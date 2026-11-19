@@ -39,6 +39,36 @@ export class MeshBuilder {
     this.indices.push(base, base + 1, base + 2, base, base + 2, base + 3);
   }
 
+  /**
+   * A closed drum facing +z: centre [x, y, z] of its back face, `radius`, `depth` towards +z and `segments` round.
+   * The side gets smooth normals, the front a flat cap; uv.x runs 0..1 round the rim (or the cap's angle), so a
+   * shader can light an arc of it. `extras` are shared attribute values. Returns the first vertex index.
+   */
+  cylinder([x, y, z], radius, depth, segments = 24, extras = {}) {
+    const first = this.count;
+    for (let i = 0; i <= segments; i += 1) {
+      const a = (i / segments) * Math.PI * 2;
+      const s = Math.sin(a);
+      const c = Math.cos(a);
+      for (const dz of [0, depth]) {
+        this.vertex({ ...extras, position: [x + s * radius, y + c * radius, z + dz], normal: [s, c, 0],
+          [this.uvName]: [i / segments, dz ? 1 : 0] });
+      }
+      if (i > 0) {
+        const b = first + i * 2;
+        this.indices.push(b - 2, b + 1, b, b - 2, b - 1, b + 1);
+      }
+    }
+    const centre = this.vertex({ ...extras, position: [x, y, z + depth], normal: [0, 0, 1], [this.uvName]: [0.5, 0.5] });
+    for (let i = 0; i <= segments; i += 1) {
+      const a = (i / segments) * Math.PI * 2;
+      this.vertex({ ...extras, position: [x + Math.sin(a) * radius, y + Math.cos(a) * radius, z + depth],
+        normal: [0, 0, 1], [this.uvName]: [i / segments, 0.98] });
+      if (i > 0) this.indices.push(centre, centre + i + 1, centre + i);
+    }
+    return first;
+  }
+
   build() {
     const geometry = new THREE.BufferGeometry();
     for (const [name, size] of Object.entries(this.layout)) {

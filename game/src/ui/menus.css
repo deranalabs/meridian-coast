@@ -63,6 +63,13 @@
 #shop ul.more-above::before { content: "\25B2  MORE"; }
 #shop ul.more-below::after { content: "\25BC  MORE"; }
 #shop li.disabled .price { color: #ffb3c0; }
+#shop li .tag {
+  display: inline-block; margin-right: 7px; padding: 1px 6px; border-radius: 3px; font-size: 11px;
+  letter-spacing: 1px; text-transform: uppercase; vertical-align: 2px; color: #1a1020; background: #ffd166;
+}
+#shop li.job { box-shadow: inset 3px 0 0 var(--mc-gold, #ffd166); }
+#shop li.locked .tag { background: #8e86a8; }
+#shop li.locked .price { color: #b9b2cc; }
 #shop .note { min-height: 22px; margin-top: 10px; font-size: 15px; font-weight: 700; color: #ffd166; }
 #shop .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 14px; }
 #shop .foot .cash { font-size: 26px; font-weight: 800; color: #9dffb5; }

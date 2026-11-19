@@ -31,7 +31,8 @@ export function createShops(game, hooks) {
   function context() {
     const p = player.state;
     return { wallet: p.wallet, arsenal: p.arsenal, vitals: p.vitals, outfit: game.outfit, cars: game.ownedCars,
-      driving: p.mode === 'driving', stars: game.action.police.wanted.stars };
+      driving: p.mode === 'driving', stars: game.action.police.wanted.stars,
+      gear: game.missions?.gearWanted() ?? [], lockedBy: game.respect?.lockedBy ?? null };
   }
 
   function wear(outfit) {

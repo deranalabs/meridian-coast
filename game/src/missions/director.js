@@ -150,6 +150,12 @@ export function createMissions(game, defs, places, hooks = {}) {
       progress = cleanProgress(raw);
     },
     available: () => availableMissions(progress, resolved),
+    /** Job gear the shops put on sale now: the item a running buy stage asks for (and every later one). */
+    gearWanted() {
+      const run = state.run;
+      if (!run || state.phase !== 'active') return [];
+      return run.def.stages.slice(run.stage).filter((stage) => stage.type === 'buy').map((stage) => stage.item);
+    },
     definition: (id) => byId.get(id) ?? null,
     /** Call the running job off (from the phone or the failed panel). */
     quit() {
@@ -165,6 +171,8 @@ export function createMissions(game, defs, places, hooks = {}) {
       if (state.offer && input.pressed('KeyE')) start(state.offer.id);
       const run = state.run;
       if (run && state.phase === 'active') {
+        // A `quiet` stage happens with the alarm cut: no call reaches the precinct until it is over.
+        if (currentStage(run).quiet && game.action.police.wanted.stars > 0) game.action.police.standDown();
         state.props?.update?.(dt, world.view);
         for (const event of stepRun(run, world.refresh(state.props), dt)) handle(event);
       } else if (run && state.phase === 'failed' && !respawning) {

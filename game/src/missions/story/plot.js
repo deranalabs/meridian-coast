@@ -60,10 +60,18 @@ export const BEATS = Object.freeze([
     shapes: ['goto', 'defeat', 'steal', 'follow', 'deliver'], reward: { cash: 4000, respect: 30 },
   },
   {
-    number: 7, id: 'gilded-tide', title: 'Gilded Tide', giver: 'nell', places: ['pell-hotel', 'gull-dock'], heist: true,
+    number: 7, id: 'tide-tables', title: 'Tide Tables', giver: 'nell', heist: true,
+    places: ['lantern', 'pell-hotel', 'aurelio-lane', 'linen-depot', 'lockup-bay', 'gun', 'clothes'],
+    beat: 'The heist set-up: scout the Aurelio and its service lane on foot, steal the Seabright Linen van and '
+      + 'lose the depot alarm, buy the thermal lance and the masks. Ilo tells Nell what Dex said; she shrugs.',
+    shapes: ['goto', 'deliver', 'steal', 'buy'], reward: { cash: 4500, respect: 30 },
+  },
+  {
+    number: 8, id: 'gilded-tide', title: 'Gilded Tide', giver: 'nell', heist: true,
+    places: ['lockup-bay', 'aurelio-lane', 'gull-dock'],
     beat: 'The heist: Gus\'s vault under the Hotel Aurelio. Nell plans it, Priya drives, Tavi cuts the power, '
       + 'Benny waits at the dock. Juno breaks it on air early and Solis comes for everyone.',
-    shapes: ['goto', 'defeat', 'evade', 'drive'], reward: { cash: 40000, respect: 60 },
+    shapes: ['drive', 'defeat', 'deliver', 'evade'], reward: { cash: 40000, respect: 60 },
   },
 ]);
 
@@ -71,5 +79,5 @@ export const BEATS = Object.freeze([
 export const BETRAYALS = Object.freeze([
   { by: 'nell', of: 'ilo', when: 4, how: 'She has been selling Gus every route Ilo runs.' },
   { by: 'dex', of: 'voss', when: 6, how: 'He hands Ilo the van routes and the yard keys.' },
-  { by: 'solis', of: 'ilo', when: 7, how: 'The clean record was never real; she wants the heist crew in cuffs.' },
+  { by: 'solis', of: 'ilo', when: 8, how: 'The clean record was never real; she wants the heist crew in cuffs.' },
 ]);

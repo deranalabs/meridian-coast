@@ -39,9 +39,12 @@ export function createShopMenu() {
       list.classList.toggle('more-above', first > 0);
       list.classList.toggle('more-below', first + ROWS < items.length);
       const shown = items.slice(first, first + ROWS);
-      list.innerHTML = shown.map((item, row) => `<li class="${row + first === index ? 'active' : ''} ${item.disabled
-        ? 'disabled' : ''}"><span class="label">${escape(item.label)}<small>${escape(item.reason || item.detail)}
-        </small></span><span class="price">${price(item)}</span></li>`).join('');
+      const flags = (item, row) => [row + first === index ? 'active' : '', item.disabled ? 'disabled' : '',
+        item.job ? 'job' : '', item.locked ? 'locked' : ''].join(' ');
+      const tag = (item) => (item.job ? '<b class="tag">Job</b>' : item.locked ? '<b class="tag">Rank</b>' : '');
+      list.innerHTML = shown.map((item, row) => `<li class="${flags(item, row)}"><span class="label">${tag(item)}${
+        escape(item.label)}<small>${escape(item.reason || item.detail)}</small></span><span class="price">${
+        price(item)}</span></li>`).join('');
       q('.cash').textContent = `$${cash.toLocaleString('en-US')}`;
       q('.note').textContent = note;
     },

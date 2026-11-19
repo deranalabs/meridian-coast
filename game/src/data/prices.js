@@ -39,6 +39,15 @@ export const CAR_PRICES = Object.freeze({
 
 export const GARAGE_FETCH = 0;
 
+/**
+ * Job gear: never on the shelf until a mission stage asks for it (catalog.js lists `gear:<id>` only then).
+ * `shop` is the shop kind that sells it.
+ */
+export const GEAR = Object.freeze({
+  cutter: { shop: 'gun', name: 'Thermal Lance', detail: 'Cuts a vault hinge in half a minute', price: 900 },
+  masks: { shop: 'clothes', name: 'Gull Masks, four', detail: 'Rubber seabird faces for the crew', price: 160 },
+});
+
 /** Spray bay: a respray that also clears the wanted level. */
 export const RESPRAY_PRICE = 250;
 

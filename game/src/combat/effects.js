@@ -201,9 +201,22 @@ export function createEffects() {
           -0.5, -Math.cos(angle) * 2.5, FAIL, 0.08, 0.55, 6);
       }
     },
+    /**
+     * A thermal lance biting steel at p: a white-hot core and a spray of orange sparks thrown back along the
+     * normal n (unit, horizontal), falling under gravity. Call it every frame while the cut runs.
+     */
+    cutting(p, n) {
+      sparks.spawn(p.x, p.y, p.z, 0, 0, 0, LANCE, 0.16, 0.05, 0);
+      for (let i = 0; i < 2; i += 1) {
+        sparks.spawn(p.x, p.y, p.z, n.x * 3 + j() * 2.4, 1.2 + j() * 1.8, n.z * 3 + j() * 2.4, i ? SPARK : FLASH,
+          0.03, 0.45 + j() * 0.2, 9);
+      }
+    },
     update(dt) {
       tracers.update(dt);
       sparks.update(dt);
     },
   };
 }
+
+const LANCE = new THREE.Color('#e6f4ff').multiplyScalar(5);

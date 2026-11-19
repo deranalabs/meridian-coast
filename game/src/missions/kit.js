@@ -6,6 +6,7 @@ import { pointOf } from './resolve.js';
 import { createConvoy } from './convoy.js';
 import { createCrew } from './crew.js';
 import { createCourse } from './course.js';
+import { createVaultDoor } from './vaultdoor.js';
 
 const WALL_SAFE = 3.5;
 const WALL_HURT = 7;
@@ -81,6 +82,23 @@ export function createMissionKit(game, places) {
         own.courses.push(course);
         props.targets[name] = course.target;
         return course;
+      },
+      /**
+       * A vault door set `back` metres into the wall behind a place; the lance cuts it in `seconds` while Ilo
+       * stands at it. It steps and goes away with the courses (anything with update(dt, view) and dispose()).
+       */
+      vaultDoor(at, { seconds = 30, back = 1.6, reach = 6 } = {}) {
+        const place = typeof at === 'string' ? places.get(at) : null;
+        const point = pointOf(at, places);
+        const outX = place?.outX ?? 0;
+        const outZ = place?.outZ ?? 1;
+        const x = point.x - outX * back;
+        const z = point.z - outZ * back;
+        const door = createVaultDoor(game.action.effects, { x, y: ground.surfaceAt(x, z).height, z }, outX, outZ,
+          { reach: reach + back });
+        game.scene.add(door.group);
+        own.courses.push({ update: (dt, view) => door.update(dt, view, seconds), dispose: door.dispose });
+        return door;
       },
       /** Armed people of a group; enemies[group] counts those still standing. */
       crew(group, spots, options = {}) {

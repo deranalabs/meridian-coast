@@ -33,6 +33,13 @@ export const STORY_CLOTHING = Object.freeze([
     name: 'Lantern Courier Jacket', mission: 'lantern-run' },
   { id: 'courier-cap', slot: 'hat', style: 'cap', colour: '#5e2382', name: 'Lantern Courier Cap',
     mission: 'lantern-run' },
+  // The heist goes in as the hotel's laundry: Seabright Linen shells and caps, gull-white with a sea-blue trim.
+  { id: 'linen-shell', slot: 'outer', style: 'windbreaker', colour: '#eef2f0', lining: '#2f7fa8',
+    name: 'Seabright Linen Shell', mission: 'gilded-tide' },
+  { id: 'linen-cap', slot: 'hat', style: 'cap', colour: '#2f7fa8', name: 'Seabright Linen Cap',
+    mission: 'gilded-tide' },
+  { id: 'linen-slacks', slot: 'bottom', style: 'cargo', colour: '#c9d2d4', name: 'Seabright Work Slacks',
+    mission: 'gilded-tide' },
 ]);
 
 /** A story piece by id, or null. */

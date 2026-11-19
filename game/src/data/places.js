@@ -37,4 +37,8 @@ export const MISSION_PLACES = Object.freeze([
   { id: 'solis-steps', kind: 'mission', name: 'Precinct Steps', district: 'neon', near: [-96, -150] },
   { id: 'bluff', kind: 'mission', name: 'Calder Bluff Lookout', district: 'heights', near: [-330, -20] },
   { id: 'gull-dock', kind: 'mission', name: 'Gull Key Boat Dock', district: 'beach', near: [400, 80] },
+  { id: 'aurelio-lane', kind: 'mission', name: 'Aurelio Service Lane', district: 'beach', near: [336, -74],
+    drive: true },
+  { id: 'linen-depot', kind: 'mission', name: 'Seabright Linen Depot', district: 'beach', near: [214, 58],
+    drive: true },
 ]);

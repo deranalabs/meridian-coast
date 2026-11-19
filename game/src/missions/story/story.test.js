@@ -18,7 +18,8 @@ const resolved = STORY_MISSIONS.map((def) => resolveMission(def, places));
 const byId = new Map(resolved.map((def) => [def.id, def]));
 
 test('every mission resolves: place ids exist, stage types are known, every stage has text', () => {
-  assert.equal(STORY_MISSIONS.length, 6);
+  assert.equal(STORY_MISSIONS.length, 8);
+  assert.deepEqual(STORY_MISSIONS.filter((def) => def.heist).map((def) => def.id), ['gilded-tide']);
   for (const def of resolved) {
     assert.match(def.id, /^[a-z0-9-]+$/);
     assert.ok(def.startAt, `${def.id} has a start`);
@@ -73,6 +74,7 @@ function fakeKit() {
     convoy: (name, options) => asked.push(['convoy', name, options.from, options.to]) && { car: { position: {} } },
     crew: (group, spots) => asked.push(['crew', group, spots.length]),
     course: (name, options) => asked.push(['convoy', name, options.from, options.to]) && { start: () => {} },
+    vaultDoor: (at) => asked.push(['door', at]) && { cut: 0 },
   });
   return { asked, kit: { scope, places, point: (id) => places.get(id) } };
 }

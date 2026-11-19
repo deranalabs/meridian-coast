@@ -1,5 +1,5 @@
 // Shop catalogue and transactions: what each shop lists for the player right now, and what buying an item does.
-import { WEAPON_PRICES, AMMO_PRICES, ARMOUR_PRICE, CLOTHING_PRICES, FOOD, CAR_PRICES, RESPRAY_PRICE }
+import { WEAPON_PRICES, AMMO_PRICES, ARMOUR_PRICE, CLOTHING_PRICES, FOOD, CAR_PRICES, RESPRAY_PRICE, GEAR }
   from '../data/prices.js';
 import { CLOTHING } from '../data/clothing.js';
 import { WEAPONS } from '../combat/weapons.js';
@@ -21,13 +21,31 @@ export const SHOP_TITLES = {
 
 const MAX_CARS = 6;
 
-/** Items for shop `kind` given ctx = {wallet, arsenal, vitals, outfit, cars, driving, stars}. */
+/** Job gear this shop sells right now: only the `gear:<id>` items a running mission asks for (ctx.gear). */
+function gearItems(kind, ctx, item) {
+  return (ctx.gear ?? []).map((id) => [id, GEAR[id.slice(5)]]).filter(([, gear]) => gear?.shop === kind)
+    .map(([id, gear]) => ({ ...item(id, gear.name, gear.detail, gear.price), job: true }));
+}
+
+/**
+ * Items for shop `kind` given ctx = {wallet, arsenal, vitals, outfit, cars, driving, stars, gear, lockedBy}.
+ * `gear` lists mission gear ids on sale now; `lockedBy(id)` names the rank an item still needs ('' when open).
+ */
 export function itemsFor(kind, ctx) {
   const cash = ctx.wallet.cash;
-  const item = (id, label, detail, price, blocked = '') => ({
-    id, label, detail, price, disabled: Boolean(blocked) || price > cash, reason: blocked || (price > cash ? 'Need cash'
-      : ''),
-  });
+  const item = (id, label, detail, price, owned = '') => {
+    const blocked = owned || ctx.lockedBy?.(id) || '';
+    return { id, label, detail, price, disabled: Boolean(blocked) || price > cash,
+      reason: blocked || (price > cash ? 'Need cash' : ''), locked: !owned && Boolean(blocked) };
+  };
+  const gear = gearItems(kind, ctx, item);
+  if (kind === 'gun') return gear.concat(shelf(kind, ctx, item));
+  if (kind === 'clothes') return gear.concat(shelf(kind, ctx, item));
+  return shelf(kind, ctx, item);
+}
+
+/** The shop's own stock. */
+function shelf(kind, ctx, item) {
   if (kind === 'gun') {
     const list = [];
     for (const [id, price] of Object.entries(WEAPON_PRICES)) {
