@@ -32,15 +32,21 @@ export function createMissions(game, defs, places, hooks = {}) {
   const giverName = (def) => hooks.cast?.(def.giver)?.name ?? '';
 
   function setupStage(index, restart) {
+    // A retry respawns the mission's cars, so a mission car Ilo still sits in (wrecked or stolen) must go.
+    const stale = restart && game.player.state.car?.missionTag ? game.player.state.car : null;
     state.props?.dispose?.();
     state.props = state.run.def.setup?.(hooks.kit, index, restart) ?? null;
     const stage = state.run.def.stages[index];
     if (restart) {
       game.action.police.standDown();
-      const start = stage.start ?? state.run.def.startAt;
+      const start = stage.start ?? state.run.def.startAt ?? stale?.position;
       // A stage that names its own start always puts Ilo there, out of any car (the stage respawns its cars).
-      const place = stage.start || game.player.state.mode === 'foot';
+      const place = stage.start || stale || game.player.state.mode === 'foot';
       if (start && place) game.player.placeOnFoot(start.x, start.z, start.heading ?? 0);
+      if (stale && game.player.state.car !== stale) {
+        stale.visible = false;
+        stale.spare = true;
+      }
     }
   }
 
