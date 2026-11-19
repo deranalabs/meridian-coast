@@ -86,6 +86,35 @@ export function meanSaturation(rgba) {
   return sum / count;
 }
 
+/** Overlap area in pixels of two boxes {x, y, width, height}. */
+export function overlapArea(a, b) {
+  const w = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
+  const h = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
+  return w > 0 && h > 0 ? w * h : 0;
+}
+
+/**
+ * The cover's HUD check. `boxes` are the panels as laid out in the page ({name, x, y, width, height, font},
+ * null when a panel is missing or hidden; font is the smallest text in px). Scaled by `scale` (the contact
+ * sheet shows 1280x800 at 768x480, so 0.6), every panel must be present, inside the frame, clear of the
+ * others (a few pixels of touching allowed) and its smallest text at least `minFont` pixels tall.
+ */
+export function hudLayout(boxes, viewport, { scale = 0.6, minFont = 6, slack = 16 } = {}) {
+  const shown = Object.entries(boxes).filter(([, box]) => box && box.width > 0 && box.height > 0);
+  const missing = Object.keys(boxes).filter((name) => !shown.some(([key]) => key === name));
+  const offscreen = shown.filter(([, b]) => b.x < 0 || b.y < 0 || b.x + b.width > viewport.width
+    || b.y + b.height > viewport.height).map(([name]) => name);
+  const small = shown.filter(([, b]) => b.font * scale < minFont).map(([name]) => name);
+  const overlaps = [];
+  for (let i = 0; i < shown.length; i += 1) {
+    for (let j = i + 1; j < shown.length; j += 1) {
+      if (overlapArea(shown[i][1], shown[j][1]) > slack) overlaps.push(`${shown[i][0]}+${shown[j][0]}`);
+    }
+  }
+  return { ok: !missing.length && !offscreen.length && !small.length && !overlaps.length, missing, offscreen,
+    small, overlaps };
+}
+
 /** All five metrics for an RGBA buffer of `width` x `height`. */
 export function measure(rgba, width, height) {
   const lum = luminance(rgba);

@@ -2,7 +2,8 @@
 // tmp/look/, --perf measures FPS and draw calls of the live drive scene at 1440x900 on the real GPU.
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { launchChrome, startServer, ROOT, sleep } from './cdp.mjs';
+import { launchChrome, startServer, panelBoxes, ROOT, sleep } from './cdp.mjs';
+import { hudLayout } from './look-metrics.mjs';
 import { SHOT_LIST } from './shot-list.mjs';
 
 const MAX_BYTES = 256 * 1024;
@@ -46,6 +47,22 @@ function watchErrors(page) {
   return errors;
 }
 
+/** Every panel the cover must show, by its selector in the HUD. */
+const COVER_PANELS = {
+  mission: '#hud .mission-panel.show', dispatch: '#hud .dispatch.show', wanted: '#hud .status .wanted',
+  weapons: '#hud .weaponbar', card: '#hud .dialogue-card.show', minimap: '#hud .minimap', radio: '#hud .radio',
+  speedo: '#hud .speedo',
+};
+
+/** The cover's HUD panels are all there, on screen, apart and readable at contact-sheet size, or the run fails. */
+async function checkCover(page) {
+  const boxes = await panelBoxes(page, COVER_PANELS);
+  const result = hudLayout(boxes, { width: 1280, height: 800 });
+  const fonts = Object.entries(boxes).map(([name, box]) => `${name} ${box ? box.font : '-'}px`).join(', ');
+  console.log(`cover HUD: ${result.ok ? 'ok' : 'FAILED'} (smallest text: ${fonts})`);
+  if (!result.ok) throw new Error(`cover HUD layout: ${JSON.stringify(result)}`);
+}
+
 async function runShots(server, nohud) {
   const chrome = await launchChrome({ width: 1280, height: 800, port: 9334 });
   try {
@@ -66,6 +83,7 @@ async function runShots(server, nohud) {
         if (errors.length) throw new Error(`console errors in ${shot.name}:\n${errors.join('\n')}`);
         const { bytes, quality } = await capture(page);
         writeFileSync(join(ROOT, folder, shot.file), bytes);
+        if (shot === SHOT_LIST[0] && !extra) await checkCover(page);
         const state = await page.evaluate('JSON.stringify(window.__meridian.getState())');
         const seconds = ((Date.now() - started) / 1000).toFixed(1);
         console.log(`${folder}/${shot.file}: ${(bytes.length / 1024).toFixed(0)} KiB q${quality} ${seconds}s ${state}`);

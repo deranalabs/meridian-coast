@@ -114,4 +114,27 @@ async function connect(url) {
   };
 }
 
+/**
+ * Where each HUD panel sits on the page: {name: selector} in, {name: {x, y, width, height, font} | null} out,
+ * null when the element is missing or not displayed. `font` is the smallest font size of any text inside it.
+ */
+export async function panelBoxes(page, selectors) {
+  const script = `(() => {
+    const out = {};
+    for (const [name, selector] of Object.entries(${JSON.stringify(selectors)})) {
+      const el = document.querySelector(selector);
+      const r = el?.getBoundingClientRect();
+      if (!el || !r.width || !r.height || getComputedStyle(el).visibility === 'hidden') { out[name] = null; continue; }
+      let font = Infinity;
+      for (const node of [el, ...el.querySelectorAll('*')]) {
+        const own = [...node.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim());
+        if (own && node.getClientRects().length) font = Math.min(font, parseFloat(getComputedStyle(node).fontSize));
+      }
+      out[name] = { x: r.x, y: r.y, width: r.width, height: r.height, font: Number.isFinite(font) ? font : 99 };
+    }
+    return out;
+  })()`;
+  return page.evaluate(script);
+}
+
 export { ROOT, sleep };

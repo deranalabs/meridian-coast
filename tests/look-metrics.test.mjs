@@ -1,7 +1,7 @@
 // Unit tests for the look metrics on small synthetic images.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { measure, gradEnergy, flatBlocks, colourBins } from './look-metrics.mjs';
+import { measure, gradEnergy, flatBlocks, colourBins, hudLayout, overlapArea } from './look-metrics.mjs';
 
 function image(width, height, fn) {
   const rgba = new Uint8ClampedArray(width * height * 4);
@@ -35,4 +35,19 @@ test('pure red is fully saturated and bright pixels are counted above 230 lumina
   const m = measure(image(4, 4, (x) => (x < 2 ? [255, 0, 0] : [255, 255, 255])), 4, 4);
   assert.ok(Math.abs(m.meanSat - 0.5) < 1e-9);
   assert.equal(m.brightShare, 0.5);
+});
+
+test('the HUD layout check finds missing, off-frame, overlapping and tiny panels', () => {
+  const view = { width: 1280, height: 800 };
+  const panel = (x, y, font = 13) => ({ x, y, width: 200, height: 100, font });
+  const clean = hudLayout({ mission: panel(20, 20), police: panel(20, 140), card: panel(500, 680) }, view);
+  assert.deepEqual(clean, { ok: true, missing: [], offscreen: [], small: [], overlaps: [] });
+  const bad = hudLayout({ mission: panel(20, 20), police: panel(60, 60), card: null, radio: panel(1200, 10),
+    speedo: panel(600, 300, 8) }, view);
+  assert.equal(bad.ok, false);
+  assert.deepEqual(bad.missing, ['card']);
+  assert.deepEqual(bad.overlaps, ['mission+police']);
+  assert.deepEqual(bad.offscreen, ['radio']);
+  assert.deepEqual(bad.small, ['speedo']);
+  assert.equal(overlapArea(panel(0, 0), panel(199, 99)), 1);
 });
