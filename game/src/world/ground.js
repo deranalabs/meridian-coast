@@ -5,19 +5,34 @@ import { UNITS } from '../palette.js';
 
 const CELL = 24;
 
-/** Build a query object for a layout: surfaceAt(x, z) returns {height, kind} where kind is a surface name. */
-export function createGround(layout) {
-  const grid = new Map();
-  layout.blocks.forEach((block) => {
-    const b = block.bounds;
-    for (let gx = Math.floor(b.x0 / CELL); gx <= Math.floor(b.x1 / CELL); gx += 1) {
-      for (let gz = Math.floor(b.z0 / CELL); gz <= Math.floor(b.z1 / CELL); gz += 1) {
-        const key = `${gx},${gz}`;
-        if (!grid.has(key)) grid.set(key, []);
-        grid.get(key).push(block);
-      }
+/** Every grid cell key a box {x0, z0, x1, z1} touches. */
+function cellsOf(b) {
+  const keys = [];
+  for (let gx = Math.floor(b.x0 / CELL); gx <= Math.floor(b.x1 / CELL); gx += 1) {
+    for (let gz = Math.floor(b.z0 / CELL); gz <= Math.floor(b.z1 / CELL); gz += 1) keys.push(`${gx},${gz}`);
+  }
+  return keys;
+}
+
+/**
+ * Build a query object for a layout: surfaceAt(x, z) returns {height, kind} where kind is a surface name.
+ * `buildings` ({x0, z0, x1, z1, top} per lot) feeds roofAt(x, z, reach): the highest roof near a point.
+ */
+export function createGround(layout, buildings = []) {
+  const roofs = new Map();
+  for (const b of buildings) {
+    for (const key of cellsOf(b)) {
+      if (!roofs.has(key)) roofs.set(key, []);
+      roofs.get(key).push(b);
     }
-  });
+  }
+  const grid = new Map();
+  for (const block of layout.blocks) {
+    for (const key of cellsOf(block.bounds)) {
+      if (!grid.has(key)) grid.set(key, []);
+      grid.get(key).push(block);
+    }
+  }
   const winding = layout.winding;
   // The hill road's box (grown by its half-width): points outside it skip the per-segment test, which every
   // walker and car would otherwise pay on each step anywhere west of the old town.
@@ -46,9 +61,23 @@ export function createGround(layout) {
     return false;
   }
 
+  /** The highest building top within `reach` metres of (x, z), or -Infinity over open ground. */
+  function roofAt(x, z, reach = 0) {
+    let best = -Infinity;
+    for (const key of cellsOf({ x0: x - reach, z0: z - reach, x1: x + reach, z1: z + reach })) {
+      for (const b of roofs.get(key) ?? []) {
+        const dx = Math.max(b.x0 - x, 0, x - b.x1);
+        const dz = Math.max(b.z0 - z, 0, z - b.z1);
+        if (b.top > best && dx * dx + dz * dz <= reach * reach) best = b.top;
+      }
+    }
+    return best;
+  }
+
   return {
     blockAt,
     onWinding,
+    roofAt,
     surfaceAt(x, z) {
       const base = heightAt(x, z);
       if (Math.abs(z - layout.causewayZ) < 6.2 && x > CAUSEWAY.x0 + 4 && x < CAUSEWAY.x1 + 4) {

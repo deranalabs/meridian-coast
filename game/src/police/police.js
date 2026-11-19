@@ -193,7 +193,7 @@ export function createPolice({ fleet, layout, ground, colliders, characters, eff
     roadblocks.update(dt, layout.graph, target, plan.roadblocks, driving && Math.abs(target.speed) > 8);
     if (plan.helicopter && !helicopter.state.active) helicopter.arrive(target);
     if (!plan.helicopter && helicopter.state.active) helicopter.leave();
-    helicopter.update(dt, target, time);
+    helicopter.update(dt, target, time, ground.roofAt ?? undefined);
     checkBust(dt, target, player);
     state.siren = Infinity;
     for (const unit of units.units) {

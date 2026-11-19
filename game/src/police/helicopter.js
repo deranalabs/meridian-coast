@@ -5,6 +5,9 @@ import { createCarMaterial } from '../vehicles/carmaterial.js';
 import { createSearchlight } from './searchlight.js';
 
 const NAMES = ['position', 'normal', 'aTrim', 'aPaint', 'aSurface', 'aGlow'];
+/** Rotor-tip reach when checking roofs below, and the height kept over the tallest of them. */
+const ROOF_REACH = 9;
+const ROOF_CLEAR = 9;
 const NAVY = { colour: '#2a3d6e', rough: 0.3, metal: 0.4 };
 const WHITE = { colour: '#f4f1ea', rough: 0.35, metal: 0.2, glow: 0.12 };
 const DARK = { colour: '#18191c', rough: 0.5, metal: 0.6 };
@@ -91,19 +94,26 @@ export function createHelicopter(timeOfDay, noiseTexture) {
     leave() {
       state.active = false;
     },
-    update(dt, target, time) {
+    /** `roofAt(x, z, reach)` gives the highest roof near a point, so the orbit clears the downtown towers. */
+    update(dt, target, time, roofAt = () => -Infinity) {
       if (!group.visible) return;
       state.angle += dt * 0.22;
       const radius = state.active ? 26 : 400;
       const goalX = target.x + Math.cos(state.angle) * radius;
       const goalZ = target.z + Math.sin(state.angle) * radius;
-      const goalY = target.y + (state.active ? 34 : 90);
-      const k = Math.min(1, dt * (state.active ? 0.8 : 0.25));
+      const midX = (state.x + goalX) / 2;
+      const midZ = (state.z + goalZ) / 2;
+      const roof = Math.max(roofAt(state.x, state.z, ROOF_REACH), roofAt(midX, midZ, ROOF_REACH),
+        roofAt(goalX, goalZ, ROOF_REACH)) + ROOF_CLEAR;
+      const goalY = Math.max(target.y + (state.active ? 34 : 90), roof);
+      // Below a roof ahead it climbs hard and holds back until it is over it.
+      const low = state.y < roof - 2;
+      const k = Math.min(1, dt * (state.active ? 0.8 : 0.25) * (low ? 0.3 : 1));
       const vx = (goalX - state.x) * k;
       const vz = (goalZ - state.z) * k;
       state.x += vx;
       state.z += vz;
-      state.y += (goalY - state.y) * Math.min(1, dt * 0.6);
+      state.y += (goalY - state.y) * Math.min(1, dt * (state.y < roof ? 4 : 0.6));
       const toward = Math.atan2(target.x - state.x, target.z - state.z);
       state.heading += Math.atan2(Math.sin(toward - state.heading), Math.cos(toward - state.heading)) * dt * 1.5;
       frame.position.set(state.x, state.y, state.z);

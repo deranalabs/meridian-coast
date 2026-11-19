@@ -67,7 +67,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
   const landmarks = createLandmarks(city, timeOfDay);
   scene.add(landmarks.group);
 
-  const ground = createGround(city.layout);
+  const ground = createGround(city.layout, city.buildings.colliders);
   const colliders = createColliders();
   for (const box of city.buildings.colliders) colliders.addBox(box);
   for (const shape of landmarks.colliders) {

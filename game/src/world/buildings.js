@@ -138,6 +138,7 @@ function buildWarehouse(builder, out, lot, box, ground, look, random) {
   addBox(builder, roofBox, upper, 'roofMetal');
   addParapet(builder, roofBox, 0.7, 0.3, look);
   out.roofs.push({ ...inset(roofBox, 2), y: top, district: lot.district, kind: 'industrial' });
+  return top + 0.7;
 }
 
 function buildTower(builder, out, lot, box, ground, district, style, look, random) {
@@ -169,9 +170,12 @@ function buildTower(builder, out, lot, box, ground, district, style, look, rando
     roof = setback;
     out.roofs.push({ ...inset(body, 1), y: body.y1, district: district.id, kind: 'ledge', hole: setback });
   }
+  // The highest point of the building (ridge, crown or parapet), for anything that must fly over it.
+  let peak = roof.y1;
   if (roofStyle === 'gable') {
     const ridge = addGableRoof(builder, roof, random.range(0.45, 0.65), 0.45, look);
     out.roofs.push({ ...roof, y: ridge, district: district.id, kind: 'gable' });
+    peak = ridge;
   } else {
     addBox(builder, { ...roof, y0: roof.y1, y1: roof.y1 }, look, 'roofGravel');
     const crown = look.tall && style === STYLES.glass && random.chance(0.6);
@@ -179,8 +183,11 @@ function buildTower(builder, out, lot, box, ground, district, style, look, rando
       const cap = { ...inset(roof, 1.2), y0: roof.y1, y1: roof.y1 + random.range(4, 9) };
       addBox(builder, cap, { ...look, tile: 'lobby', storey: cap.y1 - cap.y0, vStart: 0 }, 'roofMetal');
       out.roofs.push({ ...cap, y: cap.y1, district: district.id, kind: 'spire' });
+      peak = cap.y1;
     } else {
-      addParapet(builder, roof, random.range(0.8, 1.3), 0.35, look);
+      const parapet = random.range(0.8, 1.3);
+      addParapet(builder, roof, parapet, 0.35, look);
+      peak = roof.y1 + parapet;
       if (style !== STYLES.glass && style !== STYLES.office) addCornice(builder, roof, roof.y1 - 0.5, 0.6, 0.45, look);
       out.roofs.push({
         ...inset(roof, 1.4),
@@ -203,7 +210,7 @@ function buildTower(builder, out, lot, box, ground, district, style, look, rando
     }
   }
   addStreetDressing(out, lot, box, ground, district, look, random);
-  return body.y1;
+  return peak;
 }
 
 /**
@@ -227,13 +234,10 @@ export function buildBuildings(builder, layout, seed) {
       roofTint: rgb(random.pick(['#ffffff', '#e8e2da', '#d8d8dc'])),
       seed: random.next(),
     };
-    let top;
-    if (styleName === 'warehouse') {
-      buildWarehouse(builder, out, lot, box, ground, look, random);
-      top = ground.max + 12;
-    } else {
-      top = buildTower(builder, out, lot, box, ground, district, style, look, random);
-    }
+    // `top` is the real highest point of the lot's building: the helicopter clears it via ground.roofAt.
+    const top = styleName === 'warehouse'
+      ? buildWarehouse(builder, out, lot, box, ground, look, random)
+      : buildTower(builder, out, lot, box, ground, district, style, look, random);
     out.tallest = Math.max(out.tallest, top);
     out.colliders.push({ x0: footprint.x0, z0: footprint.z0, x1: footprint.x1, z1: footprint.z1, top });
   });

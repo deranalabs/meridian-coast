@@ -41,6 +41,18 @@ test('every point along the hill road is raised road', () => {
   }
 });
 
+test('roofAt finds the tallest building within reach and nothing over open ground', () => {
+  const towers = [{ x0: 0, z0: 0, x1: 20, z1: 20, top: 90 }, { x0: 30, z0: 0, x1: 50, z1: 20, top: 40 }];
+  const city = createGround(layout, towers);
+  assert.equal(city.roofAt(10, 10), 90);
+  assert.equal(city.roofAt(40, 10), 40);
+  assert.equal(city.roofAt(25, 10), -Infinity, 'the gap between them is open');
+  assert.equal(city.roofAt(25, 10, 6), 90, 'reach takes in both, the taller wins');
+  assert.equal(city.roofAt(55, 10, 6), 40, 'reach from the far side takes in only the lower one');
+  assert.equal(city.roofAt(-30, -30, 10), -Infinity);
+  assert.equal(ground.roofAt(0, 0, 50), -Infinity, 'a ground made without buildings has no roofs');
+});
+
 test('the hill road test agrees with a scan of every segment, inside and outside its box', () => {
   const w = layout.winding;
   const brute = (x, z) => w.some((p, i) => i + 1 < w.length && distanceToSegment({ x, z }, p, w[i + 1]).distance < 5);
