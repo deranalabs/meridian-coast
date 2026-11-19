@@ -71,6 +71,36 @@ function drawBase(layout) {
   return canvas;
 }
 
+/** One blip at (x, z) in rotated map space; unit is one screen pixel. Police squares, air diamonds, shop tiles. */
+function drawBlip(ctx, blip, x, z, unit, heading) {
+  ctx.save();
+  ctx.translate(x, z);
+  ctx.rotate(Math.PI - heading);
+  ctx.fillStyle = blip.colour;
+  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+  ctx.lineWidth = 2 * unit;
+  ctx.beginPath();
+  if (blip.air) {
+    ctx.moveTo(0, -12 * unit);
+    ctx.lineTo(11 * unit, 0);
+    ctx.lineTo(0, 12 * unit);
+    ctx.lineTo(-11 * unit, 0);
+    ctx.closePath();
+  } else if (blip.police) ctx.rect(-10 * unit, -10 * unit, 20 * unit, 20 * unit);
+  else if (blip.shop) ctx.roundRect(-13 * unit, -13 * unit, 26 * unit, 26 * unit, 5 * unit);
+  else ctx.arc(0, 0, 7 * unit, 0, Math.PI * 2);
+  ctx.fill();
+  if (blip.police || blip.shop) ctx.stroke();
+  if (blip.letter) {
+    ctx.fillStyle = '#1a0f28';
+    ctx.font = `800 ${19 * unit}px "Avenir Next", Arial, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(blip.letter, 0, unit);
+  }
+  ctx.restore();
+}
+
 /** A circular minimap inside `container`; update(x, z, heading, blips) redraws it. */
 export function createMinimap(container, layout) {
   const base = drawBase(layout);
@@ -92,12 +122,17 @@ export function createMinimap(container, layout) {
       ctx.scale(zoom, zoom);
       const [mx, mz] = toMap(x, z);
       ctx.drawImage(base, -mx, -mz);
+      const rim = (size / 2 - 16) / zoom;
       for (const blip of blips) {
         const [bx, bz] = toMap(blip.x, blip.z);
-        ctx.fillStyle = blip.colour;
-        ctx.beginPath();
-        ctx.arc(bx - mx, bz - mz, 7 / zoom, 0, Math.PI * 2);
-        ctx.fill();
+        let dx = bx - mx;
+        let dz = bz - mz;
+        const d = Math.hypot(dx, dz);
+        if (d > rim && blip.police) {
+          dx *= rim / d;
+          dz *= rim / d;
+        } else if (d > rim * 1.3) continue;
+        drawBlip(ctx, blip, dx, dz, 1 / zoom, heading);
       }
       ctx.restore();
       const gradient = ctx.createRadialGradient(size / 2, size / 2, size * 0.3, size / 2, size / 2, size / 2);

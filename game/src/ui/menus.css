@@ -53,6 +53,15 @@
 }
 #shop li.active .price { color: #ffffff; }
 #shop li.disabled { opacity: 0.55; }
+#shop ul.more-above::before, #shop ul.more-below::after {
+  display: block;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 3px;
+  opacity: 0.7;
+}
+#shop ul.more-above::before { content: "\25B2  MORE"; }
+#shop ul.more-below::after { content: "\25BC  MORE"; }
 #shop li.disabled .price { color: #ffb3c0; }
 #shop .note { min-height: 22px; margin-top: 10px; font-size: 15px; font-weight: 700; color: #ffd166; }
 #shop .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 14px; }

@@ -22,6 +22,7 @@ import { createRadio } from './ui/radio.js';
 import { CAR_PAINTS } from './palette.js';
 import { createAction } from './systems/action.js';
 import { isSearching } from './police/wanted.js';
+import { policeReport } from './police/report.js';
 import { createServices } from './systems/services.js';
 import { baseOutfit } from './shops/outfit.js';
 import { ammoView } from './combat/arsenal.js';
@@ -133,7 +134,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
 
   game.nearCarHint = () => {
     if (game.prompt) return game.prompt;
-    if (player.state.mode !== 'foot' || player.state.down) return null;
+    if (player.state.mode !== 'foot' || player.state.down || player.state.frozen) return null;
     for (const car of fleet.cars) {
       if (car.visible && car.position.distanceTo(ilo.position) < 4) return 'Press <kbd>E</kbd> to take the car';
     }
@@ -154,7 +155,10 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
   game.objective = () => {
     if (game.mission) return game.mission;
     const wanted = game.action.police.wanted;
-    if (wanted.stars === 0) return null;
+    if (wanted.stars === 0) {
+      return { label: 'NO MISSION', text: 'Free roam: jobs open soon'
+        + '<small>Coloured markers on the map are shops; Taco Tide carts heal you</small>' };
+    }
     return isSearching(wanted)
       ? { label: 'HEAT', text: 'Stay out of sight to lose a star' }
       : { label: 'HEAT', text: 'Lose the police: break their line of sight or hit a <b>spray bay</b>' };
@@ -171,6 +175,9 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
       stars: game.action.police.wanted.stars,
       searching: isSearching(game.action.police.wanted),
       weapon: ammoView(player.state.arsenal),
+      arsenal: player.state.arsenal,
+      menu: Boolean(game.services.shops.openPlace),
+      police: () => policeReport(game.action.police, subject.x, subject.z),
       objective: game.objective(),
       speed: driving ? player.state.vehicle.speed : 0,
       driving,

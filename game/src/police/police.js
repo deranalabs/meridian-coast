@@ -214,8 +214,10 @@ export function createPolice({ fleet, layout, ground, colliders, characters, eff
     /** Minimap dots for pursuing cruisers and the helicopter, flashing red and blue. */
     blips(time) {
       const colour = Math.sin(time * 12) > 0 ? '#ff2a4a' : '#3b6bff';
-      const list = units.units.map((unit) => ({ x: unit.vehicle.x, z: unit.vehicle.z, colour }));
-      if (helicopter.state.active) list.push({ x: helicopter.state.x, z: helicopter.state.z, colour });
+      const list = units.units.map((unit) => ({ x: unit.vehicle.x, z: unit.vehicle.z, colour, police: true }));
+      if (helicopter.state.active) {
+        list.push({ x: helicopter.state.x, z: helicopter.state.z, colour: '#ffd166', police: true, air: true });
+      }
       return list;
     },
     draw(time) {

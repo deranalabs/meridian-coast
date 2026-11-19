@@ -1,13 +1,14 @@
 // HUD text: a short timed message line, the objective card (the mission slot) and big busted/wasted banners.
 
-/** Build the message line and objective card inside `parent`. */
-export function createMessages(parent) {
+/** Build the message line inside `parent` and the objective card inside `cardParent` (default the same). */
+export function createMessages(parent, cardParent = parent) {
   const line = document.createElement('div');
   line.className = 'message';
   const objective = document.createElement('div');
   objective.className = 'objective';
   objective.innerHTML = '<span class="tag"></span><span class="text"></span>';
-  parent.append(line, objective);
+  parent.append(line);
+  cardParent.append(objective);
   const tag = objective.querySelector('.tag');
   const text = objective.querySelector('.text');
   const state = { timer: 0, objective: '' };
@@ -27,6 +28,7 @@ export function createMessages(parent) {
       text.innerHTML = html;
       objective.classList.toggle('show', Boolean(html));
       objective.classList.toggle('heat', label === 'HEAT');
+      objective.classList.toggle('idle', label === 'NO MISSION');
     },
     update(dt) {
       if (state.timer <= 0) return;

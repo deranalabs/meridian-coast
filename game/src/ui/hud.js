@@ -5,6 +5,8 @@ import { BOARDWALK } from '../world/heightfield.js';
 import { createWantedStars } from './wantedstars.js';
 import { createWeaponPanel } from './weaponpanel.js';
 import { createMessages } from './messages.js';
+import { createWeaponBar } from './weaponbar.js';
+import { createPolicePanel } from './policepanel.js';
 
 function element(parent, className, tag = 'div') {
   const node = document.createElement(tag);
@@ -82,7 +84,11 @@ export function createHud(layout, visible = true) {
   const armourBar = element(element(status, 'armour'), '');
   const wanted = createWantedStars(status);
   const weapon = createWeaponPanel(status);
-  const messages = createMessages(root);
+  const weaponBar = createWeaponBar(status);
+  const left = element(root, 'leftcol');
+  const messages = createMessages(root, left);
+  const policePanel = createPolicePanel(left);
+  let policeTimer = 0;
   const radio = element(root, 'radio');
   const district = element(root, 'district');
   const minimap = createMinimap(element(root, 'minimap'), layout);
@@ -99,6 +105,7 @@ export function createHud(layout, visible = true) {
     root,
     say: (html, seconds) => messages.say(html, seconds),
     update(view) {
+      root.classList.toggle('menu', Boolean(view.menu));
       cash.textContent = `$${view.cash.toLocaleString('en-US')}`;
       healthBar.style.width = `${Math.max(0, Math.min(100, view.health))}%`;
       armourBar.style.width = `${Math.max(0, Math.min(100, view.armour ?? 0))}%`;
@@ -106,6 +113,13 @@ export function createHud(layout, visible = true) {
       wanted.update(view.stars ?? 0, Boolean(view.searching));
       if (view.weapon) weapon.update(view.weapon);
       weapon.root.style.display = view.driving ? 'none' : 'flex';
+      if (view.arsenal) weaponBar.update(view.arsenal);
+      weaponBar.root.style.display = view.driving ? 'none' : 'flex';
+      policeTimer -= view.dt ?? 1 / 60;
+      if (view.police && (policeTimer <= 0 || !view.stars)) {
+        policePanel.update(view.stars ? view.police() : null, view.stars ?? 0, Boolean(view.searching));
+        policeTimer = 0.25;
+      }
       messages.update(view.dt ?? 1 / 60);
       messages.setObjective(view.objective?.label ?? '', view.objective?.text ?? '');
       const line = view.radio;

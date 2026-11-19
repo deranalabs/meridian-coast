@@ -1,0 +1,86 @@
+/* HUD styles for the left column (mission card, MPD dispatch panel) and the weapon slot bar. */
+#hud .leftcol {
+  position: absolute;
+  top: 22px;
+  left: 26px;
+  width: 352px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+#hud .leftcol .objective { position: static; max-width: none; }
+#hud.menu .status, #hud.menu .hint, #hud.menu .radio { display: none !important; }
+#hud .objective.idle { border-left-color: rgba(255, 255, 255, 0.45); opacity: 0.85; }
+#hud .objective.idle .tag { color: rgba(255, 255, 255, 0.7); }
+#hud .objective small { display: block; font-size: 13px; font-weight: 500; opacity: 0.8; margin-top: 2px; }
+#hud .police {
+  display: none;
+  padding: 8px 12px 9px;
+  border-left: 4px solid #ff3d6a;
+  background: linear-gradient(90deg, rgba(14, 10, 40, 0.8), rgba(14, 10, 40, 0.3));
+  font-size: 13px;
+}
+#hud .police.show { display: block; }
+#hud .police .head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+#hud .police .title {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  animation: dispatch-flash 0.9s steps(2, jump-none) infinite;
+}
+@keyframes dispatch-flash { 0% { color: #ff4f6e; } 100% { color: #5f8bff; } }
+#hud .police .count { font-weight: 700; opacity: 0.9; }
+#hud .police ul { list-style: none; margin: 0; padding: 0; }
+#hud .police li {
+  display: grid;
+  grid-template-columns: 16px 98px 1fr 46px 78px;
+  align-items: center;
+  padding: 2px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+}
+#hud .police li i { font-style: normal; color: #5f8bff; font-size: 11px; }
+#hud .police li.air i { color: #ffd166; }
+#hud .police li.block i { color: #ff9a4a; }
+#hud .police li b { font-weight: 800; letter-spacing: 0.5px; }
+#hud .police .detail { opacity: 0.7; }
+#hud .police .m { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+#hud .police .st {
+  text-align: right;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #ff8aa0;
+}
+#hud .police.searching .st { color: #ffd166; }
+#hud .police .foot { margin-top: 4px; font-size: 12px; font-weight: 700; letter-spacing: 1px; color: #ffb3c4; }
+#hud .weaponbar { display: flex; justify-content: flex-end; gap: 5px; margin-top: 12px; }
+#hud .weaponbar .slot {
+  min-width: 46px;
+  padding: 3px 6px 4px;
+  border-radius: 6px;
+  background: rgba(20, 10, 34, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  text-align: center;
+  opacity: 0.4;
+  font-size: 12px;
+  line-height: 1.2;
+}
+#hud .weaponbar .slot.owned { opacity: 0.85; }
+#hud .weaponbar .slot.current {
+  opacity: 1;
+  border-color: #ff8fc8;
+  background: linear-gradient(180deg, rgba(255, 79, 160, 0.45), rgba(196, 92, 255, 0.3));
+  box-shadow: 0 0 10px rgba(255, 79, 160, 0.6);
+}
+#hud .weaponbar kbd {
+  display: block;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  opacity: 0.7;
+}
+#hud .weaponbar .n { display: block; font-weight: 800; }
+#hud .weaponbar .a { display: block; font-size: 11px; font-variant-numeric: tabular-nums; opacity: 0.85; }

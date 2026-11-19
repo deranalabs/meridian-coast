@@ -1,5 +1,7 @@
 // Action screenshot scenes: a night police chase with the helicopter, a dusk street firefight and a shop screen.
 
+import { PART } from './palette.js';
+
 const wrap = (angle) => Math.atan2(Math.sin(angle), Math.cos(angle));
 
 function laneKeeper(game, laneX, heading, throttle) {
@@ -46,11 +48,11 @@ export const ACTION_SHOTS = {
       game.player.placeOnFoot(FIGHT.x, FIGHT.z, Math.PI);
       police.setStars(2);
       const cruiser = game.fleet.reuse('cruiser', '#16203a');
-      const unit = police.units.adopt(cruiser, 102, FIGHT.z - 19, 2.3);
+      const unit = police.units.adopt(cruiser, 102.5, FIGHT.z - 16, 2.3);
       unit.vehicle.vx = 0;
       unit.vehicle.vz = 0;
       unit.officersOut = true;
-      for (const [x, dz, weapon] of [[96.5, -13, 'pistol'], [104, -14, 'shotgun']]) {
+      for (const [x, dz, weapon] of [[95.5, -10.5, 'pistol'], [104.5, -11.5, 'shotgun']]) {
         const officer = police.officers.deploy(x, FIGHT.z + dz, 0, weapon);
         officer.cooldown = 0.2;
       }
@@ -73,9 +75,13 @@ export const ACTION_SHOTS = {
         afterStep(index) {
           if (index !== FIGHT.steps - 1) return;
           const p = game.ilo.position;
-          game.camera.position.set(p.x + 2.8, p.y + 1.9, p.z + 5.2);
-          game.camera.lookAt(p.x - 0.8, p.y + 1.0, p.z - 10);
-          game.camera.fov = 58;
+          const hand = game.ilo.joints[PART.handR].elements;
+          const aim = { x: Math.sin(game.ilo.heading), y: 0.02, z: Math.cos(game.ilo.heading) };
+          const tip = { x: hand[12] + aim.x * 0.45, y: hand[13] + 0.05, z: hand[14] + aim.z * 0.45 };
+          game.action.effects.muzzle(tip, aim);
+          game.camera.position.set(p.x + 1.5, p.y + 1.8, p.z + 3.4);
+          game.camera.lookAt(p.x - 0.6, p.y + 1.15, p.z - 12);
+          game.camera.fov = 56;
           game.camera.updateProjectionMatrix();
         },
       };
@@ -112,11 +118,11 @@ export const ACTION_SHOTS = {
           }
           if (index !== CHASE.steps - 1) return;
           const p = game.player.state.car.position;
-          Object.assign(police.helicopter.state, { x: p.x + 4, z: p.z - 12, y: p.y + 17, heading: 2.2 });
+          Object.assign(police.helicopter.state, { x: p.x + 3, z: p.z + 30, y: p.y + 14, heading: 2.9 });
           police.helicopter.update(1 / 60, { x: p.x, y: p.y, z: p.z }, game.time);
-          game.camera.position.set(p.x - 1.5, p.y + 2.6, p.z + 26);
-          game.camera.lookAt(p.x + 0.8, p.y + 5.2, p.z - 12);
-          game.camera.fov = 62;
+          game.camera.position.set(p.x + 1.6, p.y + 1.35, p.z - 7.5);
+          game.camera.lookAt(p.x - 0.4, p.y + 3.6, p.z + 14);
+          game.camera.fov = 60;
           game.camera.updateProjectionMatrix();
         },
       };

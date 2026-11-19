@@ -12,6 +12,7 @@ import { CAR_PAINTS } from '../palette.js';
 const KIND_LABEL = { gun: 'Gun shop', clothes: 'Clothing', dealer: 'Car dealer', spray: 'Spray bay', food: 'Food stand',
   safehouse: 'Safe house', garage: 'Garage' };
 const REACH = { spray: 6, dealer: 4.5, garage: 4.5 };
+const BLIP_LETTER = { gun: 'G', clothes: 'C', dealer: 'D', spray: 'S', food: 'F', safehouse: 'H', garage: 'L' };
 const makeColour = (hex) => new THREE.Color(hex);
 
 /** Build shops over a game; hooks = {save(), say(html)}. update(dt, input) returns true while a menu is open. */
@@ -24,7 +25,8 @@ export function createShops(game, hooks) {
   const menu = createShopMenu();
   const player = game.player;
   const state = { place: null, index: 0, note: '', outfit: game.outfit };
-  const blips = places.map((place) => ({ x: place.x, z: place.z, colour: place.colour, shop: true }));
+  const blips = places.filter((place) => USABLE.has(place.kind)).map((place) => ({ x: place.x, z: place.z,
+    colour: place.colour, shop: true, letter: BLIP_LETTER[place.kind] }));
 
   function context() {
     const p = player.state;

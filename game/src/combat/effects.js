@@ -165,7 +165,7 @@ export function createEffects() {
     group,
     tracer: (a, b) => tracers.add(a, b),
     muzzle(p, dir) {
-      sparks.spawn(p.x, p.y, p.z, 0, 0, 0, FLASH, 0.3, 0.05, 0);
+      sparks.spawn(p.x, p.y, p.z, 0, 0, 0, FLASH, 0.42, 0.05, 0);
       sparks.spawn(p.x + dir.x * 0.18, p.y + dir.y * 0.18, p.z + dir.z * 0.18, dir.x * 2, dir.y * 2, dir.z * 2,
         FLASH, 0.18, 0.05, 0);
     },

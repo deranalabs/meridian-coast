@@ -1,5 +1,7 @@
 // Shop menu overlay: the shop's name, a list of items with prices, the highlighted row, cash and key hints.
 
+const ROWS = 8;
+
 function escape(text) {
   return String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 }
@@ -33,7 +35,11 @@ export function createShopMenu() {
     },
     render(items, index, cash, note = '') {
       const price = (item) => (item.price ? `$${item.price.toLocaleString('en-US')}` : 'Free');
-      list.innerHTML = items.map((item, i) => `<li class="${i === index ? 'active' : ''} ${item.disabled
+      const first = Math.max(0, Math.min(items.length - ROWS, index - Math.floor(ROWS / 2)));
+      list.classList.toggle('more-above', first > 0);
+      list.classList.toggle('more-below', first + ROWS < items.length);
+      const shown = items.slice(first, first + ROWS);
+      list.innerHTML = shown.map((item, row) => `<li class="${row + first === index ? 'active' : ''} ${item.disabled
         ? 'disabled' : ''}"><span class="label">${escape(item.label)}<small>${escape(item.reason || item.detail)}
         </small></span><span class="price">${price(item)}</span></li>`).join('');
       q('.cash').textContent = `$${cash.toLocaleString('en-US')}`;
