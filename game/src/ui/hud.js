@@ -73,6 +73,9 @@ function placeName(x, z) {
   return 'Port Meridian';
 }
 
+/** The tag the radio line shows before each kind of segment (songs go untagged). */
+const RADIO_TAG = { dj: 'On air', ad: 'Ad', news: 'News' };
+
 /** Build the HUD over the canvas; update(view) refreshes it from a plain view object. */
 export function createHud(layout, visible = true) {
   const root = document.createElement('div');
@@ -92,6 +95,7 @@ export function createHud(layout, visible = true) {
   const policePanel = createPolicePanel(left);
   let policeTimer = 0;
   const radio = element(root, 'radio');
+  let lastRadio = null;
   const district = element(root, 'district');
   const minimap = createMinimap(element(root, 'minimap'), layout);
   const speedoBox = element(root, 'speedo');
@@ -128,8 +132,13 @@ export function createHud(layout, visible = true) {
       const card = view.mission ? null : view.objective;
       messages.setObjective(card?.label ?? '', card?.text ?? '');
       const line = view.radio;
-      radio.innerHTML = `&#9835; <b>${line.station}</b> &nbsp;${line.text}`;
-      radio.style.display = view.driving ? 'block' : 'none';
+      const radioKey = view.driving ? `${line.station}|${line.kind}|${line.text}` : '';
+      if (radioKey !== lastRadio) {
+        lastRadio = radioKey;
+        radio.className = `radio ${line.kind ?? 'song'}`;
+        radio.innerHTML = `&#9835; <b>${line.station}</b><i>${RADIO_TAG[line.kind] ?? ''}</i>${line.text}`;
+        radio.style.display = view.driving ? 'block' : 'none';
+      }
       district.textContent = placeName(view.x, view.z);
       minimap.update(view.x, view.z, view.heading, view.blips, view.route);
       speedoBox.style.display = view.driving ? 'block' : 'none';

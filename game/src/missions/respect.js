@@ -31,7 +31,8 @@ export function lockReason(id, respect) {
 export function nextUnlock(respect) {
   const next = RANKS.find((rank) => rank.respect > respect);
   if (!next) return null;
-  return { name: next.name, respect: next.respect, needed: next.respect - respect, opens: RANK_UNLOCKS[next.name] ?? [] };
+  return { name: next.name, respect: next.respect, needed: next.respect - respect,
+    opens: RANK_UNLOCKS[next.name] ?? [] };
 }
 
 /** A shop item id as the menus name it ('weapon:smg' becomes 'Ratchet SMG'). */

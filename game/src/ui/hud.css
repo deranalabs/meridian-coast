@@ -79,8 +79,21 @@
   font-size: 15px;
   font-weight: 600;
   white-space: nowrap;
+  max-width: min(64vw, 760px);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-#hud .radio b { color: #ffd1e6; font-weight: 800; letter-spacing: 1px; }
+#hud .radio b { color: #ffd1e6; font-weight: 800; letter-spacing: 1px; margin-right: 9px; }
+#hud .radio i {
+  font-style: normal; font-size: 11px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase;
+  margin-right: 8px; padding: 1px 6px; border-radius: 3px; vertical-align: 1px;
+}
+#hud .radio i:empty { display: none; }
+#hud .radio.dj i { background: #ffd1e6; color: #3a1236; }
+#hud .radio.ad i { background: #3fe0d0; color: #08302c; }
+#hud .radio.news { background: linear-gradient(90deg, rgba(200, 30, 60, 0.6), rgba(90, 20, 60, 0.5)); }
+#hud .radio.news i { background: #ff3b5c; color: #fff; animation: radio-news 0.9s steps(2) infinite; }
+@keyframes radio-news { 50% { opacity: 0.45; } }
 #hud .hint {
   position: absolute;
   left: 50%;

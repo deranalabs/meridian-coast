@@ -35,7 +35,8 @@ export const CAUSEWAY_SPRINT = Object.freeze({
     ['ilo', 'Bring the money to the dock, then.'],
   ],
   stages: [
-    { type: 'drive', at: 'sprint-line', radius: 12, text: 'Bring any car to the sprint line', next: 'Race to Gull Key' },
+    { type: 'drive', at: 'sprint-line', radius: 12, text: 'Bring any car to the sprint line',
+      next: 'Race to Gull Key' },
     {
       type: 'race', target: 'sprint', inCar: true, limit: 110,
       text: 'Causeway Sprint: beat Priya\'s driver through every gate',

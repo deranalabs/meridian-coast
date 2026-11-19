@@ -111,6 +111,8 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
   game.services = createServices(game);
   game.missions = createStory(game);
   game.phone = createPhone(game);
+  // The radio hears the city: jobs passed and failed, chases, the helicopter, arrests become news flashes.
+  radio.listen(game.action.events);
   game.prompt = null;
   let heldInput = null;
 

@@ -59,7 +59,8 @@ export function createMissions(game, defs, places, hooks = {}) {
   function finish() {
     const def = state.run.def;
     state.paid = payReward(progress, def, game.player.state.wallet, state.props?.bonus?.() ?? 0);
-    say(`${def.activity ? 'Job done' : 'Mission passed'} <em>+$${state.paid.cash.toLocaleString('en-US')}</em> &nbsp;+${state.paid.respect} respect`,
+    const headline = def.activity ? 'Job done' : 'Mission passed';
+    say(`${headline} <em>+$${state.paid.cash.toLocaleString('en-US')}</em> &nbsp;+${state.paid.respect} respect`,
       4.5, 'passed');
     emit('passed', { id: def.id, ...state.paid });
     stop();

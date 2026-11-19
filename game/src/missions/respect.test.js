@@ -28,7 +28,8 @@ test('unlocks open at their rank and the shop shows the lock until then', () => 
   assert.equal(lockReason('weapon:smg', 29), 'Rank: Known Face');
   assert.equal(lockReason('weapon:smg', 30), '');
   assert.equal(lockReason('weapon:pistol', 0), '');
-  assert.deepEqual(nextUnlock(12), { name: 'Known Face', respect: 30, needed: 18, opens: ['weapon:smg', 'car:pickup'] });
+  assert.deepEqual(nextUnlock(12),
+    { name: 'Known Face', respect: 30, needed: 18, opens: ['weapon:smg', 'car:pickup'] });
   assert.equal(nextUnlock(500), null);
   assert.deepEqual(unlockedItems(10), RANK_UNLOCKS.Runner);
   assert.equal(unlockLabel('weapon:smg'), 'Ratchet SMG');
