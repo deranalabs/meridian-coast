@@ -10,6 +10,7 @@ import { createInput } from './core/input.js';
 import { createTitleScreen } from './ui/titlescreen.js';
 import { getShot } from './shots.js';
 import { loadSave, applySave } from './save/savesystem.js';
+import { createSound } from './audio/sound.js';
 
 const STEP = 1 / 60;
 const MAX_FRAME = 0.1;
@@ -71,6 +72,7 @@ window.__meridian = {
       shot: params.get('shot'),
       mode: player.mode,
       speedKmh: player.vehicle ? Math.round(Math.abs(player.vehicle.speed) * 36) / 10 : 0,
+      forwardKmh: player.vehicle ? Math.round(player.vehicle.speed * 36) / 10 : 0,
       time: Math.round(game.time * 100) / 100,
       camera: game.camera.position.toArray().map((v) => Math.round(v * 10) / 10),
       characters: game.characters.characters.length,
@@ -83,6 +85,8 @@ window.__meridian = {
       weapon: player.arsenal.current,
       shop: game.services.shops.openPlace?.id ?? null,
       respawning: game.services.respawn.active,
+      audio: sound.mixer.ctx?.state ?? 'locked',
+      muted: sound.mixer.muted,
     };
   },
   /** Triangles per mesh (instances included), largest first: a quick profile of where geometry goes. */
@@ -101,7 +105,10 @@ window.__meridian = {
   },
 };
 
+const sound = createSound(game);
+
 function frame(dt) {
+  sound.update();
   stats.begin();
   game.draw(game.time);
   stats.end(dt);

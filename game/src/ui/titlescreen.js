@@ -41,7 +41,8 @@ export function createTitleScreen(still) {
       <li>Settings</li>
     </ul>
     <div class="controls">${still ? '' : 'Press '}<kbd>Enter</kbd> start &nbsp; <kbd>WASD</kbd> move &nbsp;
-      <kbd>Shift</kbd> run &nbsp; <kbd>E</kbd> car &nbsp; <kbd>Space</kbd> handbrake &nbsp; <kbd>R</kbd> radio</div>`;
+      <kbd>Shift</kbd> run &nbsp; <kbd>E</kbd> car / shop &nbsp; <kbd>Space</kbd> handbrake &nbsp; <kbd>R</kbd> radio
+      <br><kbd>Q</kbd> aim &nbsp; <kbd>F</kbd> fire &nbsp; <kbd>1</kbd>-<kbd>4</kbd> weapons &nbsp; <kbd>M</kbd> mute</div>`;
   document.body.appendChild(root);
   const hud = document.getElementById('hud');
   if (hud) hud.style.visibility = 'hidden';

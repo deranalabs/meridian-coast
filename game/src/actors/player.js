@@ -163,6 +163,8 @@ export function createPlayer(character, { fleet, colliders, ground, smoke, traff
   /** One physics step of the player's car from an input; also used by scripted scenes. */
   function driveStep(dt, controls) {
     const v = state.vehicle;
+    state.throttle = controls.throttle;
+    state.handbrake = controls.handbrake;
     stepVehicle(v, controls, dt, (x, z, r) => colliders.resolveCircle(x, z, r),
       (x, z) => ground.surfaceAt(x, z).kind === 'water');
     const car = state.car;
