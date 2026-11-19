@@ -78,3 +78,23 @@
 }
 #hud .message.failed-line { color: var(--mc-police-red); }
 #hud.map-large .leftcol .mission-panel { max-width: 300px; }
+
+/* Small windows (768x480): banners wrap in the gap between the mission panel and the cash and stars. */
+@media (max-width: 900px), (max-height: 560px) {
+  #hud .message {
+    top: 16px;
+    left: 318px;
+    right: 226px;
+    transform: none;
+    white-space: normal;
+    text-align: center;
+    font-size: 14px;
+    letter-spacing: 1px;
+    line-height: 1.25;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: rgba(14, 8, 30, 0.62);
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.75);
+  }
+  #hud .message.passed-line { font-size: 18px; }
+}

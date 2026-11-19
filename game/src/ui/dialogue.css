@@ -82,3 +82,14 @@
 #hud.cutscene .leftcol, #hud.cutscene .status, #hud.cutscene .minimap, #hud.cutscene .speedo,
 #hud.cutscene .radio, #hud.cutscene .district, #hud.cutscene .hint { opacity: 0; }
 #hud.cutscene .dialogue-card { bottom: calc(9vh + 14px); }
+/* Small windows in play (the minimap shows): the card sits right of the minimap instead of over it. */
+@media (max-width: 900px), (max-height: 560px) {
+  #hud:not(.cutscene) .dialogue-card {
+    left: auto;
+    right: 14px;
+    width: calc(100vw - 272px);
+    min-width: 0;
+    transform: translateY(12px);
+  }
+  #hud:not(.cutscene) .dialogue-card.show { transform: translateY(0); }
+}
