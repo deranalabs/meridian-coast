@@ -1,6 +1,10 @@
-// Action screenshot scenes: a night police chase with the helicopter, a dusk street firefight and a shop screen.
+// Action screenshot scenes: the heist's dusk police chase with the helicopter (the cover) and a street firefight.
 
 import { PART } from './palette.js';
+import { STORY_MISSIONS } from './missions/story/index.js';
+
+const HEIST = 'gilded-tide';
+const ESCAPE_STAGE = 3;
 
 const wrap = (angle) => Math.atan2(Math.sin(angle), Math.cos(angle));
 
@@ -88,16 +92,24 @@ export const ACTION_SHOTS = {
     },
   },
 
-  police: {
-    time: 'night',
+  // The cover: Gilded Tide, stage 4 of 5. Ilo runs the dragnet up Neon Mile in the linen van at dusk, three
+  // cruisers and Air-1 behind, while Solis calls every unit on the radio.
+  mission: {
+    time: 'dusk',
     steps: CHASE.steps,
     focus: [100, 0, -40],
     stage(game) {
       const { police } = game.action;
-      const car = game.fleet.add('coupe', '#f0a800');
+      game.missions.progress.done.push(...STORY_MISSIONS.map((def) => def.id).filter((id) => id !== HEIST));
+      game.missions.jump(HEIST, ESCAPE_STAGE);
+      const car = game.missions.state.props.cars['linen-van'].car;
       car.position.set(CHASE.laneX, 0, CHASE.startZ);
       car.heading = Math.PI;
       game.player.enterNow(car);
+      const arsenal = game.player.state.arsenal;
+      arsenal.owned.pistol = { clip: 12, reserve: 36 };
+      arsenal.owned.smg = { clip: 24, reserve: 96 };
+      arsenal.current = 'smg';
       game.player.state.vehicle.vz = -CHASE.speed;
       game.player.state.autopilot = laneKeeper(game, CHASE.laneX, Math.PI, 0.62);
       police.setStars(4);
@@ -116,6 +128,8 @@ export const ACTION_SHOTS = {
             police.helicopter.arrive({ x: p.x, y: 0, z: p.z }, 0);
             Object.assign(police.helicopter.state, { x: p.x + 8, z: p.z + 30, y: 27 });
           }
+          // Finish Solis's line a step early so the card shows it whole on the captured frame.
+          if (index === CHASE.steps - 2 && !game.dialogue.conversation.complete) game.dialogue.conversation.skip();
           if (index !== CHASE.steps - 1) return;
           const p = game.player.state.car.position;
           Object.assign(police.helicopter.state, { x: p.x + 3, z: p.z + 30, y: p.y + 14, heading: 2.9 });

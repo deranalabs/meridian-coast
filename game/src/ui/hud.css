@@ -73,15 +73,19 @@
   left: 50%;
   transform: translateX(-50%);
   padding: 7px 18px;
-  border-radius: 20px;
+  border-radius: 16px;
   background: linear-gradient(90deg, rgba(196, 92, 255, 0.35), rgba(255, 95, 162, 0.35));
   border: 1px solid rgba(255, 255, 255, 0.3);
   font-size: 15px;
   font-weight: 600;
-  white-space: nowrap;
-  max-width: min(64vw, 760px);
+  line-height: 1.3;
+  /* Clear of the left column (mission and dispatch panels) and the cash column; long lines wrap to two. */
+  width: max-content;
+  max-width: clamp(260px, calc(100vw - 800px), 760px);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 #hud .radio b { color: #ffd1e6; font-weight: 800; letter-spacing: 1px; margin-right: 9px; }
 #hud .radio i {

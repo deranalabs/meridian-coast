@@ -121,7 +121,8 @@ export function createHud(layout, visible = true) {
       if (view.weapon) weapon.update(view.weapon);
       weapon.root.style.display = view.driving ? 'none' : 'flex';
       if (view.arsenal) weaponBar.update(view.arsenal);
-      weaponBar.root.style.display = view.driving ? 'none' : 'flex';
+      // In a car the bar stays up, dimmed, as the loadout Ilo will have on stepping out.
+      weaponBar.root.classList.toggle('stowed', Boolean(view.driving));
       policeTimer -= view.dt ?? 1 / 60;
       if (view.police && (policeTimer <= 0 || !view.stars)) {
         policePanel.update(view.stars ? view.police() : null, view.stars ?? 0, Boolean(view.searching));
@@ -137,7 +138,7 @@ export function createHud(layout, visible = true) {
         lastRadio = radioKey;
         radio.className = `radio ${line.kind ?? 'song'}`;
         radio.innerHTML = `&#9835; <b>${line.station}</b><i>${RADIO_TAG[line.kind] ?? ''}</i>${line.text}`;
-        radio.style.display = view.driving ? 'block' : 'none';
+        radio.style.display = view.driving ? '' : 'none';
       }
       district.textContent = placeName(view.x, view.z);
       minimap.update(view.x, view.z, view.heading, view.blips, view.route);

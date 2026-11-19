@@ -83,10 +83,24 @@
 
 /* Weapon bar */
 #hud .weaponbar { display: flex; justify-content: flex-end; gap: 4px; margin-top: 8px; }
+/* In a car: the loadout stays visible but stowed, a little smaller and dimmer, with a small label. */
+#hud .weaponbar.stowed { position: relative; margin-top: 18px; filter: saturate(0.75); }
+#hud .weaponbar.stowed::before {
+  content: 'Stowed';
+  position: absolute;
+  top: -15px;
+  right: 2px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+#hud .weaponbar.stowed .wslot.owned { opacity: 0.72; }
 #hud .wslot {
   position: relative;
-  width: 66px;
-  padding: 4px 4px 3px;
+  width: 74px;
+  padding: 4px 3px 3px;
   border-radius: 4px;
   background: rgba(14, 8, 30, 0.5);
   border: 2px solid transparent;

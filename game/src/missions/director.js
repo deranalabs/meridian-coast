@@ -116,6 +116,26 @@ export function createMissions(game, defs, places, hooks = {}) {
     return true;
   }
 
+  /**
+   * Start `id` straight at stage `index` (scripted scenes and tests), skipping the intro: the stage is set up
+   * as a checkpoint, its alert raised and its line and talk played. Story order is not checked.
+   */
+  function jump(id, index) {
+    const def = byId.get(id);
+    if (!def || state.run || index < 0 || index >= def.stages.length) return false;
+    world.clearLatches(true);
+    state.run = createRun(def);
+    state.run.stage = index;
+    state.run.checkpoint = index;
+    state.phase = 'active';
+    setupStage(index, false);
+    if (def.outfit?.length) hooks.dress?.(def.outfit);
+    emit('started', { id });
+    enterStage(index);
+    announce(currentStage(state.run));
+    return true;
+  }
+
   function retry() {
     world.clearLatches();
     const [event] = restartRun(state.run);
@@ -141,6 +161,7 @@ export function createMissions(game, defs, places, hooks = {}) {
     state,
     pillars,
     start,
+    jump,
     get progress() {
       return progress;
     },

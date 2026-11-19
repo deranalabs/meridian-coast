@@ -1,5 +1,5 @@
 // Dialogue card: the speaker's portrait, name and role, the typewriter line and the skip hint, at the screen's foot.
-import { portraitCanvas } from './portrait.js';
+import { portraitCanvas, shade } from './portrait.js';
 import { FACTION_INFO, FACTIONS, UI_TOKENS } from '../palette.js';
 
 const PORTRAIT = 132;
@@ -7,6 +7,13 @@ const PORTRAIT = 132;
 function accentOf(person) {
   if (!person) return UI_TOKENS.gold;
   return FACTION_INFO[person.faction]?.colour ?? FACTIONS[person.faction] ?? UI_TOKENS.gold;
+}
+
+/** The accent lifted toward white until it reads on the dark card (police navy would vanish otherwise). */
+export function readableName(hex) {
+  const n = Number.parseInt(hex.slice(1), 16);
+  const luma = (0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255)) / 255;
+  return luma >= 0.55 ? hex : shade(hex, Math.min(0.75, 0.62 - luma * 0.6));
 }
 
 /** The card inside `parent`; update(person, text, complete) shows a line, update(null) hides the card. */
@@ -43,6 +50,7 @@ export function createDialogueCard(parent) {
         name.textContent = person.name;
         role.textContent = person.role;
         root.style.setProperty('--dc-accent', accentOf(person));
+        name.style.color = readableName(accentOf(person));
         root.classList.toggle('player', id === 'ilo');
       }
       if (text !== shown.text) {

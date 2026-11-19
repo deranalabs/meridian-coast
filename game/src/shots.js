@@ -1,6 +1,7 @@
 // Deterministic screenshot scenes behind ?shot=<name>&seed=N: each sets time of day, actors and camera.
 import { ACTION_SHOTS } from './shotsaction.js';
 import { SHOP_SHOTS } from './shotsshop.js';
+import { STORY_MISSIONS } from './missions/story/index.js';
 
 const CLUTTER = ['bin', 'news', 'hydrant', 'bench', 'meter', 'bollard', 'shelter', 'planter', 'palm', 'palmTall',
   'tree', 'lamp', 'sign', 'signal'];
@@ -156,6 +157,31 @@ export const SHOTS = {
   },
 };
 
+/**
+ * The full map (N): three jobs done so the next story jobs and both activities pin the map, Ilo on foot by the
+ * cab rank with two stars and two cruisers closing in, the whole city at zoom 1.
+ */
+const MAP_SHOT = {
+  time: 'dusk',
+  steps: 20,
+  focus: [40, 0, 90],
+  stage(game) {
+    const { police } = game.action;
+    game.missions.progress.done.push(...STORY_MISSIONS.slice(0, 3).map((def) => def.id));
+    game.player.placeOnFoot(44, 92, Math.PI * 0.75);
+    police.setStars(2);
+    for (const [x, z] of [[102, 40], [-20, 150]]) police.units.adopt(game.fleet.reuse('cruiser', '#16203a'), x, z, 0);
+    return {
+      afterStep(index) {
+        if (index !== MAP_SHOT.steps - 1) return;
+        game.map.open({ zoom: 1.55 });
+        game.map.projection.centreOn(12, 10);
+      },
+    };
+  },
+};
+
 export function getShot(name) {
+  if (name === 'map') return MAP_SHOT;
   return SHOTS[name] ?? ACTION_SHOTS[name] ?? SHOP_SHOTS[name] ?? null;
 }
