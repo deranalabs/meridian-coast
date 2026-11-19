@@ -41,6 +41,7 @@ export function createCharacters(capacity, fabricTexture) {
       crowd.setAppearance(row, appearance);
       crowd.setVisible(row, true);
       characters.push(character);
+      crowd.mesh.geometry.instanceCount = characters.length;
       return character;
     },
     update(dt, time) {

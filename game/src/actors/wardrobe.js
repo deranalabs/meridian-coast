@@ -23,7 +23,7 @@ function placed(geometry, position, rotation = [0, 0, 0], scale = 1) {
 }
 
 function shell(profile, y0, y1, factor, extra, options = {}) {
-  return loft(inflate(sliceRings(profile, y0, y1), factor, extra), { segments: 12, ...options });
+  return loft(inflate(sliceRings(profile, y0, y1), factor, extra), { segments: 9, ...options });
 }
 
 function hairPieces(out) {
@@ -34,7 +34,7 @@ function hairPieces(out) {
   const cap = (extra, from = 0.115) => {
     const rings = sliceRings(PROFILES.head, from, 0.24).map(([y, rx, rz, cx, cz]) => [y, rx, rz, cx ?? 0,
       (cz ?? 0) - 0.012 * (1 - (y - from) / (0.24 - from))]);
-    return loft(inflate(rings, 1.0, extra), { segments: 14, capStart: false });
+    return loft(inflate(rings, 1.0, extra), { segments: 11, capStart: false });
   };
   HAIR_STYLES.forEach((style, variant) => {
     if (style === 'crop') add(variant, cap(0.009));
@@ -86,7 +86,8 @@ function sleeves(out, slot, variant, channel, upperTo, foreTo, factor, extra, ro
   for (const [upper, fore] of ARMS) {
     out.push(piece(shell(PROFILES.upperArm, 0.02, upperTo, factor, extra, { capStart: false, capEnd: false }),
       upper, slot, variant, channel, rough));
-    out.push(piece(placed(new THREE.SphereGeometry(0.058 * factor + extra, 9, 6), [0, -0.005, 0]), upper, slot,
+    out.push(piece(placed(new THREE.SphereGeometry(0.06 + extra * 0.8, 7, 4, 0, Math.PI * 2, 0, Math.PI / 2),
+      [0, -0.012, 0]), upper, slot,
       variant, channel, rough));
     if (foreTo !== null) {
       out.push(piece(shell(PROFILES.forearm, 0.015, foreTo, factor, extra, { capStart: false, capEnd: false }),
@@ -263,8 +264,8 @@ function extrudeSide(shape, width, bevel) {
     bevelEnabled: true,
     bevelThickness: bevel,
     bevelSize: bevel,
-    bevelSegments: 2,
-    curveSegments: 6,
+    bevelSegments: 1,
+    curveSegments: 3,
   });
   geometry.rotateY(-Math.PI / 2);
   geometry.translate(width / 2, 0, 0);

@@ -1,0 +1,155 @@
+// Game assembly: builds the world, actors, vehicles, cameras and HUD, and runs one fixed step and one draw.
+import * as THREE from '../vendor/three.module.min.js';
+import { createPost } from './render/post.js';
+import { createSky } from './render/sky.js';
+import { createEnvironment } from './render/environment.js';
+import { createLighting } from './render/lighting.js';
+import { installFog } from './render/fog.js';
+import { createCity } from './world/city.js';
+import { createLandmarks } from './world/landmarks.js';
+import { createGround } from './world/ground.js';
+import { createColliders } from './world/colliders.js';
+import { createCharacters } from './actors/characters.js';
+import { createPedestrians } from './actors/pedestrians.js';
+import { iloAppearance } from './actors/appearance.js';
+import { createPlayer } from './actors/player.js';
+import { createFleet } from './vehicles/fleet.js';
+import { createTraffic } from './vehicles/traffic.js';
+import { createSmoke } from './vehicles/smoke.js';
+import { createChaseCamera, createFootCamera } from './vehicles/camera.js';
+import { createHud } from './ui/hud.js';
+import { createRadio } from './ui/radio.js';
+import { CAR_PAINTS } from './palette.js';
+
+const PEDESTRIANS = 46;
+const TRAFFIC = 26;
+const PARKED = 34;
+
+function addParkedCars(fleet, parking, focus, random) {
+  const spots = [...parking].sort((a, b) => Math.hypot(a.x - focus.x, a.z - focus.z)
+    - Math.hypot(b.x - focus.x, b.z - focus.z)).slice(0, PARKED);
+  spots.forEach((spot, index) => {
+    const type = ['sedan', 'coupe', 'sedan', 'pickup'][index % 4];
+    const car = fleet.add(type, CAR_PAINTS[(index * 7 + random) % CAR_PAINTS.length]);
+    if (!car) return;
+    car.position.set(spot.x, 0, spot.z);
+    car.heading = spot.rot;
+    car.parked = true;
+  });
+}
+
+/** Build everything for `seed` and `timeOfDay`; focus is where ambient life spawns first. */
+export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
+  const scene = new THREE.Scene();
+  scene.fog = installFog(timeOfDay);
+  scene.environment = createEnvironment(renderer, timeOfDay);
+  scene.environmentIntensity = timeOfDay.envIntensity;
+  const sky = createSky(timeOfDay);
+  scene.add(sky.mesh);
+  const lighting = createLighting(scene, timeOfDay);
+  const city = createCity(seed, timeOfDay);
+  scene.add(city.group);
+  const landmarks = createLandmarks(city, timeOfDay);
+  scene.add(landmarks.group);
+
+  const ground = createGround(city.layout);
+  const colliders = createColliders();
+  for (const box of city.buildings.colliders) colliders.addBox(box);
+  for (const shape of landmarks.colliders) {
+    if (shape.r) colliders.addCircle(shape);
+    else colliders.addBox(shape);
+  }
+
+  const fleet = createFleet(40, city.surfaces.data, timeOfDay);
+  scene.add(fleet.group);
+  addParkedCars(fleet, city.props.parking, focus, seed);
+  for (const car of fleet.cars) car.position.y = ground.surfaceAt(car.position.x, car.position.z).height;
+  const traffic = createTraffic(fleet, city.layout, ground, TRAFFIC, seed, focus);
+  const smoke = createSmoke(400, timeOfDay);
+  scene.add(smoke.points);
+
+  const characters = createCharacters(PEDESTRIANS + 8, city.surfaces.data);
+  scene.add(characters.mesh);
+  const ilo = characters.add(iloAppearance());
+  ilo.position.set(focus.x, ground.surfaceAt(focus.x, focus.z).height, focus.z);
+  const pedestrians = createPedestrians(characters, city.layout, PEDESTRIANS, seed, focus);
+  const player = createPlayer(ilo, { fleet, colliders, ground, smoke, traffic });
+
+  const camera = new THREE.PerspectiveCamera(58, 16 / 10, 0.1, 2600);
+  const chase = createChaseCamera(camera);
+  const footCamera = createFootCamera(camera);
+  const post = createPost(renderer, timeOfDay);
+  const hud = createHud(city.layout, showHud);
+  const radio = createRadio(0);
+  const focusPoint = new THREE.Vector3();
+  const lookPoint = new THREE.Vector3();
+
+  const game = {
+    scene, camera, city, landmarks, ground, colliders, fleet, traffic, smoke, characters, ilo, pedestrians, player,
+    chase, footCamera, post, hud, radio, lighting, sky, timeOfDay, seed, time: 0, cameraMode: 'auto',
+  };
+
+  game.step = (dt, input) => {
+    game.time += dt;
+    const event = player.update(dt, input, footCamera.state.yaw);
+    if (event?.entered) chase.snap();
+    if (input.pressed('KeyR')) radio.next();
+    const subject = player.state.car ? player.state.car.position : ilo.position;
+    focusPoint.copy(subject);
+    traffic.update(dt, focusPoint, [subject]);
+    pedestrians.update(dt, focusPoint);
+    smoke.update(dt);
+    characters.update(dt, game.time);
+    fleet.update();
+    radio.update(dt);
+    city.update(game.time);
+    landmarks.update(game.time);
+    if (game.cameraMode === 'auto') game.updateCamera(dt, input.mouse);
+  };
+
+  game.updateCamera = (dt, mouse = { dx: 0, dy: 0 }) => {
+    if (player.state.mode === 'driving') {
+      chase.update(player.state.car, player.state.vehicle.speed, dt);
+      footCamera.setYaw(player.state.car.heading);
+    } else {
+      footCamera.update(ilo.position, mouse, dt, (x, z) => ground.surfaceAt(x, z).height);
+    }
+  };
+
+  game.nearCarHint = () => {
+    if (player.state.mode !== 'foot') return null;
+    for (const car of fleet.cars) {
+      if (car.visible && car.position.distanceTo(ilo.position) < 4) return 'Press <kbd>E</kbd> to take the car';
+    }
+    return null;
+  };
+
+  game.draw = (time) => {
+    camera.getWorldDirection(lookPoint).multiplyScalar(30).add(camera.position);
+    city.cull(camera.position);
+    lighting.follow(lookPoint);
+    lighting.lightSubject(ilo.position, camera);
+    sky.update(camera, time);
+    post.render(scene, camera, time);
+  };
+
+  game.updateHud = () => {
+    const driving = player.state.mode === 'driving';
+    const subject = driving ? player.state.car.position : ilo.position;
+    const heading = driving ? player.state.car.heading : footCamera.state.yaw;
+    hud.update({
+      cash: player.state.cash,
+      health: player.state.health,
+      speed: driving ? player.state.vehicle.speed : 0,
+      driving,
+      x: subject.x,
+      z: subject.z,
+      heading,
+      radio: radio.line(),
+      blips: landmarks.blips,
+      hint: game.nearCarHint(),
+    });
+  };
+
+  return game;
+}

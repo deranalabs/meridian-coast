@@ -9,7 +9,7 @@ export const BLADE_WIDTH = 2.4;
 const SLOT_W = 512;
 const SLOT_H = 96;
 const COLUMNS = 2;
-const ROWS = 10;
+const ROWS = 11;
 
 /** Original shop words, each with its tube colour and a font. */
 const WORDS = [
@@ -20,7 +20,10 @@ const WORDS = [
   ['NOODLES', '#ff6a3d', 'sans'], ['ARCADE', '#3fa8ff', 'sans'], ['TATTOO', '#ff4fa0', 'script'],
   ['SURF', '#3fe0d0', 'script'], ['LAUNDRY', '#9ad8ff', 'sans'], ['PHARMACY', '#5aff9a', 'sans'],
   ['PIZZA', '#ff8a3d', 'script'], ['THE TIDE', '#3fe0ff', 'script'],
+  ['MARLIN CROWN', '#ffc94a', 'script'], ['CASINO', '#ff4fa0', 'sans'],
 ];
+const WORD_INDEX = Object.fromEntries(WORDS.map(([word], index) => [word, index]));
+const RANDOM_WORDS = WORDS.length - 2;
 
 const FONTS = {
   sans: '800 66px "Avenir Next Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif',
@@ -163,7 +166,8 @@ export function createSigns(buildings, timeOfDay, seed) {
   const atlas = neonAtlas();
   const builder = new MeshBuilder({ position: 3, normal: 3, uv: 2, aPhase: 1 });
   for (const sign of buildings.signs) {
-    const slot = random.pick(atlas.slots);
+    const randomSlot = atlas.slots[random.int(0, RANDOM_WORDS - 1)];
+    const slot = sign.word ? atlas.slots[WORD_INDEX[sign.word]] : randomSlot;
     const phase = random.next();
     if (sign.kind === 'flat') {
       const height = Math.min(1.9, (sign.width + 0.6) / slot.aspect);
@@ -172,7 +176,7 @@ export function createSigns(buildings, timeOfDay, seed) {
       signQuad(builder, slot, [sign.x, sign.y, sign.z], sign.rot, 1.1, phase, 0.09, BLADE_WIDTH);
       signQuad(builder, slot, [sign.x, sign.y, sign.z], sign.rot + Math.PI, 1.1, phase, 0.09, BLADE_WIDTH);
     } else {
-      const height = Math.min(3.2, sign.width / slot.aspect);
+      const height = Math.min(sign.word ? 5 : 3.2, sign.width / slot.aspect);
       signQuad(builder, slot, [sign.x, sign.y + height / 2, sign.z], sign.rot, height, phase, 0);
       signQuad(builder, slot, [sign.x, sign.y + height / 2, sign.z], sign.rot + Math.PI, height, phase, 0.05);
     }

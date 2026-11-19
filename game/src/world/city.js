@@ -10,6 +10,8 @@ import { createFacadeAtlas } from './facades.js';
 import { createFacadeMaterial } from './facadematerial.js';
 import { createFacadeBuilder } from './buildingkit.js';
 import { buildBuildings } from './buildings.js';
+import { addCasino } from './casino.js';
+import { DISTRICT_BY_ID } from './districts.js';
 import { createSigns } from './signs.js';
 import { createProps } from './props.js';
 import { createLightPools } from './lightpools.js';
@@ -32,6 +34,9 @@ export function createCity(seed, timeOfDay) {
   const facadeMaterial = createFacadeMaterial(atlas, timeOfDay);
   const builder = createFacadeBuilder();
   const buildings = buildBuildings(builder, layout, seed);
+  const casinoBlock = layout.blocks.find((block) => block.reserved === 'casino');
+  const casino = casinoBlock ? addCasino(builder, casinoBlock, DISTRICT_BY_ID.neon.sidewalk) : null;
+  if (casino) buildings.signs.push(...casino.signs);
   const buildingMesh = new THREE.Mesh(builder.build(), facadeMaterial);
   buildingMesh.name = 'buildings';
   buildingMesh.castShadow = true;
@@ -42,17 +47,24 @@ export function createCity(seed, timeOfDay) {
   group.add(signs.group);
   const props = createProps(layout, buildings, signs.billboards, surfaces, timeOfDay, seed);
   group.add(props.group);
-  group.add(createLightPools(props.lamps, timeOfDay));
+  const pools = createLightPools(props.lamps, timeOfDay);
+  group.add(pools.group);
 
   return {
     group,
     layout,
     buildings,
+    casino,
     props,
     surfaces,
     update(time) {
       water.update(time);
       signs.update(time);
+    },
+    /** Re-cull instanced props and light pools around the camera. */
+    cull(point) {
+      props.update(point);
+      pools.update(point);
     },
   };
 }

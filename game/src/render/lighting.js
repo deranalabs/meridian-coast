@@ -29,10 +29,22 @@ export function createLighting(scene, timeOfDay) {
   rim.position.set(-timeOfDay.sunDir.x, 0.5, -timeOfDay.sunDir.z).multiplyScalar(100);
   scene.add(rim);
 
+  const night = timeOfDay.name === 'night';
+  const key = new THREE.PointLight(night ? '#ffc8d8' : '#ffd8b8', night ? 16 : 5, 10, 2);
+  scene.add(key);
   const texelWorld = (SHADOW_HALF_SIZE * 2) / sun.shadow.mapSize.x;
   return {
     sun,
     hemi,
+    key,
+    /** Keep a soft key light between the camera and the character it frames. */
+    lightSubject(subject, camera) {
+      const dx = camera.position.x - subject.x;
+      const dz = camera.position.z - subject.z;
+      const length = Math.hypot(dx, dz) || 1;
+      key.position.set(subject.x + (dx / length) * 2.2 - (dz / length) * 1.2, subject.y + 2.3,
+        subject.z + (dz / length) * 2.2 + (dx / length) * 1.2);
+    },
     follow(target) {
       const snappedX = Math.round(target.x / texelWorld) * texelWorld;
       const snappedZ = Math.round(target.z / texelWorld) * texelWorld;

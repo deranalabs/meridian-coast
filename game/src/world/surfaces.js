@@ -11,8 +11,8 @@ function asphalt(seed) {
   const random = createRandom(seed);
   const image = ctx.getImageData(0, 0, SIZE, SIZE);
   for (let index = 0; index < SIZE * SIZE; index += 1) {
-    const speck = random.next() < 0.06 ? random.range(-30, 40) : 0;
-    const value = 52 + (broad[index] - 0.5) * 26 + (fine[index] - 0.5) * 22 + speck;
+    const speck = random.next() < 0.12 ? random.range(-34, 46) : 0;
+    const value = 62 + (broad[index] - 0.5) * 30 + (fine[index] - 0.5) * 36 + speck;
     image.data[index * 4] = clamp255(value);
     image.data[index * 4 + 1] = clamp255(value);
     image.data[index * 4 + 2] = clamp255(value + 4);

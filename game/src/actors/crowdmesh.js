@@ -18,6 +18,8 @@ uniform highp sampler2D uCrowd;
 varying vec3 vCrowdColour;
 varying vec2 vCrowdSurf;
 varying vec3 vCrowdLocal;
+mat4 crowdMatrix;
+float crowdHide;
 vec4 crowdTexel(float column) {
   return texelFetch(uCrowd, ivec2(int(column), gl_InstanceID), 0);
 }
@@ -39,11 +41,16 @@ float crowdHidden() {
 }
 `;
 
+/** Fetch visibility first and the bone only for visible vertices; hidden variants collapse to one point. */
+const FETCH_BONE = /* glsl */ `
+  crowdHide = crowdHidden();
+  crowdMatrix = crowdHide > 0.5 ? mat4(0.0) : crowdBone(aRig.x);
+`;
+
 const SKIN_VERTEX = /* glsl */ `
-  vec4 crowdPlaced = crowdBone(aRig.x) * vec4(transformed, 1.0);
   vCrowdLocal = position;
-  transformed = crowdHidden() > 0.5 ? vec3(0.0, -9000.0, 0.0) : crowdPlaced.xyz;
-  vCrowdColour = crowdTexel(${COLOUR_TEXEL}.0 + aRig.w).rgb;
+  transformed = crowdHide > 0.5 ? vec3(0.0, -9000.0, 0.0) : (crowdMatrix * vec4(transformed, 1.0)).xyz;
+  vCrowdColour = crowdHide > 0.5 ? vec3(0.0) : crowdTexel(${COLOUR_TEXEL}.0 + aRig.w).rgb;
   vCrowdSurf = aSurf;
 `;
 
@@ -58,10 +65,13 @@ function inject(shader, uniforms, withNormals) {
   Object.assign(shader.uniforms, uniforms);
   let vertex = shader.vertexShader.replace('#include <common>', `#include <common>\n${VERTEX_PARS}`);
   if (withNormals) {
-    vertex = vertex.replace('#include <beginnormal_vertex>', `#include <beginnormal_vertex>
-  objectNormal = normalize(mat3(crowdBone(aRig.x)) * objectNormal);`);
+    vertex = vertex.replace('#include <beginnormal_vertex>', `#include <beginnormal_vertex>\n${FETCH_BONE}
+  objectNormal = crowdHide > 0.5 ? vec3(0.0, 1.0, 0.0) : normalize(mat3(crowdMatrix) * objectNormal);`);
+    shader.vertexShader = vertex.replace('#include <begin_vertex>', `#include <begin_vertex>\n${SKIN_VERTEX}`);
+  } else {
+    shader.vertexShader = vertex.replace('#include <begin_vertex>',
+      `#include <begin_vertex>\n${FETCH_BONE}\n${SKIN_VERTEX}`);
   }
-  shader.vertexShader = vertex.replace('#include <begin_vertex>', `#include <begin_vertex>\n${SKIN_VERTEX}`);
 }
 
 function createMaterials(dataTexture, fabric) {

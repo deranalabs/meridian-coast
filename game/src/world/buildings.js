@@ -10,11 +10,11 @@ const STOREY = 3.4;
 const GROUND_STOREY = 4.4;
 
 const TINTS = {
-  glass: ['#ffffff', '#e6ecff', '#f0e6ff', '#e0f4f4'],
-  office: ['#ffffff', '#f4efe4', '#e4e8f0', '#f6e8e0'],
-  deco: ['#fff4e4', '#e8fff2', '#ffe8ee', '#f4ecff', '#fffbe0'],
-  brick: ['#ffffff', '#f0e0d8', '#e8e8e8'],
-  concrete: ['#ffffff', '#e8e4dc', '#dcdcde', '#f0e8de'],
+  glass: ['#ffffff', '#c8dcff', '#e8d8ff', '#bfeee8', '#fff0d0'],
+  office: ['#ffffff', '#f4efe4', '#cfdcf0', '#f6e0d0', '#d8f0e0'],
+  deco: ['#fff0d8', '#d0ffe8', '#ffd8e4', '#e8dcff', '#fff6c8', '#c8f0ff'],
+  brick: ['#ffffff', '#f0d0c0', '#d8d8e8', '#ffe8c8'],
+  concrete: ['#ffffff', '#e8e4dc', '#c8d0dc', '#f0e0c8', '#d8e8e0'],
   pastel: ['#ffc2d4', '#bff0dc', '#ffd8b0', '#c4e4ff', '#fff0a8', '#e2c8ff', '#ffb8a8'],
   stucco: ['#fff2e0', '#ffe4cc', '#f4f0e8', '#ffe8d8'],
   oldtown: ['#f5d9a8', '#e8b48a', '#f0e0c0', '#d98f6a', '#f4c87a', '#e9cfa8', '#c9a27e'],

@@ -81,7 +81,7 @@ const EMISSIVE_FRAGMENT = /* glsl */ `
   float windowLit = vTile.z > 0.5 ? (vTile.z > 1.5 ? 0.0 : 1.0) : step(windowHash, uWindowsLit);
   vec3 windowTint = mix(vec3(1.0), vec3(0.75, 0.9, 1.25), step(0.72, fract(windowHash * 13.7)));
   windowTint *= 0.35 + 0.9 * fract(windowHash * 7.31);
-  float shopDim = vTile.z > 0.5 ? 0.42 : 1.0;
+  float shopDim = vTile.z > 0.5 ? 0.9 : 1.0;
   totalEmissiveRadiance += facadeLight * facadeLight * windowLit * windowTint * shopDim * uWindowLevel;
 `;
 

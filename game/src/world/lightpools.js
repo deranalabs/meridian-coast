@@ -1,6 +1,7 @@
 // Fake lamp lighting: additive light pools on the ground and camera-facing halos, one instanced draw each.
 import * as THREE from '../../vendor/three.module.min.js';
 import { heightAt } from './heightfield.js';
+import { createCulledInstances } from './instancing.js';
 
 const POOL_VERTEX = /* glsl */ `
 varying vec2 vUv;
@@ -60,7 +61,7 @@ function additive(vertexShader, fragmentShader, uniforms) {
   });
 }
 
-/** Light pools and halos for `lamps` [{x, y, z}]; levels come from the time of day. */
+/** Light pools and halos for `lamps` [{x, y, z}]; update(point) keeps only those near the camera uploaded. */
 export function createLightPools(lamps, timeOfDay) {
   const group = new THREE.Group();
   group.name = 'light-pools';
@@ -79,20 +80,21 @@ export function createLightPools(lamps, timeOfDay) {
     uSize: { value: 0.9 },
   });
   const halos = new THREE.InstancedMesh(new THREE.PlaneGeometry(2, 2), haloMaterial, Math.max(1, lamps.length));
-  const matrix = new THREE.Matrix4();
-  lamps.forEach((lamp, index) => {
+  const poolMatrices = lamps.map((lamp) => {
     const y = Math.max(heightAt(lamp.x, lamp.z), lamp.y - 6.0) + 0.03;
-    matrix.makeScale(13, 1, 13).setPosition(lamp.x, y, lamp.z);
-    pools.setMatrixAt(index, matrix);
-    matrix.makeTranslation(lamp.x, lamp.y - 0.05, lamp.z);
-    halos.setMatrixAt(index, matrix);
+    return new THREE.Matrix4().makeScale(13, 1, 13).setPosition(lamp.x, y, lamp.z);
   });
-  pools.count = lamps.length;
-  halos.count = lamps.length;
-  pools.frustumCulled = false;
-  halos.frustumCulled = false;
+  const haloMatrices = lamps.map((lamp) => new THREE.Matrix4().makeTranslation(lamp.x, lamp.y - 0.05, lamp.z));
+  const poolSet = createCulledInstances(pools, poolMatrices, null, 240);
+  const haloSet = createCulledInstances(halos, haloMatrices, null, 420);
   pools.renderOrder = 2;
   halos.renderOrder = 3;
   group.add(pools, halos);
-  return group;
+  return {
+    group,
+    update(point) {
+      poolSet.refresh(point);
+      haloSet.refresh(point);
+    },
+  };
 }

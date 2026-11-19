@@ -43,7 +43,7 @@ float noise(vec2 p) {
 float fbm(vec2 p) {
   float sum = 0.0;
   float amp = 0.5;
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 4; i++) {
     sum += amp * noise(p);
     p = p * 2.03 + vec2(17.1, 9.7);
     amp *= 0.5;

@@ -66,22 +66,22 @@ export function buildBodyPieces() {
   const body = SLOT.body;
   const pieces = [];
   const skin = (geometry, bone) => pieces.push(piece(geometry, bone, body, 0, COLOUR.skin, 0.55));
-  skin(loft(PROFILES.pelvis, { segments: 12 }), PART.pelvis);
-  skin(loft(PROFILES.abdomen, { segments: 12, capStart: false, capEnd: false }), PART.abdomen);
-  skin(loft(PROFILES.torso, { segments: 14 }), PART.torso);
-  skin(loft(PROFILES.neck, { segments: 10 }), PART.neck);
-  skin(loft(PROFILES.head, { segments: 14 }), PART.head);
+  skin(loft(PROFILES.pelvis, { segments: 10 }), PART.pelvis);
+  skin(loft(PROFILES.abdomen, { segments: 10, capStart: false, capEnd: false }), PART.abdomen);
+  skin(loft(PROFILES.torso, { segments: 12 }), PART.torso);
+  skin(loft(PROFILES.neck, { segments: 8 }), PART.neck);
+  skin(loft(PROFILES.head, { segments: 12 }), PART.head);
   faceDetails(pieces);
   const sides = [[PART.upperArmL, PART.forearmL, PART.handL, 1], [PART.upperArmR, PART.forearmR, PART.handR, -1]];
   for (const [upper, fore, palm, side] of sides) {
-    skin(loft(PROFILES.upperArm, { segments: 10 }), upper);
-    skin(placed(new THREE.SphereGeometry(0.058, 8, 6), [0, -0.01, 0]), upper);
-    skin(loft(PROFILES.forearm, { segments: 10 }), fore);
+    skin(loft(PROFILES.upperArm, { segments: 8 }), upper);
+    skin(placed(new THREE.SphereGeometry(0.058, 7, 4, 0, Math.PI * 2, 0, Math.PI / 2), [0, -0.01, 0]), upper);
+    skin(loft(PROFILES.forearm, { segments: 8 }), fore);
     for (const geometry of hand(side)) skin(geometry, palm);
   }
   for (const [thigh, shin] of [[PART.thighL, PART.shinL], [PART.thighR, PART.shinR]]) {
-    skin(loft(PROFILES.thigh, { segments: 12 }), thigh);
-    skin(loft(PROFILES.shin, { segments: 10 }), shin);
+    skin(loft(PROFILES.thigh, { segments: 9 }), thigh);
+    skin(loft(PROFILES.shin, { segments: 8 }), shin);
   }
   return pieces;
 }

@@ -3,12 +3,8 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { launchChrome, startServer, ROOT, sleep } from './cdp.mjs';
+import { SHOT_LIST } from './shot-list.mjs';
 
-export const SHOT_LIST = [
-  { file: '1-drive.jpg', name: 'drive' },
-  { file: '2-foot.jpg', name: 'foot' },
-  { file: '3-title.jpg', name: 'title' },
-];
 const MAX_BYTES = 256 * 1024;
 const args = new Set(process.argv.slice(2));
 
@@ -86,14 +82,18 @@ async function runPerf(server) {
     await page.send('Page.enable');
     await page.send('Runtime.enable');
     const errors = watchErrors(page);
-    await page.send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1.5, mobile: false });
-    await openScene(page, `${server.url}index.html?shot=drive&seed=1&live=1`, errors);
+    const dprArg = process.argv.find((arg) => arg.startsWith('--dpr='));
+    const deviceScaleFactor = dprArg ? Number(dprArg.slice(6)) : 1.5;
+    await page.send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor, mobile: false });
+    const scaleArg = process.argv.find((arg) => arg.startsWith('--scale='));
+    const extra = scaleArg ? `&scale=${scaleArg.slice(8)}` : '';
+    await openScene(page, `${server.url}index.html?shot=drive&seed=1&live=1${extra}`, errors);
     const gpu = await page.evaluate(`(() => {
       const gl = document.createElement('canvas').getContext('webgl2');
       const info = gl.getExtension('WEBGL_debug_renderer_info');
       return info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
     })()`);
-    await sleep(3000);
+    await sleep(7000);
     const samples = [];
     for (let index = 0; index < 12; index += 1) {
       await sleep(500);
@@ -110,8 +110,9 @@ async function runPerf(server) {
       drawCallsMax: Math.max(...samples.map((s) => s.drawCalls)),
       drawCallsMean: Math.round(mean('drawCalls')),
       triangles: Math.round(mean('triangles')),
+      renderScale: samples.map((s) => s.renderScale).join(' '),
       errors,
-    }, null, 2));
+    }));
   } finally {
     await chrome.stop();
   }

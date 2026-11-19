@@ -2,33 +2,9 @@
 import * as THREE from '../../vendor/three.module.min.js';
 import { mergeGeometries, composeMatrix } from '../core/meshbuilder.js';
 import { createRandom } from '../core/random.js';
-
-const NAMES = ['position', 'normal', 'color', 'aGlow', 'aSurface'];
-
-/** Collects parts: add(geometry, matrix, colour, {glow, rough, metal}) then build() merges them. */
-function partList() {
-  const parts = [];
-  const constants = [];
-  return {
-    add(geometry, matrix, colour, { glow = 0, rough = 0.6, metal = 0 } = {}) {
-      const g = geometry.index ? geometry : geometry;
-      g.deleteAttribute('uv');
-      g.applyMatrix4(matrix);
-      parts.push(g);
-      const c = new THREE.Color(colour);
-      constants.push({ color: [c.r, c.g, c.b], aGlow: glow, aSurface: [rough, metal] });
-    },
-    build() {
-      return mergeGeometries(parts, NAMES, constants);
-    },
-  };
-}
+import { partList, lathe } from './partlist.js';
 
 const M = (p, r, s) => composeMatrix(p, r, s);
-
-function lathe(profile, segments = 12) {
-  return new THREE.LatheGeometry(profile.map(([r, y]) => new THREE.Vector2(r, y)), segments);
-}
 
 export function streetLamp() {
   const p = partList();
@@ -116,8 +92,13 @@ export function parkingMeter() {
 
 export function newsBox() {
   const p = partList();
-  p.add(new THREE.BoxGeometry(0.5, 0.95, 0.45), M([0, 0.55, 0]), '#d8352a', { rough: 0.45, metal: 0.4 });
-  p.add(new THREE.BoxGeometry(0.42, 0.3, 0.02), M([0, 0.78, 0.23]), '#9fb4c0', { rough: 0.1, metal: 0.2 });
+  p.add(new THREE.BoxGeometry(0.48, 0.62, 0.42), M([0, 0.42, 0]), '#b8322a', { rough: 0.45, metal: 0.4 });
+  p.add(lathe([[0.3, 0], [0.3, 0.05], [0.26, 0.2], [0, 0.24]], 4), M([0, 0.73, 0], [0, Math.PI / 4, 0], [1, 1, 0.9]),
+    '#8a241e', { rough: 0.4, metal: 0.5 });
+  p.add(new THREE.BoxGeometry(0.49, 0.08, 0.43), M([0, 0.62, 0]), '#f2efe6', { rough: 0.5 });
+  p.add(new THREE.BoxGeometry(0.4, 0.22, 0.02), M([0, 0.45, 0.215]), '#9fb4c0', { rough: 0.1, metal: 0.2 });
+  p.add(new THREE.BoxGeometry(0.34, 0.15, 0.01), M([0, 0.45, 0.205]), '#e8e2d2', { rough: 0.9 });
+  p.add(new THREE.BoxGeometry(0.08, 0.02, 0.02), M([0.15, 0.68, 0.215]), '#c8ccd2', { metal: 1, rough: 0.2 });
   p.add(new THREE.BoxGeometry(0.06, 0.1, 0.06), M([0.18, 0.04, 0.16]), '#222', { metal: 0.8 });
   p.add(new THREE.BoxGeometry(0.06, 0.1, 0.06), M([-0.18, 0.04, 0.16]), '#222', { metal: 0.8 });
   return p.build();
@@ -137,7 +118,7 @@ export function planter() {
   p.add(new THREE.BoxGeometry(1.4, 0.6, 1.4), M([0, 0.3, 0]), '#b9b2a6', { rough: 0.9 });
   p.add(new THREE.BoxGeometry(1.28, 0.05, 1.28), M([0, 0.6, 0]), '#3b2a1e', { rough: 1 });
   for (let k = 0; k < 5; k += 1) {
-    const blob = new THREE.IcosahedronGeometry(random.range(0.3, 0.45), 1);
+    const blob = roundBlob(random.range(0.3, 0.45), random);
     p.add(blob, M([random.range(-0.35, 0.35), 0.85 + random.range(0, 0.25), random.range(-0.35, 0.35)]),
       random.pick(['#3f6b35', '#4c7a3a', '#2f5a2c']), { rough: 0.9 });
   }
@@ -219,19 +200,31 @@ export function palm(seed = 1) {
   return p.build();
 }
 
+/** A lumpy foliage ball with smooth radial normals, so canopies read soft rather than faceted. */
+function roundBlob(radius, random) {
+  const blob = new THREE.IcosahedronGeometry(radius, 1);
+  const positions = blob.attributes.position;
+  const normals = new Float32Array(positions.count * 3);
+  for (let i = 0; i < positions.count; i += 1) {
+    const x = positions.getX(i);
+    const y = positions.getY(i);
+    const z = positions.getZ(i);
+    const length = Math.hypot(x, y, z) || 1;
+    const lump = 1 + 0.08 * Math.sin(x * 3.1 + random.next()) * Math.cos(z * 2.7) + 0.06 * Math.sin(y * 4.3);
+    positions.setXYZ(i, x * lump, y * lump * 0.85, z * lump);
+    normals.set([x / length, y / length, z / length], i * 3);
+  }
+  blob.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
+  return blob;
+}
+
 export function tree(seed = 1) {
   const random = createRandom(seed);
   const p = partList();
   const height = random.range(3.2, 4.6);
   p.add(new THREE.CylinderGeometry(0.14, 0.22, height, 7), M([0, height / 2, 0]), '#5a4532', { rough: 0.95 });
   for (let k = 0; k < 4; k += 1) {
-    const blob = new THREE.IcosahedronGeometry(random.range(1.3, 1.9), 1);
-    const positions = blob.attributes.position;
-    for (let i = 0; i < positions.count; i += 1) {
-      const s = 1 + random.range(-0.12, 0.12);
-      positions.setXYZ(i, positions.getX(i) * s, positions.getY(i) * s, positions.getZ(i) * s);
-    }
-    blob.computeVertexNormals();
+    const blob = roundBlob(random.range(1.3, 1.9), random);
     const angle = (k / 4) * Math.PI * 2;
     const spread = k === 0 ? 0 : random.range(0.8, 1.3);
     p.add(blob, M([Math.cos(angle) * spread, height + random.range(0.2, 1.6), Math.sin(angle) * spread]),

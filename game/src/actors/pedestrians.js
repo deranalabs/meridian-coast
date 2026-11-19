@@ -73,7 +73,10 @@ export function createPedestrians(characters, layout, count, seed, focus, radius
     peds.push(ped);
   }
 
+  const system = { peds, enabled: true, update };
+
   function update(dt, centre) {
+    if (!system.enabled) return;
     for (const ped of peds) {
       const c = ped.character;
       if (ped.pause > 0) {
@@ -101,5 +104,5 @@ export function createPedestrians(characters, layout, count, seed, focus, radius
     }
   }
 
-  return { peds, update };
+  return system;
 }

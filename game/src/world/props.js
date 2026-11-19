@@ -3,6 +3,7 @@ import * as THREE from '../../vendor/three.module.min.js';
 import * as models from './propmodels.js';
 import { createPropMaterial } from './propmaterial.js';
 import { BLADE_WIDTH } from './signs.js';
+import { createCulledInstances } from './instancing.js';
 import { heightAt, BOARDWALK, WATER_LEVEL } from './heightfield.js';
 import { PARK } from './districts.js';
 import { polygonArea } from './geometry2d.js';
@@ -226,36 +227,32 @@ function dressAwnings(place, awnings) {
   }
 }
 
-const tempMatrix = new THREE.Matrix4();
 const tempQuaternion = new THREE.Quaternion();
 const tempScale = new THREE.Vector3();
 const tempPosition = new THREE.Vector3();
 const yAxis = new THREE.Vector3(0, 1, 0);
 
+/** Big props stay drawn further out than street clutter; everything beyond is fogged or too small to see. */
+const FAR_TYPES = new Set(['lamp', 'palm', 'palmTall', 'tree', 'signal', 'billboard', 'container', 'antenna', 'tank',
+  'lifeguard', 'awning', 'signBox']);
+
 function instance(type, placements, material) {
   const geometry = TYPES[type].make();
   const mesh = new THREE.InstancedMesh(geometry, material, Math.max(1, placements.length));
-  mesh.count = placements.length;
-  placements.forEach((p, index) => {
+  const matrices = placements.map((p) => {
     tempPosition.set(p.x, p.y, p.z);
     tempQuaternion.setFromAxisAngle(yAxis, p.rot);
     if (Array.isArray(p.scale)) tempScale.set(p.scale[0], p.scale[1], p.scale[2]);
     else tempScale.setScalar(p.scale);
-    tempMatrix.compose(tempPosition, tempQuaternion, tempScale);
-    mesh.setMatrixAt(index, tempMatrix);
-    if (p.colour) mesh.setColorAt(index, new THREE.Color(p.colour));
+    return new THREE.Matrix4().compose(tempPosition, tempQuaternion, tempScale);
   });
-  if (mesh.instanceColor === null && placements.length) mesh.setColorAt(0, new THREE.Color('#ffffff'));
-  if (mesh.instanceColor) {
-    placements.forEach((p, index) => {
-      if (!p.colour) mesh.setColorAt(index, new THREE.Color('#ffffff'));
-    });
-  }
+  const tinted = placements.some((p) => p.colour);
+  const colours = tinted ? placements.map((p) => new THREE.Color(p.colour ?? '#ffffff')) : null;
+  if (tinted) mesh.setColorAt(0, colours[0]);
   mesh.castShadow = TYPES[type].shadow;
   mesh.receiveShadow = true;
   mesh.name = `props-${type}`;
-  mesh.computeBoundingSphere();
-  return mesh;
+  return createCulledInstances(mesh, matrices, colours, FAR_TYPES.has(type) ? 300 : 140);
 }
 
 /**
@@ -287,11 +284,14 @@ export function createProps(layout, buildings, billboards, textures, timeOfDay, 
   const foliage = createPropMaterial(textures.data, level, { side: THREE.DoubleSide });
   const group = new THREE.Group();
   group.name = 'props';
+  const culled = [];
   for (const type of Object.keys(TYPES)) {
     const list = place.lists[type];
     if (!list.length) continue;
     const doubleSided = type === 'palm' || type === 'palmTall' || type === 'umbrella';
-    group.add(instance(type, list, doubleSided ? foliage : material));
+    const entry = instance(type, list, doubleSided ? foliage : material);
+    culled.push(entry);
+    group.add(entry.mesh);
   }
   const lamps = place.lists.lamp.map((p) => ({
     x: p.x + Math.sin(p.rot + Math.PI / 2) * 1.85,
@@ -299,5 +299,15 @@ export function createProps(layout, buildings, billboards, textures, timeOfDay, 
     z: p.z + Math.cos(p.rot + Math.PI / 2) * 1.85,
   }));
   const count = Object.values(place.lists).reduce((sum, list) => sum + list.length, 0);
-  return { group, placements: place.lists, parking, lamps, count };
+  return {
+    group,
+    placements: place.lists,
+    parking,
+    lamps,
+    count,
+    /** Upload the instances near `point` (call every frame; it only does work after the camera moves). */
+    update(point) {
+      for (const entry of culled) entry.refresh(point);
+    },
+  };
 }

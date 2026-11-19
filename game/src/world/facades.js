@@ -102,6 +102,31 @@ function glassPane(p, x, y, w, h, tone, random, lit = true) {
   p.rect('emissive', x + silhouette, y + h * 0.55, w * 0.18, h * 0.45, 'rgba(0,0,0,0.6)');
 }
 
+/** A lit shop interior seen through glass: dim back wall, ceiling strips, shelves of goods, a shopper. */
+function shopInterior(p, x, y, w, h, random) {
+  const warm = random.chance(0.6);
+  p.gradient('emissive', x, y, w, h, warm
+    ? [[0, '#6a4428'], [0.5, '#3a2416'], [1, '#160c08']]
+    : [[0, '#3a4a5e'], [0.5, '#1e2836'], [1, '#0a0e14']]);
+  const lightColour = warm ? '#ffe2b0' : '#e4f0ff';
+  for (let k = 0; k < 3; k += 1) p.rect('emissive', x + 6 + k * (w / 3), y + 4, w / 3 - 14, 3, lightColour);
+  for (let shelf = 0; shelf < 3; shelf += 1) {
+    const sy = y + h * 0.3 + shelf * h * 0.18;
+    p.rect('emissive', x + 4, sy + 12, w - 8, 2, '#2a1a10');
+    for (let item = x + 6; item < x + w - 8; item += random.range(5, 9)) {
+      const colour = random.pick(['#7a3a32', '#80683a', '#3a6a80', '#5a7a3e', '#7a4a62', '#7a7670']);
+      const itemHeight = random.range(5, 11);
+      p.rect('emissive', item, sy + 12 - itemHeight, random.range(3, 6), itemHeight, colour);
+    }
+  }
+  if (random.chance(0.6)) {
+    const px = x + random.range(0.2, 0.7) * w;
+    p.rect('emissive', px, y + h * 0.5, 12, h * 0.5, '#0a0606');
+    p.rect('emissive', px + 2, y + h * 0.4, 8, 10, '#0a0606');
+  }
+  p.gradient('emissive', x, y + h * 0.85, w, h * 0.15, [[0, 'rgba(0,0,0,0)'], [1, 'rgba(0,0,0,0.8)']]);
+}
+
 function wall(p, colour, roughness = 0.85) {
   p.rect('albedo', 0, 0, TILE, TILE, colour);
   p.rect('emissive', 0, 0, TILE, TILE, '#000');
@@ -272,14 +297,15 @@ const PAINTERS = {
     p.rect('albedo', 0, 0, TILE, 26, '#1c1d22');
     p.rect('emissive', 6, 6, 116, 14, random.pick(['#ff4fa0', '#3fe0ff', '#ffb347', '#c45cff']));
     glassPane(p, 6, 32, 116, 96, ['#4f5d70', '#252c38', '#1c2028'], random);
-    p.gradient('emissive', 6, 32, 116, 96, [[0, '#fff6dc'], [1, '#d08a48']]);
-    for (let x = 14; x < 120; x += 22) p.rect('emissive', x, 90, 14, 30, 'rgba(40,20,30,0.85)');
+    shopInterior(p, 6, 32, 116, 96, random);
+    p.rect('albedo', 62, 32, 4, 96, '#1c1d22');
+    p.rect('emissive', 62, 32, 4, 96, '#000');
   },
   shopB(p, random) {
     wall(p, '#e7dccb', 0.85);
     p.rect('albedo', 0, 0, TILE, 22, random.pick(['#2a6f6b', '#8a2f4f', '#2f3f8a', '#b4572a']));
     glassPane(p, 14, 30, 64, 98, ['#5a6a7a', '#262d38', '#1e222a'], random);
-    p.gradient('emissive', 14, 30, 64, 98, [[0, '#ffe8c0'], [1, '#b8783c']]);
+    shopInterior(p, 14, 30, 64, 98, random);
     p.rect('albedo', 88, 40, 30, 88, '#5a3a28');
     p.rect('emissive', 92, 46, 22, 30, '#ffcf8a');
   },
@@ -287,7 +313,7 @@ const PAINTERS = {
     wall(p, '#f0e4cc', 0.8);
     p.rect('albedo', 0, 0, TILE, 12, '#c7b08a');
     glassPane(p, 18, 24, 92, 104, ['#6a8098', '#2a3646', '#1f2731'], random);
-    p.gradient('emissive', 18, 24, 92, 104, [[0, '#ffeccc'], [1, '#c98a52']]);
+    shopInterior(p, 18, 24, 92, 104, random);
     p.rect('albedo', 62, 24, 4, 104, '#e2cfa8');
   },
   oldShop(p, random) {
@@ -295,7 +321,7 @@ const PAINTERS = {
     p.arch('albedo', 18, 18, 92, 110, '#6b4630');
     p.arch('emissive', 26, 26, 76, 102, '#000');
     glassPane(p, 26, 60, 76, 68, ['#5a6672', '#2a3038', '#20242a'], random);
-    p.gradient('emissive', 26, 60, 76, 68, [[0, '#ffdca0'], [1, '#b06a34']]);
+    shopInterior(p, 26, 60, 76, 68, random);
   },
   oldDoor(p) {
     wall(p, '#d8bb92', 0.92);

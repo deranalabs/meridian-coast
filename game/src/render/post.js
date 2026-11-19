@@ -2,6 +2,8 @@
 import * as THREE from '../../vendor/three.module.min.js';
 
 const BLOOM_LEVELS = 6;
+/** MSAA samples for the HDR scene target; 2 keeps edges clean at a fraction of 4x's bandwidth. */
+const SCENE_SAMPLES = 2;
 
 const QUAD_VERTEX = /* glsl */ `
 varying vec2 vUv;
@@ -79,6 +81,8 @@ uniform float uExposure;
 uniform vec3 uShadowTint;
 uniform vec3 uHighlightTint;
 uniform float uSaturation;
+uniform float uContrast;
+uniform float uSharpen;
 uniform float uVignette;
 uniform float uGrain;
 uniform float uTime;
@@ -106,11 +110,26 @@ float grainHash(vec2 p) {
   return fract((p3.x + p3.y) * p3.z);
 }
 
+vec3 sharpened(vec2 uv) {
+  vec2 texel = 1.0 / uResolution;
+  vec3 centre = texture2D(tScene, uv).rgb;
+  vec3 north = texture2D(tScene, uv + vec2(0.0, texel.y)).rgb;
+  vec3 south = texture2D(tScene, uv - vec2(0.0, texel.y)).rgb;
+  vec3 east = texture2D(tScene, uv + vec2(texel.x, 0.0)).rgb;
+  vec3 west = texture2D(tScene, uv - vec2(texel.x, 0.0)).rgb;
+  vec3 lo = min(centre, min(min(north, south), min(east, west)));
+  vec3 hi = max(centre, max(max(north, south), max(east, west)));
+  vec3 amount = sqrt(clamp(min(lo, 2.0 - hi) / max(hi, 0.0001), 0.0, 1.0)) * uSharpen;
+  vec3 detail = centre * 4.0 - (north + south + east + west);
+  return max(centre + detail * amount * 0.25, vec3(0.0));
+}
+
 void main() {
-  vec3 hdr = texture2D(tScene, vUv).rgb;
+  vec3 hdr = sharpened(vUv);
   vec3 bloom = texture2D(tBloom, vUv).rgb;
   vec3 colour = (hdr + bloom * uBloomStrength) * uExposure;
   colour = acesFit(colour);
+  colour = mix(colour, colour * colour * (3.0 - 2.0 * colour), uContrast);
   float luma = dot(colour, vec3(0.2126, 0.7152, 0.0722));
   colour = mix(vec3(luma), colour, uSaturation);
   float shadowWeight = pow(1.0 - clamp(luma, 0.0, 1.0), 3.0);
@@ -181,11 +200,13 @@ export function createPost(renderer, timeOfDay) {
       tBloom: { value: null },
       uBloomStrength: { value: night ? 0.95 : 0.75 },
       uExposure: { value: timeOfDay.exposure },
-      uShadowTint: { value: night ? new THREE.Vector3(0.03, 0.012, 0.06) : new THREE.Vector3(0.045, 0.012, 0.06) },
-      uHighlightTint: { value: new THREE.Vector3(1.04, 0.95, 0.93) },
-      uSaturation: { value: 1.08 },
-      uVignette: { value: 0.32 },
-      uGrain: { value: 0.022 },
+      uShadowTint: { value: night ? new THREE.Vector3(0.02, 0.008, 0.04) : new THREE.Vector3(0.022, 0.006, 0.032) },
+      uHighlightTint: { value: new THREE.Vector3(1.04, 0.96, 0.94) },
+      uSaturation: { value: 0.94 },
+      uContrast: { value: 0.35 },
+      uSharpen: { value: 0.8 },
+      uVignette: { value: 0.3 },
+      uGrain: { value: 0.04 },
       uTime: { value: 0 },
       uResolution: { value: new THREE.Vector2(1, 1) },
     },
@@ -195,13 +216,16 @@ export function createPost(renderer, timeOfDay) {
     depthWrite: false,
   });
 
-  let sceneTarget = makeTarget(2, 2, 4);
+  let sceneTarget = makeTarget(2, 2, SCENE_SAMPLES);
   let mips = [];
+  const size = { width: 2, height: 2, scale: 1 };
 
-  function setSize(width, height) {
+  function allocate() {
+    const width = Math.max(2, Math.round(size.width * size.scale));
+    const height = Math.max(2, Math.round(size.height * size.scale));
     sceneTarget.dispose();
     for (const mip of mips) mip.dispose();
-    sceneTarget = makeTarget(width, height, 4);
+    sceneTarget = makeTarget(width, height, SCENE_SAMPLES);
     mips = [];
     let w = width;
     let h = height;
@@ -211,6 +235,20 @@ export function createPost(renderer, timeOfDay) {
       mips.push(makeTarget(w, h, 0));
     }
     compositeMaterial.uniforms.uResolution.value.set(width, height);
+  }
+
+  function setSize(width, height) {
+    size.width = width;
+    size.height = height;
+    allocate();
+  }
+
+  /** Dynamic resolution: the 3D scene renders at `scale` of the canvas and is upsampled by the composite. */
+  function setScale(scale) {
+    const clamped = Math.min(1, Math.max(0.6, scale));
+    if (Math.abs(clamped - size.scale) < 0.001) return;
+    size.scale = clamped;
+    allocate();
   }
 
   function pass(material, target) {
@@ -243,6 +281,10 @@ export function createPost(renderer, timeOfDay) {
   return {
     composite: compositeMaterial,
     setSize,
+    setScale,
+    get scale() {
+      return size.scale;
+    },
     render(scene, camera, time) {
       renderer.setRenderTarget(sceneTarget);
       renderer.render(scene, camera);

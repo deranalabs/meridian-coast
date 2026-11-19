@@ -1,0 +1,109 @@
+// HUD: cash, health, speedometer gauge, minimap with district name, radio line and context hints.
+import { createMinimap } from './minimap.js';
+import { districtAt, PARK } from '../world/districts.js';
+import { BOARDWALK } from '../world/heightfield.js';
+
+function element(parent, className, tag = 'div') {
+  const node = document.createElement(tag);
+  node.className = className;
+  parent.appendChild(node);
+  return node;
+}
+
+function drawSpeedo(ctx, size, kmh) {
+  ctx.clearRect(0, 0, size, size);
+  const cx = size / 2;
+  const cy = size / 2;
+  const radius = size * 0.42;
+  const start = Math.PI * 0.75;
+  const sweep = Math.PI * 1.5;
+  const fraction = Math.min(1, kmh / 240);
+  ctx.lineCap = 'round';
+  ctx.lineWidth = size * 0.05;
+  ctx.strokeStyle = 'rgba(30, 14, 46, 0.65)';
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, start, start + sweep);
+  ctx.stroke();
+  const gradient = ctx.createLinearGradient(0, size, size, 0);
+  gradient.addColorStop(0, '#3fe0d0');
+  gradient.addColorStop(0.6, '#c45cff');
+  gradient.addColorStop(1, '#ff4fa0');
+  ctx.strokeStyle = gradient;
+  ctx.shadowColor = '#ff4fa0';
+  ctx.shadowBlur = 14;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, start, start + sweep * Math.max(0.005, fraction));
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+  ctx.lineWidth = 2;
+  for (let tick = 0; tick <= 12; tick += 1) {
+    const angle = start + (sweep * tick) / 12;
+    const inner = radius - size * (tick % 3 === 0 ? 0.1 : 0.06);
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(angle) * inner, cy + Math.sin(angle) * inner);
+    ctx.lineTo(cx + Math.cos(angle) * (radius - size * 0.035), cy + Math.sin(angle) * (radius - size * 0.035));
+    ctx.stroke();
+  }
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'rgba(20,6,30,0.9)';
+  ctx.shadowBlur = 8;
+  ctx.font = `800 ${Math.round(size * 0.26)}px "Avenir Next", Futura, Arial, sans-serif`;
+  ctx.fillText(String(Math.round(kmh)), cx, cy - size * 0.02);
+  ctx.font = `700 ${Math.round(size * 0.075)}px "Avenir Next", Futura, Arial, sans-serif`;
+  ctx.fillText('KM/H', cx, cy + size * 0.17);
+  ctx.shadowBlur = 0;
+}
+
+function placeName(x, z) {
+  const district = districtAt(x, z);
+  if (district) return district.name;
+  const park = PARK.rect;
+  if (x >= park.x0 && x <= park.x1 && z >= park.z0 && z <= park.z1) return PARK.name;
+  if (x > BOARDWALK.x0) return 'Palmetto Beach';
+  if (x > 480) return 'Gull Key';
+  return 'Port Meridian';
+}
+
+/** Build the HUD over the canvas; update(view) refreshes it from a plain view object. */
+export function createHud(layout, visible = true) {
+  const root = document.createElement('div');
+  root.id = 'hud';
+  if (!visible) root.classList.add('hidden');
+  document.body.appendChild(root);
+  const status = element(root, 'status');
+  const cash = element(status, 'cash');
+  const healthBar = element(element(status, 'health'), '');
+  const radio = element(root, 'radio');
+  const district = element(root, 'district');
+  const minimap = createMinimap(element(root, 'minimap'), layout);
+  const speedoBox = element(root, 'speedo');
+  const speedo = document.createElement('canvas');
+  speedo.width = 380;
+  speedo.height = 380;
+  speedoBox.appendChild(speedo);
+  const speedoCtx = speedo.getContext('2d');
+  const hint = element(root, 'hint');
+  let lastHint = null;
+
+  return {
+    root,
+    update(view) {
+      cash.textContent = `$${view.cash.toLocaleString('en-US')}`;
+      healthBar.style.width = `${Math.max(0, Math.min(100, view.health))}%`;
+      const line = view.radio;
+      radio.innerHTML = `&#9835; <b>${line.station}</b> &nbsp;${line.text}`;
+      radio.style.display = view.driving ? 'block' : 'none';
+      district.textContent = placeName(view.x, view.z);
+      minimap.update(view.x, view.z, view.heading, view.blips);
+      speedoBox.style.display = view.driving ? 'block' : 'none';
+      if (view.driving) drawSpeedo(speedoCtx, speedo.width, Math.abs(view.speed) * 3.6);
+      if (view.hint !== lastHint) {
+        hint.innerHTML = view.hint ?? '';
+        lastHint = view.hint;
+      }
+    },
+  };
+}
