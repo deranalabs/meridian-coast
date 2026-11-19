@@ -41,4 +41,8 @@ export const MISSION_PLACES = Object.freeze([
     drive: true },
   { id: 'linen-depot', kind: 'mission', name: 'Seabright Linen Depot', district: 'beach', near: [214, 58],
     drive: true },
+  // Side activities: the Causeway Sprint start line and the Rask Cabs rank.
+  { id: 'sprint-line', kind: 'mission', name: 'Boardwalk Sprint Line', district: 'beach', near: [236, -150],
+    drive: true },
+  { id: 'cab-rank', kind: 'mission', name: 'Rask Cabs Rank', district: 'neon', near: [36, 64], drive: true },
 ]);

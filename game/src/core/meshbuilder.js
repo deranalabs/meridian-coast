@@ -59,7 +59,8 @@ export class MeshBuilder {
         this.indices.push(b - 2, b + 1, b, b - 2, b - 1, b + 1);
       }
     }
-    const centre = this.vertex({ ...extras, position: [x, y, z + depth], normal: [0, 0, 1], [this.uvName]: [0.5, 0.5] });
+    const centre = this.vertex({ ...extras, position: [x, y, z + depth], normal: [0, 0, 1],
+      [this.uvName]: [0.5, 0.5] });
     for (let i = 0; i <= segments; i += 1) {
       const a = (i / segments) * Math.PI * 2;
       this.vertex({ ...extras, position: [x + Math.sin(a) * radius, y + Math.cos(a) * radius, z + depth],

@@ -82,7 +82,8 @@ export function createPhoneView(parent, contacts, jobs, castMember) {
       clock.textContent = model.time;
       rankName.textContent = model.rank;
       respectText.textContent = model.nextRank
-        ? `${model.respect} respect · ${model.nextRespect - model.respect} to ${model.nextRank}`
+        ? `${model.respect} respect · ${model.nextRespect - model.respect} to ${model.nextRank}${
+          model.opens ? `, opens ${model.opens}` : ''}`
         : `${model.respect} respect · top rank`;
       const span = model.nextRespect ? model.respect / model.nextRespect : 1;
       respectBar.style.width = `${Math.round(Math.min(1, span) * 100)}%`;

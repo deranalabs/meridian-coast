@@ -14,6 +14,7 @@ import { createSound } from './audio/sound.js';
 import { applyTheme } from './ui/theme.js';
 import { createSettings } from './ui/settings.js';
 import { createPauseMenu } from './ui/pausemenu.js';
+import { unlockLabel } from './missions/respect.js';
 
 const STEP = 1 / 60;
 const MAX_FRAME = 0.1;
@@ -137,6 +138,13 @@ function saveFromMenu() {
 const pause = createPauseMenu({
   settings,
   place: () => game.hud.root.querySelector('.district')?.textContent ?? '',
+  standing: () => {
+    const { rank, next } = game.respect;
+    const respect = game.missions.progress.respect;
+    const ahead = next ? `${next.needed} to ${next.name}${next.opens.length ? `: ${next.opens.map(unlockLabel)
+      .join(', ')}` : ''}` : 'Top rank';
+    return `<b>${rank.name}</b>${respect} respect &middot; <i>${ahead}</i>`;
+  },
   onSave: saveFromMenu,
   onQuit: () => window.location.reload(),
   onEvent: menuSound,

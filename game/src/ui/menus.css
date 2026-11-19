@@ -125,6 +125,9 @@
 }
 #pause.open { display: flex; }
 #pause .pause-card { width: min(620px, 86vw); }
+#pause .standing { margin: -4px 0 14px; font-size: 14px; font-weight: 700; color: #e8dcf4; letter-spacing: 0.4px; }
+#pause .standing b { color: var(--mc-gold, #ffd166); font-size: 17px; margin-right: 8px; }
+#pause .standing i { font-style: normal; opacity: 0.75; }
 #pause .kicker { font-size: 14px; font-weight: 700; letter-spacing: 6px; text-transform: uppercase; color: #ffd1e6; }
 #pause .big {
   font-size: 72px;

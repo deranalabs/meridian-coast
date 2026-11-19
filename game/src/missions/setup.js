@@ -3,6 +3,8 @@ import { MISSION_PLACES } from '../data/places.js';
 import { findPlaces } from '../world/placefinder.js';
 import { createMissions } from './director.js';
 import { STORY_MISSIONS } from './story/index.js';
+import { ACTIVITIES } from './activities/index.js';
+import { createRespect } from './respect.js';
 import { createDialogue } from './dialogue.js';
 import { createMissionKit } from './kit.js';
 import { castMember } from '../data/cast.js';
@@ -51,7 +53,8 @@ export function createStory(game, extra = {}) {
   const feet = () => ({ x: game.ilo.position.x, y: game.ilo.position.y, z: game.ilo.position.z });
   events.on('mission-complete', (e) => effects?.celebrate?.(game.player.state.car?.position ?? feet(), e.colour));
   events.on('mission-failed', () => effects?.failBurst?.(game.player.state.car?.position ?? feet()));
-  const missions = createMissions(game, extra.missions ?? STORY_MISSIONS, places, hooks);
+  const missions = createMissions(game, extra.missions ?? [...STORY_MISSIONS, ...ACTIVITIES], places, hooks);
   missions.places = places;
+  game.respect = createRespect(() => missions.progress);
   return missions;
 }

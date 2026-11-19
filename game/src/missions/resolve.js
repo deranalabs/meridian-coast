@@ -19,8 +19,14 @@ export function resolveMission(def, places) {
     if (!stage.text) throw new Error(`${def.id} stage ${index}: no objective text`);
     const out = { ...stage, at: pointOf(stage.at, places), start: pointOf(stage.start, places) };
     if (stage.leash) out.leash = { metres: stage.leash.metres, at: pointOf(stage.leash.at, places) };
-    if (['goto', 'drive', 'deliver'].includes(stage.type) && !out.at) {
-      throw new Error(`${def.id} stage ${index}: ${stage.type} needs a place`);
+    if (['goto', 'drive', 'deliver'].includes(stage.type) && !out.at && !stage.target) {
+      throw new Error(`${def.id} stage ${index}: ${stage.type} needs a place or a target`);
+    }
+    if (['race', 'follow'].includes(stage.type) && !stage.target) {
+      throw new Error(`${def.id} stage ${index}: ${stage.type} needs a target`);
+    }
+    if (stage.type === 'buy' && !stage.item?.startsWith('gear:')) {
+      throw new Error(`${def.id} stage ${index}: buy needs a gear item`);
     }
     return out;
   });

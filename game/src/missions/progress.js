@@ -7,6 +7,7 @@ export const RANKS = Object.freeze([
   { respect: 30, name: 'Known Face' },
   { respect: 60, name: 'Earner' },
   { respect: 100, name: 'Harbour Name' },
+  { respect: 180, name: 'Tide Caller' },
 ]);
 
 const ID = /^[a-z0-9-]{1,40}$/;
@@ -24,7 +25,7 @@ export function rankFor(respect) {
 
 /** A mission is open when every mission it requires is done and it is not done itself. */
 export function isAvailable(progress, def) {
-  if (progress.done.includes(def.id)) return false;
+  if (progress.done.includes(def.id) && !def.repeat) return false;
   return (def.requires ?? []).every((id) => progress.done.includes(id));
 }
 
@@ -33,14 +34,15 @@ export const availableMissions = (progress, defs) =>
   defs.filter((def) => isAvailable(progress, def)).sort((a, b) => a.number - b.number);
 
 /**
- * Mark the mission done and pay its reward into the wallet, at most once per mission id.
- * Returns {cash, respect} actually paid (zeros when it was already paid).
+ * Mark the mission done and pay its reward into the wallet, at most once per mission id; a repeatable job
+ * (`repeat`, the side activities) pays every time. Returns {cash, respect} actually paid (zeros when it was
+ * already paid). `bonus` adds cash on top, such as a fare's tip.
  */
-export function payReward(progress, def, wallet) {
+export function payReward(progress, def, wallet, bonus = 0) {
   if (!progress.done.includes(def.id)) progress.done.push(def.id);
   if (progress.paid.includes(def.id)) return { cash: 0, respect: 0 };
-  progress.paid.push(def.id);
-  const cash = Math.max(0, Math.round(def.reward?.cash ?? 0));
+  if (!def.repeat) progress.paid.push(def.id);
+  const cash = Math.max(0, Math.round((def.reward?.cash ?? 0) + bonus));
   const respect = Math.max(0, Math.round(def.reward?.respect ?? 0));
   wallet.cash += cash;
   progress.respect += respect;

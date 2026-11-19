@@ -18,6 +18,9 @@ export const CLOTHING = Object.freeze([
   { id: 'windbreaker', slot: 'outer', style: 'windbreaker', colour: '#c45cff', lining: '#3fe0d0',
     name: 'Squall Shell' },
   { id: 'no-jacket', slot: 'outer', style: null, name: 'No Jacket' },
+  // Rank pieces (missions/respect.js locks them until the street knows Ilo's name).
+  { id: 'gilt-blazer', slot: 'outer', style: 'blazer', colour: '#d9a531', lining: '#1c1a24', name: 'Gilt Blazer' },
+  { id: 'tide-cap', slot: 'hat', style: 'cap', colour: '#16857c', name: 'Tide Caller Cap' },
   { id: 'ball-cap', slot: 'hat', style: 'cap', colour: '#d7263d', name: 'Port Cap' },
   { id: 'sun-hat', slot: 'hat', style: 'sunhat', colour: '#e3c18f', name: 'Straw Sun Hat' },
   { id: 'beanie', slot: 'hat', style: 'beanie', colour: '#2a3d66', name: 'Harbor Beanie' },

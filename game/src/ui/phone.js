@@ -1,7 +1,9 @@
 // Phone: P opens Ilo's handset with contacts, open and finished jobs, rank and respect; Enter takes Ilo to a job.
 import { CAST, castMember } from '../data/cast.js';
 import { STORY_MISSIONS } from '../missions/story/index.js';
+import { ACTIVITIES } from '../missions/activities/index.js';
 import { RANKS, rankFor } from '../missions/progress.js';
+import { nextUnlock, unlockLabel } from '../missions/respect.js';
 import { createPhoneView } from './phoneview.js';
 
 const MEET_DISTANCE = 2.2;
@@ -22,7 +24,7 @@ export function nextRank(respect) {
 }
 
 /** The phone over `game` (needs game.missions); update(input) returns true while the phone is open. */
-export function createPhone(game, defs = STORY_MISSIONS) {
+export function createPhone(game, defs = [...STORY_MISSIONS, ...ACTIVITIES]) {
   const missions = game.missions;
   const jobs = defs.map((def) => ({ id: def.id, number: def.number, title: def.title, giver: def.giver,
     place: missions.places.get(def.startAt)?.name ?? '' }));
@@ -85,8 +87,9 @@ export function createPhone(game, defs = STORY_MISSIONS) {
     const progress = missions.progress;
     const next = nextRank(progress.respect);
     const minutes = (20 * 60 + Math.floor(game.time / 4)) % 1440;
+    const opens = nextUnlock(progress.respect)?.opens.map(unlockLabel).join(', ') ?? '';
     view.render({ rank: rankFor(progress.respect).name, respect: progress.respect, nextRank: next?.name ?? null,
-      nextRespect: next?.respect ?? null, done: new Set(progress.done),
+      nextRespect: next?.respect ?? null, opens, done: new Set(progress.done),
       open: new Set(missions.available().map((def) => def.id)), selected: state.selected,
       note: state.note || (missions.active ? 'On a job. Finish it, or fail it, to take another.' : ''),
       time: `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}` });

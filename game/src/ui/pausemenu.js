@@ -8,11 +8,12 @@ import { controlsHtml } from './controlslist.js';
  * createPauseMenu({ settings, place, onSave, onQuit, onEvent }) → { open(), close(), isOpen(), update(input) }.
  * place() names where Ilo is; onSave() returns the line to show; update() returns 'resume' when the menu closes.
  */
-export function createPauseMenu({ settings, place = () => '', onSave, onQuit, onEvent = () => {} }) {
+export function createPauseMenu({ settings, place = () => '', standing = () => '', onSave, onQuit,
+  onEvent = () => {} }) {
   const root = document.createElement('div');
   root.id = 'pause';
   root.innerHTML = `<div class="pause-card"><div class="kicker">${CITY_NAME} &middot; <span class="where"></span></div>
-    <div class="big">Paused</div><div class="pages"></div></div>`;
+    <div class="big">Paused</div><div class="standing"></div><div class="pages"></div></div>`;
   document.body.appendChild(root);
   const where = root.querySelector('.where');
   const pages = root.querySelector('.pages');
@@ -54,6 +55,7 @@ export function createPauseMenu({ settings, place = () => '', onSave, onQuit, on
       state.open = true;
       state.confirmQuit = false;
       where.textContent = place();
+      root.querySelector('.standing').innerHTML = standing();
       note.textContent = '';
       list.index = 0;
       list.render();

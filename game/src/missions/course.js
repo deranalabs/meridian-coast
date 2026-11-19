@@ -34,6 +34,7 @@ export function createCourse(game, { from, to, spacing = 85, radius = 10, rival 
   const gates = gatesAlong(route, spacing);
   const target = { x: 0, y: 0, z: 0, gate: 0, gates: gates.length, arrived: false, beaten: false, lost: false };
   let racer = null;
+  let started = false;
 
   function aim() {
     const gate = gates[Math.min(target.gate, gates.length - 1)];
@@ -48,6 +49,7 @@ export function createCourse(game, { from, to, spacing = 85, radius = 10, rival 
     gates,
     /** Put the rival on the start line; called when the race stage begins. */
     start() {
+      started = true;
       if (rival && !racer) {
         racer = createConvoy(game, { ...rival, from, to, wait: 1, slowWhenBehind: rival.slowWhenBehind ?? 70 });
       }
@@ -55,8 +57,9 @@ export function createCourse(game, { from, to, spacing = 85, radius = 10, rival 
     get rival() {
       return racer;
     },
+    /** Gates count only once the race has started (a drive to the line never passes one by accident). */
     update(dt, view) {
-      if (target.arrived || target.beaten) return;
+      if (!started || target.arrived || target.beaten) return;
       racer?.update(dt, view);
       if (view.driving && Math.hypot(view.x - target.x, view.z - target.z) < radius) {
         target.gate += 1;
