@@ -69,7 +69,7 @@ export function createPhoneView(parent, contacts, jobs, castMember) {
   const note = add(handset, 'div', 'phone-note');
   const keys = add(handset, 'div', 'phone-keys');
   keys.innerHTML = '<kbd>↑</kbd><kbd>↓</kbd> choose &nbsp; <kbd>Enter</kbd> take the job &nbsp; '
-    + '<kbd>P</kbd> close';
+    + '<kbd>P</kbd> close &nbsp; <kbd>N</kbd> map';
   let last = '';
 
   return {

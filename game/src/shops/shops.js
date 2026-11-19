@@ -26,7 +26,7 @@ export function createShops(game, hooks) {
   const player = game.player;
   const state = { place: null, index: 0, note: '', outfit: game.outfit };
   const blips = places.filter((place) => USABLE.has(place.kind)).map((place) => ({ x: place.x, z: place.z,
-    colour: place.colour, shop: true, letter: BLIP_LETTER[place.kind] }));
+    colour: place.colour, shop: true, letter: BLIP_LETTER[place.kind], label: place.name }));
 
   function context() {
     const p = player.state;

@@ -22,7 +22,8 @@ export function missionGuide(game) {
     for (const def of availableMissions(progress, defs)) {
       if (!def.startAt) continue;
       pins.push({ x: def.startAt.x, y: def.startAt.y, z: def.startAt.z, size: 1 });
-      out.blips.push({ x: def.startAt.x, z: def.startAt.z, mission: true, colour: def.colour ?? UI_TOKENS.gold });
+      out.blips.push({ x: def.startAt.x, z: def.startAt.z, mission: true, colour: def.colour ?? UI_TOKENS.gold,
+        label: def.title });
     }
     pillars.show(pins);
     out.route = null;

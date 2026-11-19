@@ -14,6 +14,7 @@ import { createSound } from './audio/sound.js';
 import { applyTheme } from './ui/theme.js';
 import { createSettings } from './ui/settings.js';
 import { createPauseMenu } from './ui/pausemenu.js';
+import { MAP_KEY } from './ui/mapscreen.js';
 import { unlockLabel } from './missions/respect.js';
 
 const STEP = 1 / 60;
@@ -169,6 +170,7 @@ function frame(dt) {
   game.draw(game.time);
   stats.end(dt);
   game.updateHud();
+  game.map.draw();
 }
 
 function runLoop(title) {
@@ -180,7 +182,14 @@ function runLoop(title) {
     last = now;
     if (!fixedScale) dynamicResolution.update(raw * 1000, dt);
     const playing = !title?.isOpen();
-    if (playing && canPause() && (input.pressed('Escape') || pauseRequested)) {
+    if (game.map.isOpen) {
+      game.map.update(input, dt);
+      input.endFrame();
+    } else if (playing && (canPause() || game.phone.isOpen) && input.pressed(MAP_KEY)) {
+      if (game.phone.isOpen) game.phone.close();
+      game.map.open({ zoom: 1.4, centre: true });
+      input.endFrame();
+    } else if (playing && canPause() && (input.pressed('Escape') || pauseRequested)) {
       openPause();
       input.endFrame();
     } else if (pause.isOpen()) {
@@ -188,7 +197,7 @@ function runLoop(title) {
       input.endFrame();
     }
     pauseRequested = false;
-    if (pause.isOpen()) {
+    if (pause.isOpen() || game.map.isOpen) {
       accumulator = 0;
       frame(dt);
       requestAnimationFrame(loop);

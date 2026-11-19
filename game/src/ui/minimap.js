@@ -158,9 +158,17 @@ function drawMissionBlip(ctx, blip, unit) {
   ctx.fill();
 }
 
+const drawn = new WeakMap();
+
+/** The city painted once per layout (2048 px over WORLD_BOUNDS); the minimap and the full map share it. */
+export function cityCanvas(layout) {
+  if (!drawn.has(layout)) drawn.set(layout, drawBase(layout));
+  return drawn.get(layout);
+}
+
 /** A circular minimap inside `container`; update(x, z, heading, blips, route) redraws it. */
 export function createMinimap(container, layout) {
-  const base = drawBase(layout);
+  const base = cityCanvas(layout);
   const canvas = document.createElement('canvas');
   canvas.width = 420;
   canvas.height = 420;
@@ -182,6 +190,7 @@ export function createMinimap(container, layout) {
       const rim = (size / 2 - 16) / zoom;
       if (route?.length > 1) drawRoute(ctx, route, mx, mz, 1 / zoom);
       for (const blip of blips) {
+        if (blip.mapOnly) continue;
         const [bx, bz] = toMap(blip.x, blip.z);
         let dx = bx - mx;
         let dz = bz - mz;

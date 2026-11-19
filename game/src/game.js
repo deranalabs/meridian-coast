@@ -28,6 +28,7 @@ import { createStory } from './missions/setup.js';
 import { baseOutfit } from './shops/outfit.js';
 import { ammoView } from './combat/arsenal.js';
 import { createPhone } from './ui/phone.js';
+import { createMapScreen } from './ui/mapscreen.js';
 
 /** The same keyboard with this step's presses hidden (the phone has them); held keys still steer a car. */
 const pressFree = (input) => ({ mouse: input.mouse, down: (...codes) => input.down(...codes),
@@ -206,11 +207,23 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
       z: subject.z,
       heading,
       radio: radio.line(),
-      blips: [...landmarks.blips, ...game.services.blips, ...game.missions.blips,
-        ...game.action.police.blips(game.time)],
+      blips: game.blips(),
       hint: game.nearCarHint(),
     });
   };
+
+  /** Everything the minimap and the full map mark: landmarks, shops, jobs and their targets, police. */
+  game.blips = () => [...landmarks.blips, ...game.services.blips, ...game.missions.blips,
+    ...game.action.police.blips(game.time)];
+
+  /** What the full map shows: where Ilo is and faces, every blip and the job route. */
+  game.mapView = () => {
+    const driving = player.state.mode === 'driving';
+    const subject = driving ? player.state.car.position : ilo.position;
+    return { x: subject.x, z: subject.z, heading: driving ? player.state.car.heading : footCamera.state.yaw,
+      blips: game.blips(), route: game.missions.route };
+  };
+  game.map = createMapScreen(game);
 
   return game;
 }

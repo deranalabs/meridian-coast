@@ -74,11 +74,17 @@ function crane(parts, x) {
     { x0: x - 7, z0: z + 4, x1: x - 5, z1: z + 6 }, { x0: x + 5, z0: z + 4, x1: x + 7, z1: z + 6 }];
 }
 
-/** Add the waterfront to `parts`; returns colliders for crane legs and blip positions. */
+/** The pier names the map prints at the head of each pier, west to east. */
+export const PIER_NAMES = Object.freeze(['Pier Seven', 'Pier Eight', 'Pier Nine']);
+
+/** Add the waterfront to `parts`; returns colliders for crane legs and named blips (cranes, then pier heads). */
 export function addHarbor(parts) {
   quay(parts);
   for (const x of PIERS) pier(parts, x);
   const colliders = [];
   for (const x of CRANES) colliders.push(...crane(parts, x));
-  return { colliders, blips: [{ x: CRANES[1], z: QUAY_Z, colour: '#ff8a3d' }] };
+  const blips = [{ x: CRANES[1], z: QUAY_Z, colour: '#ff8a3d', landmark: true, label: 'Brinewater Cranes' }];
+  PIERS.forEach((x, index) => blips.push({ x, z: QUAY_Z + 70, colour: '#c9a77a', label: PIER_NAMES[index],
+    mapOnly: true }));
+  return { colliders, blips };
 }

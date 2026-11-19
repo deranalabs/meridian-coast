@@ -157,12 +157,19 @@ export function createLandmarks(city, timeOfDay) {
   group.add(sweep);
   const colliders = [light.collider, bowl.collider, ...harbour.colliders, ...promenade.colliders];
   if (city.casino) colliders.push(city.casino.collider);
+  // Named for the full map; `landmark` keeps the name on screen at every zoom.
   const blips = [
-    { x: light.x, z: light.z, colour: '#ffe27a' },
-    { x: bowl.x, z: bowl.z, colour: '#c45cff' },
+    { x: light.x, z: light.z, colour: '#ffe27a', landmark: true, label: 'Gull Key Light' },
+    { x: bowl.x, z: bowl.z, colour: '#c45cff', landmark: true, label: 'Meridian Bowl' },
     ...harbour.blips,
+    // The causeway is named only zoomed in: at full view its label would sit on the lighthouse's.
+    { x: (CAUSEWAY.x0 + CAUSEWAY.x1) / 2, z: city.layout.causewayZ, colour: '#ece6da', mapOnly: true,
+      label: 'Gull Key Causeway' },
   ];
-  if (city.casino) blips.push({ x: city.casino.centre.x, z: city.casino.centre.z, colour: '#ffc94a' });
+  if (city.casino) {
+    blips.push({ x: city.casino.centre.x, z: city.casino.centre.z, colour: '#ffc94a', landmark: true,
+      label: 'Marlin Crown' });
+  }
   return {
     group,
     colliders,

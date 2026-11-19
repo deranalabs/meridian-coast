@@ -27,6 +27,7 @@ export const CONTROLS = Object.freeze([
     [['↑', '↓', 'Enter'], 'Choose and confirm'],
     [['←', '→'], 'Change a setting'],
     [['M'], 'Mute sound'],
+    [['N'], 'Full map (WASD pan, +/− or wheel zoom, Space finds you)'],
   ]],
   ['Story', [
     [['P'], 'Phone: contacts, jobs, rank'],
