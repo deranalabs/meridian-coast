@@ -151,3 +151,69 @@ resume; `PLAY_SHOTS=1` saves the pause menu at 768x480 to `tmp/play-pause.jpg`.
 
 **Untested**: what the audio actually sounds like (headless runs only check that the context unlocks and no
 errors are thrown); the pointer-lock pause in a real window; Quit to title.
+
+## Recording 3b: story, cast, missions one to three, phone
+
+**Story so far** (`missions/story/plot.js` holds it as data: premise, motives, beats, betrayals). Ilo Rask, an
+ex-courier, owes Gus Pell forty grand and the interest grows daily. Nell, the fixer at the Lucky Lantern, gives him
+work. (1) *Lantern Run*: Ilo walks a sealed parcel from the Coral Street kiosk to Gus in Nell's courier colours,
+with no police behind him; Gus calls it interest, not payment. (2) *Salt and Chrome*: for Gus's collateral Ilo
+steals Harlan Voss's silver coupe outside the freight yard, shakes the two-star alarm the yard calls in, and brings
+it to his cousin Tavi's bay. (3) *White Van*: Juno, the night DJ, tips him off about Dex's van out of Pier Nine;
+Ilo tails it to the Brinewater cold store, breaks the Salt Dogs escort and finds real harbour permits signed at the
+precinct. Planned for 3c: (4) *Headline* for Captain Solis, (5) *Hill Favour* for Priya, (6) *Tarp Run* with
+Benny, and the heist *Gilded Tide* under the Hotel Aurelio, where Nell, Dex and Solis each turn.
+
+**The ten characters** (`data/cast.js`, portraits in `ui/portrait.js`): Ilo Rask (you), Nell Okafor (fixer,
+Velvet Hand), Augustin "Gus" Pell (loan shark, Gilded Wake), Harlan Voss (harbour boss, Salt Dogs), Capt. Renata
+Solis (police), Tavi Rask (cousin, mechanic, Calder Crew), Dex Marrow (Voss's driver), Priya Castell (Calder Crew
+boss), Juno Clement (night DJ), Benny Larch (boatman, Gull Key).
+
+**Mission definition** (one file per mission in `missions/story/`, listed in `story/index.js`). Plain data;
+`missions/resolve.js` turns place ids into points and throws on an unknown place or stage type at startup.
+
+```js
+export const LANTERN_RUN = Object.freeze({
+  id: 'lantern-run', number: 1, title: 'Lantern Run', giver: 'nell', requires: [], startAt: 'lantern',
+  colour: '#c45cff', reward: { cash: 1200, respect: 10 }, outfit: ['courier-jacket', 'courier-cap'],
+  intro: [['nell', 'A parcel at the Coral Street kiosk. You walk it to Gus.']], outro: [['gus', 'Sealed.']],
+  stages: [
+    { type: 'goto', at: 'newsbox', radius: 3.5, onFoot: true, text: 'Collect the parcel at the kiosk' },
+    { type: 'deliver', at: 'pell-hotel', wait: 1.5, onFoot: true, noWanted: true, checkpoint: true,
+      start: 'newsbox', text: 'Walk the parcel to Gus' },
+  ],
+  setup(kit, stageIndex, restart) { const props = kit.scope(); props.actor('gus', 'pell-hotel'); return props; },
+});
+```
+
+Stage fields: `type` (goto, drive, steal, follow, defeat, evade, deliver), `text`, `next`, `at`, `radius`, `car`
+(a tagged mission car), `target` (a convoy name), `group` (a crew name), `min`/`max`/`closeGrace` (follow),
+`wait` (deliver), `onFoot`, `clean` (deliver only with no stars), `noWanted` (fails "heat" the moment stars
+appear), `alert` (the stage raises the real wanted level to that many stars, and an evade stage clears only after
+they went up), `checkpoint` (a retry starts here), `start` (where a retry on foot puts Ilo), `talk` (lines when
+the stage begins), `leash`. A mission's `setup(kit, stageIndex, restart)` returns the kit scope; it may add
+`onStage(index)` (a stage began) and `onPassed()` (set `focus` for the outro camera).
+
+**How to add a mission**: add a beat to `plot.js`; write `story/mN-name.js` exporting the definition; list it in
+`story/index.js`; add any new place to `MISSION_PLACES` in `data/places.js` and any costume to `STORY_CLOTHING` in
+`data/clothing.js`; run `node --test game/src/missions/story/story.test.js` (it resolves every place, runs every
+setup against a fake kit, and checks the requires chain, the cast and the plot). Play it with the phone (P).
+
+**Built in 3b**: the mission framework (`machine.js`, `objectives.js`, `failures.js`, `progress.js`,
+`director.js`, `kit.js`, `convoy.js`, `crew.js`), gold start pillars and minimap pins, the mission panel, dialogue
+cards with portraits, typewriter text and voice blips, the cutscene camera; then the three missions; the phone
+(`ui/phone.js`, `ui/phoneview.js`, `ui/phone.css`: contacts with portraits, open, later and done jobs, rank and
+respect, Enter walks Ilo to the job's giver when he is on foot, unwanted and free); `police.alert()` and
+`police.heat()` so missions read and raise the real wanted level; a busted Ilo fails the job "caught"; pass and fail
+spark showers (`combat/effects.js`); Nell's courier jacket and cap worn for mission one and taken off after
+(`STORY_CLOTHING`, `costume()` in `shops/outfit.js`); a retry clears the failure line (`messages.drop`).
+
+**Keys**: P phone (arrows and Enter to take a job, P or Esc to close), E at a gold pillar to meet the contact,
+Enter skips a dialogue line or retries a failed job, Backspace calls a failed job off.
+
+**Tests**: `missions/story/story.test.js` (places, stages, rewards, requires chain, cast, plot, setups, mission one
+and two through the state machine), `ui/phone.test.js`. `tests/play.mjs` now takes mission one from the phone,
+reaches the kiosk, fails it with a raised alarm, retries from the checkpoint, completes it and sees $1,200 paid.
+
+**Untested**: missions two and three are played end to end only by scratch scripts (alarm, evade, tail, too-far
+failure, retry, escort fight, payout all worked); the escort fight's difficulty by hand.
