@@ -217,3 +217,53 @@ reaches the kiosk, fails it with a raised alarm, retries from the checkpoint, co
 
 **Untested**: missions two and three are played end to end only by scratch scripts (alarm, evade, tail, too-far
 failure, retry, escort fight, payout all worked); the escort fight's difficulty by hand.
+
+## Recording 3c and 3d: missions four to eight, activities, ranks, radio, full map, cover
+
+**What exists (3c)**: missions four to six, **Headline** (Voss yard stake-out, fight, four-star evade, deliver to
+Solis), **Hill Favour** and **Tarp Run** (race, buy and timed stages, race courses with a rival); the heist in two
+parts, **Tide Tables** (scout the Hotel Aurelio on foot, steal the Seabright linen van, buy the lance and masks as
+job gear in the shops) and **Gilded Tide** (drive in, drop the guards in a `quiet` stage, a timed vault cut with a
+lit vault door, a four-star dragnet escape with the helicopter, the van to Benny's boat at Gull Key). Respect ranks
+(`missions/respect.js`) open weapons, cars and clothes: shops show locks, the pause menu and the phone the next
+unlock. Activities (`missions/activities/`): the **Causeway Sprint** street race and **Rask Cabs** fares, both
+repeatable, the cab tips for beating the meter. Radio (`ui/radio.js`, `ui/radiocontent.js`): four stations with
+hosts, DJ lines and satirical ads on a fixed programme; news flashes for passed jobs, chases, the helicopter and
+arrests; the radio line tags each segment (NEWS, DJ, AD) and wraps to two lines clear of the left panels.
+
+**What exists (3d)**: the **full map** on **N** (`ui/mapscreen.js` DOM, keys and mouse; `ui/mapdraw.js` painting;
+`ui/mapprojection.js` the pure world-to-screen projection with tests; `ui/mapscreen.css`): the minimap's city
+canvas (shared through `cityCanvas(layout)`), district names, named landmarks (lighthouse, Bowl, Marlin Crown,
+cranes; piers and the causeway when zoomed), job and activity pins with titles, job targets and the gold route, shop
+tiles with letters (names when zoomed), police cars and the helicopter, Ilo's arrow, a legend and a district key.
+WASD or drag pans, +/− or the wheel zooms at the cursor, Space finds Ilo; the world holds still while it is open;
+N on the phone hands over to the map. `game.blips()` and `game.mapView()` feed both maps. `missions.jump(id, stage)`
+starts a job mid-way for scenes and tests. The weapon bar stays up in a car, dimmed and labelled "Stowed". Dialogue
+names lift dark faction colours so police navy reads. Lit wanted stars are gold.
+
+**Controls added**: N full map (also in the pause menu's Controls list and the phone's key line).
+
+**Shots** (`tests/shot-list.mjs`, 1280x800, all under 256 KiB): `1-mission.jpg` the cover, Gilded Tide stage 4 of 5
+at dusk: mission panel, PMPD dispatch rows, wanted stars, stowed weapon bar, Solis on the dialogue card, minimap,
+Air-1 with its searchlight, cruisers, traffic and a NEWS radio line; `2-map.jpg` the full map; `3-shop.jpg`;
+`4-combat.jpg`. `browser.mjs --shots` fails unless every cover panel is present, on screen, apart from the others
+and its smallest text at least 6 px at contact-sheet size (`hudLayout` in `look-metrics.mjs`, `panelBoxes` in
+`cdp.mjs`).
+
+**Look numbers (768x480, with HUD)**: 1-mission gradEnergy 7.95, flatBlocks 0.252, colors 192, brightShare 3.71 %,
+meanSat 0.421: every cover target met. 2-map 5.47 / 0.577 / 81 / 0.45 % / 0.518; 3-shop 4.76 / 0.524 / 82 / 2.61 % /
+0.519; 4-combat 6.87 / 0.365 / 110 / 0.84 % / 0.497.
+
+**Draw calls and FPS** (M1, 1440x900 at DPR 1.5, dynamic resolution): drive scene 70 draw calls, 58.9 FPS; live
+heist chase (`--perf --scene=mission`: four stars, three cruisers, helicopter) 75 draw calls, 59.7 FPS. A stale
+headless Chrome left by an interrupted test run halved the FPS on the first try: if numbers drop, look for
+`tmp/chrome-profile-*` processes first.
+
+**Tests**: 103 unit tests pass; lint clean. `tests/play.mjs` (38 checks, no console errors) now also opens the map,
+zooms to Ilo and closes it; takes Headline after mission three, clears the yard and the stake-out and calls it off
+with no heat left; drives a whole Rask Cabs fare (cab, pick-up, drop, $250 plus a tip). `MAKEFUN_OUTPUT_DIR=out node
+main.ts` gives identical bytes twice.
+
+**Untested**: Hill Favour, Tarp Run, Tide Tables and the race end to end in the walk-through (played by hand and
+by scratch scripts in 3c); the heist's later stages only through the cover scene; map drag and wheel by hand only;
+nothing on GPUs other than the M1.
