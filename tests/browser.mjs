@@ -54,7 +54,8 @@ async function runShots(server, nohud) {
     await page.send('Runtime.enable');
     await page.send('Log.enable');
     const errors = watchErrors(page);
-    await page.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false });
+    const metrics = { width: 1280, height: 800, deviceScaleFactor: 1, mobile: false };
+    await page.send('Emulation.setDeviceMetricsOverride', metrics);
     mkdirSync(join(ROOT, 'screenshots'), { recursive: true });
     mkdirSync(join(ROOT, 'tmp', 'look'), { recursive: true });
     for (const shot of SHOT_LIST) {
@@ -84,7 +85,8 @@ async function runPerf(server) {
     const errors = watchErrors(page);
     const dprArg = process.argv.find((arg) => arg.startsWith('--dpr='));
     const deviceScaleFactor = dprArg ? Number(dprArg.slice(6)) : 1.5;
-    await page.send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor, mobile: false });
+    const metrics = { width: 1440, height: 900, deviceScaleFactor, mobile: false };
+    await page.send('Emulation.setDeviceMetricsOverride', metrics);
     const scaleArg = process.argv.find((arg) => arg.startsWith('--scale='));
     const extra = scaleArg ? `&scale=${scaleArg.slice(8)}` : '';
     await openScene(page, `${server.url}index.html?shot=drive&seed=1&live=1${extra}`, errors);
@@ -122,7 +124,9 @@ const server = await startServer(8131);
 try {
   if (args.has('--shots')) await runShots(server, args.has('--nohud'));
   if (args.has('--perf')) await runPerf(server);
-  if (!args.has('--shots') && !args.has('--perf')) console.log('usage: node tests/browser.mjs --shots [--nohud] | --perf');
+  if (!args.has('--shots') && !args.has('--perf')) {
+    console.log('usage: node tests/browser.mjs --shots [--nohud] | --perf [--dpr=N] [--scale=S]');
+  }
 } finally {
   server.stop();
 }

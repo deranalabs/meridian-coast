@@ -94,7 +94,9 @@ export function mergeGeometries(geometries, names, constants = []) {
       }
     }
     if (geometry.index) {
-      for (let i = 0; i < geometry.index.count; i += 1) indices[indexOffset + i] = geometry.index.getX(i) + vertexOffset;
+      for (let i = 0; i < geometry.index.count; i += 1) {
+        indices[indexOffset + i] = geometry.index.getX(i) + vertexOffset;
+      }
       indexOffset += geometry.index.count;
     } else {
       for (let i = 0; i < count; i += 1) indices[indexOffset + i] = vertexOffset + i;

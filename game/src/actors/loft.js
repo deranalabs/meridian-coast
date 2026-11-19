@@ -75,7 +75,8 @@ export function sliceRings(rings, y0, y1) {
         return a.map((value, k) => (k === 0 ? y : value + ((b[k] ?? 0) - value) * t));
       }
     }
-    const nearest = Math.abs(y - rings[0][0]) < Math.abs(y - rings[rings.length - 1][0]) ? rings[0] : rings[rings.length - 1];
+    const last = rings[rings.length - 1];
+    const nearest = Math.abs(y - rings[0][0]) < Math.abs(y - last[0]) ? rings[0] : last;
     return [y, ...nearest.slice(1)];
   };
   const inside = rings.filter((ring) => ring[0] > lo && ring[0] < hi);

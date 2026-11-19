@@ -71,7 +71,8 @@ export function deckHeight(x) {
   }
   if (x < CAUSEWAY.x1 - CAUSEWAY.rampOut) return CAUSEWAY.deck;
   if (x < CAUSEWAY.x1) {
-    return CAUSEWAY.deck + (endHeight - CAUSEWAY.deck) * smooth((x - (CAUSEWAY.x1 - CAUSEWAY.rampOut)) / CAUSEWAY.rampOut);
+    const t = (x - (CAUSEWAY.x1 - CAUSEWAY.rampOut)) / CAUSEWAY.rampOut;
+    return CAUSEWAY.deck + (endHeight - CAUSEWAY.deck) * smooth(t);
   }
   return endHeight;
 }

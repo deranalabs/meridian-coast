@@ -54,7 +54,9 @@ function inset(box, amount) {
 function frontEdges(box, fronts) {
   const edges = [];
   for (const front of fronts) {
-    if (front === 'n') edges.push({ a: { x: box.x0, z: box.z0 }, b: { x: box.x1, z: box.z0 }, n: [0, -1], rot: Math.PI });
+    if (front === 'n') {
+      edges.push({ a: { x: box.x0, z: box.z0 }, b: { x: box.x1, z: box.z0 }, n: [0, -1], rot: Math.PI });
+    }
     if (front === 's') edges.push({ a: { x: box.x1, z: box.z1 }, b: { x: box.x0, z: box.z1 }, n: [0, 1], rot: 0 });
     if (front === 'w') {
       edges.push({ a: { x: box.x0, z: box.z1 }, b: { x: box.x0, z: box.z0 }, n: [-1, 0], rot: -Math.PI / 2 });
@@ -77,6 +79,17 @@ function addStreetDressing(out, lot, box, ground, district, look, random) {
     const length = Math.hypot(edge.b.x - edge.a.x, edge.b.z - edge.a.z);
     const mid = { x: (edge.a.x + edge.b.x) / 2, z: (edge.a.z + edge.b.z) / 2 };
     const isShop = look.shop;
+    if (isShop) {
+      out.glows.push({
+        x: mid.x + edge.n[0] * 1.6,
+        z: mid.z + edge.n[1] * 1.6,
+        rot: edge.rot,
+        width: length * 0.95,
+        depth: 4.5,
+        colour: '#ffb070',
+        strength: 0.4,
+      });
+    }
     if (isShop && random.chance(0.7) && length > 5) {
       out.awnings.push({
         x: mid.x + edge.n[0] * 0.02,
@@ -198,7 +211,7 @@ function buildTower(builder, out, lot, box, ground, district, style, look, rando
  * prop, sign and physics modules.
  */
 export function buildBuildings(builder, layout, seed) {
-  const out = { colliders: [], awnings: [], signs: [], roofs: [], tallest: 0 };
+  const out = { colliders: [], awnings: [], signs: [], roofs: [], glows: [], tallest: 0 };
   layout.lots.forEach((lot, index) => {
     const random = createRandom(seed * 1009 + index * 31 + 7);
     const district = DISTRICT_BY_ID[lot.district];

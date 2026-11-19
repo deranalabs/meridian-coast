@@ -85,7 +85,8 @@ export function createTraffic(fleet, layout, ground, count, seed, focus, radius 
       control.x = nodeData.x + dx * 6;
       control.z = nodeData.z + dz * 6;
     }
-    const length = Math.hypot(control.x - start.x, control.z - start.z) + Math.hypot(end.x - control.x, end.z - control.z);
+    const length = Math.hypot(control.x - start.x, control.z - start.z)
+      + Math.hypot(end.x - control.x, end.z - control.z);
     agent.turn = { start: { ...start }, control, end, length: Math.max(length, 1), t: 0, next: nextId, node, nextLane,
       exitDistance };
   }
@@ -137,7 +138,8 @@ export function createTraffic(fleet, layout, ground, count, seed, focus, radius 
       const target = gap < FOLLOW_GAP ? 0 : gap < FOLLOW_GAP + 6 ? agent.cruise * 0.4 : agent.cruise;
       const turning = agent.turn ? 0.55 : 1;
       const goal = target * turning;
-      agent.speed += Math.sign(goal - agent.speed) * Math.min(Math.abs(goal - agent.speed), (goal > agent.speed ? 4 : 9) * dt);
+      const rate = (goal > agent.speed ? 4 : 9) * dt;
+      agent.speed += Math.sign(goal - agent.speed) * Math.min(Math.abs(goal - agent.speed), rate);
       if (agent.turn) {
         const turn = agent.turn;
         turn.t = Math.min(1, turn.t + (agent.speed * dt) / turn.length);

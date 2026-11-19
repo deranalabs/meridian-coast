@@ -3,8 +3,9 @@
 const SLOW_MS = 17.8;
 const VSYNC_MS = 17.1;
 const STEP = 0.1;
-const STABLE_SECONDS = 5;
-const RETRY_SECONDS = 20;
+const STABLE_SECONDS = 4;
+const RETRY_SECONDS = 8;
+const WARMUP_SECONDS = 3;
 
 /**
  * update(frameMs, dt) with the measured frame interval. Frames above SLOW_MS step the scale down; a long run
@@ -12,7 +13,8 @@ const RETRY_SECONDS = 20;
  */
 export function createDynamicResolution(post, { min = 0.6, max = 1 } = {}) {
   let average = 16.7;
-  let cooldown = 1.5;
+  let cooldown = WARMUP_SECONDS;
+  let warming = true;
   let stable = 0;
   let ceiling = max;
   let ceilingTimer = 0;
@@ -27,6 +29,11 @@ export function createDynamicResolution(post, { min = 0.6, max = 1 } = {}) {
       if (ceilingTimer <= 0) ceiling = max;
       stable = average < VSYNC_MS ? stable + dt : 0;
       if (cooldown > 0) return;
+      if (warming) {
+        warming = false;
+        average = Math.min(average, frameMs);
+        return;
+      }
       if (average > SLOW_MS && post.scale > min + 1e-3) {
         ceiling = post.scale - 1e-3;
         ceilingTimer = RETRY_SECONDS;

@@ -218,8 +218,9 @@ function outerPieces(out) {
         COLOUR.accent, 0.3, 0.9));
       if (style === 'bomber') {
         for (const side of [-1, 1]) {
-          out.push(piece(placed(new THREE.BoxGeometry(0.012, 0.09, 0.05), [side * 0.17, 0.08, 0.07], [0, side * 0.5, 0]),
-            PART.abdomen, slot, variant, COLOUR.outerLining, 0.6));
+          const flap = new THREE.BoxGeometry(0.012, 0.09, 0.05);
+          const pocket = placed(flap, [side * 0.17, 0.08, 0.07], [0, side * 0.5, 0]);
+          out.push(piece(pocket, PART.abdomen, slot, variant, COLOUR.outerLining, 0.6));
         }
       } else {
         const hood = loft([[0.24, 0.1, 0.09], [0.3, 0.11, 0.1], [0.35, 0.08, 0.07]], { arc: Math.PI * 1.1 });

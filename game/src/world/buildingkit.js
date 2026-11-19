@@ -2,7 +2,9 @@
 import { MeshBuilder } from '../core/meshbuilder.js';
 import { ATLAS_ROWS, TILE_CELL, ALWAYS_LIT } from './facades.js';
 
-const LIT_NEVER = new Set(['roofGravel', 'roofTerracotta', 'roofMetal', 'cornice', 'parapet', 'plainWall', 'corrugated']);
+const LIT_NEVER = new Set([
+  'roofGravel', 'roofTerracotta', 'roofMetal', 'cornice', 'parapet', 'plainWall', 'corrugated',
+]);
 
 /** Atlas attribute for a tile name: column, flipped row, lit mode (0 random, 1 always, 2 never). */
 export function tileAttribute(name) {

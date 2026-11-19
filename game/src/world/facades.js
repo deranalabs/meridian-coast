@@ -37,7 +37,11 @@ export const TILE_CELL = Object.fromEntries(
 export const ALWAYS_LIT = new Set(['lobby', 'shopA', 'shopB', 'decoGround', 'oldShop']);
 
 function layers() {
-  return { albedo: makeCanvas(WIDTH, HEIGHT), emissive: makeCanvas(WIDTH, HEIGHT), material: makeCanvas(WIDTH, HEIGHT) };
+  return {
+    albedo: makeCanvas(WIDTH, HEIGHT),
+    emissive: makeCanvas(WIDTH, HEIGHT),
+    material: makeCanvas(WIDTH, HEIGHT),
+  };
 }
 
 /**

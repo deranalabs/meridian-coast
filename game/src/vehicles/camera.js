@@ -11,8 +11,8 @@ export function createChaseCamera(camera) {
     snap() {
       state.initialised = false;
     },
-    update(car, speed, dt, { distance = 4.7, height = 1.42, look = 0.95 } = {}) {
-      const heading = car.heading;
+    update(car, speed, dt, { distance = 4.7, height = 1.42, look = 1.3, yawOffset = 0 } = {}) {
+      const heading = car.heading + yawOffset;
       const first = !state.initialised;
       if (first) {
         state.yawLag = heading;
@@ -30,9 +30,9 @@ export function createChaseCamera(camera) {
       if (dt <= 0 || first) camera.position.copy(tempDesired);
       else camera.position.lerp(tempDesired, Math.min(1, dt * 16));
       tempTarget.set(
-        car.position.x + Math.sin(heading) * 2.5,
+        car.position.x + Math.sin(car.heading) * 2.5,
         car.position.y + look,
-        car.position.z + Math.cos(heading) * 2.5,
+        car.position.z + Math.cos(car.heading) * 2.5,
       );
       camera.lookAt(tempTarget);
       const targetFov = 55 + Math.min(10, Math.abs(speed) * 0.2);

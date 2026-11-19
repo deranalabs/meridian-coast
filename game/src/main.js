@@ -74,7 +74,8 @@ window.__meridian = {
       const triangles = (geometry.index ? geometry.index.count : geometry.attributes.position.count) / 3;
       const instances = object.isInstancedMesh ? object.count : geometry.instanceCount ?? 1;
       const count = Number.isFinite(instances) ? instances : 1;
-      rows.push({ name: object.name || object.type, triangles: Math.round(triangles * count), shadow: object.castShadow });
+      const name = object.name || object.type;
+      rows.push({ name, triangles: Math.round(triangles * count), shadow: object.castShadow });
     });
     return rows.sort((a, b) => b.triangles - a.triangles).slice(0, 25);
   },

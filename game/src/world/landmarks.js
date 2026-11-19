@@ -27,8 +27,8 @@ function lighthouse(parts) {
   parts.add(new THREE.CylinderGeometry(2.8, 2.8, 0.4, 20), M([x, top + 0.2, z]), '#2a2c30', { metal: 0.6 });
   for (let k = 0; k < 20; k += 1) {
     const angle = (k / 20) * Math.PI * 2;
-    parts.add(new THREE.BoxGeometry(0.06, 1.0, 0.06), M([x + Math.cos(angle) * 2.65, top + 0.9, z + Math.sin(angle) * 2.65]),
-      '#2a2c30', { metal: 0.7 });
+    const post = M([x + Math.cos(angle) * 2.65, top + 0.9, z + Math.sin(angle) * 2.65]);
+    parts.add(new THREE.BoxGeometry(0.06, 1.0, 0.06), post, '#2a2c30', { metal: 0.7 });
   }
   parts.add(new THREE.TorusGeometry(2.65, 0.05, 4, 24), M([x, top + 1.4, z], [Math.PI / 2, 0, 0]), '#2a2c30',
     { metal: 0.7 });

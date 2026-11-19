@@ -47,7 +47,7 @@ export function createCity(seed, timeOfDay) {
   group.add(signs.group);
   const props = createProps(layout, buildings, signs.billboards, surfaces, timeOfDay, seed);
   group.add(props.group);
-  const pools = createLightPools(props.lamps, timeOfDay);
+  const pools = createLightPools(props.lamps, [...buildings.glows, ...signs.glows], timeOfDay);
   group.add(pools.group);
 
   return {

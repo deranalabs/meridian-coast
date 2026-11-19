@@ -87,6 +87,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
   const game = {
     scene, camera, city, landmarks, ground, colliders, fleet, traffic, smoke, characters, ilo, pedestrians, player,
     chase, footCamera, post, hud, radio, lighting, sky, timeOfDay, seed, time: 0, cameraMode: 'auto',
+    chaseOptions: undefined,
   };
 
   game.step = (dt, input) => {
@@ -109,7 +110,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
 
   game.updateCamera = (dt, mouse = { dx: 0, dy: 0 }) => {
     if (player.state.mode === 'driving') {
-      chase.update(player.state.car, player.state.vehicle.speed, dt);
+      chase.update(player.state.car, player.state.vehicle.speed, dt, game.chaseOptions);
       footCamera.setYaw(player.state.car.heading);
     } else {
       footCamera.update(ilo.position, mouse, dt, (x, z) => ground.surfaceAt(x, z).height);

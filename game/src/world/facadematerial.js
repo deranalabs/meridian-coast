@@ -94,7 +94,7 @@ export function createFacadeMaterial(atlas, timeOfDay) {
     uMaterial: { value: atlas.material },
     uGrime: { value: grimeTexture(31) },
     uWindowsLit: { value: timeOfDay.windowsLit },
-    uWindowLevel: { value: timeOfDay.name === 'night' ? 3.2 : 2.4 },
+    uWindowLevel: { value: timeOfDay.name === 'night' ? 3.6 : 3.6 },
   };
   material.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniforms);

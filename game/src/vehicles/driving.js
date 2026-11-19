@@ -51,6 +51,8 @@ export function stepVehicle(state, input, dt, collide = null, blocked = null) {
   }
   if (input.handbrake) forward -= Math.sign(forward) * Math.min(Math.abs(forward), 9 * dt);
   forward -= forward * (ROLLING_DRAG + Math.abs(forward) * AIR_DRAG) * dt;
+  const worldX = fx * forward + rx * lateral;
+  const worldZ = fz * forward + rz * lateral;
 
   const wheelbase = spec.frontAxle - spec.rearAxle;
   let yawTarget = (forward * Math.tan(state.steer)) / wheelbase;
@@ -58,12 +60,18 @@ export function stepVehicle(state, input, dt, collide = null, blocked = null) {
   state.yawRate += (yawTarget - state.yawRate) * Math.min(1, dt * (input.handbrake ? 5 : 9));
   state.heading += state.yawRate * dt;
 
-  const grip = input.handbrake ? 1.1 : spec.grip;
-  lateral *= Math.exp(-grip * dt);
+  // The body yaws but the momentum keeps its direction: re-read it in the new frame, then grip bleeds the
+  // sideways part. Low rear grip (handbrake) lets it slide: that slip is the drift.
   const nfx = Math.sin(state.heading);
   const nfz = Math.cos(state.heading);
   const nrx = -nfz;
   const nrz = nfx;
+  forward = worldX * nfx + worldZ * nfz;
+  lateral = worldX * nrx + worldZ * nrz;
+  const grip = input.handbrake ? 1.1 : spec.grip;
+  const bled = lateral * (1 - Math.exp(-grip * dt));
+  lateral -= bled;
+  forward += Math.sign(forward) * Math.abs(bled) * 0.35;
   state.vx = nfx * forward + nrx * lateral;
   state.vz = nfz * forward + nrz * lateral;
 

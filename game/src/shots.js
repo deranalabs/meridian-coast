@@ -1,31 +1,50 @@
 // Deterministic screenshot scenes behind ?shot=<name>&seed=N: each sets time of day, actors and camera.
 
-const DRIVE_LANE_Z = -62;
-const DRIVE_END_X = 40;
+const CLUTTER = ['bin', 'news', 'hydrant', 'bench', 'meter', 'bollard', 'shelter', 'planter', 'palm', 'palmTall',
+  'tree', 'lamp', 'sign', 'signal'];
 
-function nearestSign(game, x, z, district) {
-  let best = null;
-  let bestDistance = Infinity;
-  for (const sign of game.city.buildings.signs) {
-    if (sign.kind !== 'flat' || sign.district !== district) continue;
-    const d = Math.hypot(sign.x - x, sign.z - z);
-    if (d < bestDistance) {
-      bestDistance = d;
-      best = sign;
-    }
-  }
-  return best;
-}
+/** The drive: northbound on the x = 100 avenue of Neon Mile, the Marlin Crown casino rising ahead right. */
+const DRIVE = { laneX: 102, endZ: -54, heading: Math.PI, speed: 24 };
 
 function wrap(angle) {
   return Math.atan2(Math.sin(angle), Math.cos(angle));
 }
 
-/** Keep a scripted car on a westbound lane at z = laneZ. */
-function laneKeeper(game, laneZ, throttle) {
+function clearOfProps(game, x, z, radius) {
+  const lists = game.city.props.placements;
+  for (const type of CLUTTER) {
+    for (const p of lists[type]) if (Math.hypot(p.x - x, p.z - z) < radius) return false;
+  }
+  return true;
+}
+
+/** A neon sign in `district` near (x, z) with clear pavement in front of it for a character and a camera. */
+function findSignSpot(game, x, z, district) {
+  const signs = game.city.buildings.signs
+    .filter((sign) => sign.kind === 'flat' && sign.district === district)
+    .sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z));
+  for (const sign of signs) {
+    const nx = Math.sin(sign.rot);
+    const nz = Math.cos(sign.rot);
+    const px = sign.x + nx * 2.3;
+    const pz = sign.z + nz * 2.3;
+    const cx = px + nx * 3.4 + nz * 1.7;
+    const cz = pz + nz * 3.4 - nx * 1.7;
+    const midX = (px + cx) / 2;
+    const midZ = (pz + cz) / 2;
+    if (clearOfProps(game, px, pz, 2.4) && clearOfProps(game, midX, midZ, 1.4) && clearOfProps(game, cx, cz, 1.2)) {
+      return { sign, nx, nz, px, pz, cx, cz };
+    }
+  }
+  return null;
+}
+
+/** Keep a scripted car on its lane along the x axis heading north (or any fixed heading). */
+function laneKeeper(game, laneX, heading, throttle) {
   return () => {
     const v = game.player.state.vehicle;
-    const target = -Math.PI / 2 - Math.max(-0.3, Math.min(0.3, (v.z - laneZ) * 0.08));
+    const sideError = (v.x - laneX) * Math.sign(Math.cos(heading)) * -1;
+    const target = heading + Math.max(-0.3, Math.min(0.3, sideError * 0.08));
     const steer = Math.max(-1, Math.min(1, wrap(target - v.heading) * 2.5));
     return { throttle, steer, handbrake: false };
   };
@@ -38,32 +57,32 @@ function laneKeeper(game, laneZ, throttle) {
 export const SHOTS = {
   drive: {
     time: 'dusk',
-    steps: 36,
-    focus: [DRIVE_END_X - 20, 0, DRIVE_LANE_Z],
+    steps: 40,
+    focus: [100, 0, DRIVE.endZ - 25],
     stage(game) {
       const car = game.fleet.add('coupe', '#f0a800');
-      car.position.set(DRIVE_END_X + 14, 0, DRIVE_LANE_Z);
-      car.heading = -Math.PI / 2;
+      const startZ = DRIVE.endZ + DRIVE.speed * (40 / 60);
+      car.position.set(DRIVE.laneX, 0, startZ);
+      car.heading = DRIVE.heading;
       game.player.enterNow(car);
-      const v = game.player.state.vehicle;
-      v.vx = -24;
-      const ahead = [[-16, 6], [-34, 2], [-58, 6], [-80, 2]];
-      const oncoming = [[-8, 2], [-30, 6], [-52, 2], [-74, 6]];
+      game.player.state.vehicle.vz = -DRIVE.speed;
+      game.player.state.autopilot = laneKeeper(game, DRIVE.laneX, DRIVE.heading, 0.55);
+      game.chaseOptions = { yawOffset: -0.32, distance: 5.0, height: 1.5, look: 1.25 };
+      const ahead = [[-14, 6], [-30, 2], [-52, 6], [-76, 2]];
+      const oncoming = [[-6, 2], [-24, 6], [-44, 2], [-68, 6]];
       let slot = 0;
-      for (const [dx, lane] of ahead) {
-        game.traffic.placeNear(slot, DRIVE_END_X + dx, -60, -1, 0, lane);
+      for (const [dz, lane] of ahead) {
+        game.traffic.placeNear(slot, 100, DRIVE.endZ + dz + 10, 0, -1, lane);
         slot += 1;
       }
-      for (const [dx, lane] of oncoming) {
-        game.traffic.placeNear(slot, DRIVE_END_X + dx, -60, 1, 0, lane);
+      for (const [dz, lane] of oncoming) {
+        game.traffic.placeNear(slot, 100, DRIVE.endZ + dz - 10, 0, 1, lane);
         slot += 1;
       }
-      game.player.state.autopilot = laneKeeper(game, DRIVE_LANE_Z, 0.55);
       for (const parked of game.fleet.cars) {
         if (!parked.parked) continue;
-        const dx = parked.position.x - DRIVE_END_X;
-        const near = parked.position.z > -60 ? dx > -40 && dx < 30 : dx > -16 && dx < 30;
-        if (near) parked.visible = false;
+        const dz = parked.position.z - DRIVE.endZ;
+        if (Math.abs(parked.position.x - 100) < 12 && dz > -26 && dz < 20) parked.visible = false;
       }
       return {};
     },
@@ -73,19 +92,26 @@ export const SHOTS = {
     steps: 90,
     focus: [-60, 0, 20],
     stage(game) {
-      const sign = nearestSign(game, -60, 20, 'neon');
-      const nx = Math.sin(sign.rot);
-      const nz = Math.cos(sign.rot);
-      const x = sign.x + nx * 2.4;
-      const z = sign.z + nz * 2.4;
-      const y = game.ground.surfaceAt(x, z).height;
-      game.ilo.position.set(x, y, z);
-      const alongX = nz;
-      const alongZ = -nx;
-      game.ilo.heading = Math.atan2(nx * 0.6 - alongX, nz * 0.6 - alongZ);
+      const spot = findSignSpot(game, -60, 20, 'neon');
+      const y = game.ground.surfaceAt(spot.px, spot.pz).height;
+      game.ilo.position.set(spot.px, y, spot.pz);
+      game.ilo.heading = Math.atan2(spot.cx - spot.px, spot.cz - spot.pz) - 0.35;
       game.cameraMode = 'manual';
-      game.camera.position.set(x + nx * 2.6 - alongX * 4.2, y + 1.55, z + nz * 2.6 - alongZ * 4.2);
-      game.camera.lookAt(x + alongX * 7 - nx * 0.6, y + 2.3, z + alongZ * 7 - nz * 0.6);
+      game.camera.position.set(spot.cx, y + 1.45, spot.cz);
+      game.camera.lookAt(spot.px - spot.nz * 2.4 + spot.nx * 0.9, y + 1.75, spot.pz + spot.nx * 2.4 + spot.nz * 0.9);
+      return {};
+    },
+  },
+  title: {
+    time: 'dusk',
+    steps: 60,
+    hud: false,
+    title: true,
+    focus: [330, 0, -60],
+    stage(game) {
+      game.cameraMode = 'manual';
+      game.camera.position.set(452, 4.5, 30);
+      game.camera.lookAt(300, 34, -110);
       return {};
     },
   },
@@ -112,19 +138,6 @@ export const SHOTS = {
       game.camera.position.set(0, 1.5, -321.5);
       game.camera.lookAt(0, 1.0, -330);
       return { afterStep: place };
-    },
-  },
-  title: {
-    time: 'dusk',
-    steps: 60,
-    hud: false,
-    title: true,
-    focus: [330, 0, -60],
-    stage(game) {
-      game.cameraMode = 'manual';
-      game.camera.position.set(452, 4.5, 30);
-      game.camera.lookAt(300, 34, -110);
-      return {};
     },
   },
 };

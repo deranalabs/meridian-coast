@@ -68,8 +68,9 @@ void main() {
     vec2 plane = dir.xz / (h + 0.08);
     vec2 drift = vec2(uTime * 0.004, uTime * 0.0015);
     float streak = fbm(plane * vec2(0.55, 1.6) + drift);
-    float puff = fbm(plane * 1.3 - drift * 2.0);
-    float cloud = smoothstep(0.48, 0.82, streak * 0.75 + puff * 0.45);
+    float puff = fbm(plane * 2.2 - drift * 2.0);
+    float cloud = smoothstep(0.46, 0.8, streak * 0.72 + puff * 0.48);
+    cloud *= 0.75 + 0.25 * noise(plane * 9.0);
     cloud *= smoothstep(0.0, 0.08, h) * (1.0 - smoothstep(0.5, 0.95, h));
     vec3 lit = mix(uMid * 0.9, uCloudLight * 1.6, pow(sunDot, 2.0) * 0.8 + 0.2);
     lit += uSunGlow * pow(sunDot, 10.0) * 2.0;

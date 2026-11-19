@@ -160,15 +160,34 @@ function signQuad(builder, slot, centre, rot, height, phase, offset = 0, fixedWi
   );
 }
 
-/** Neon words for every sign spot and lit billboards on chosen roofs; update(time) drives flicker. */
+/**
+ * Neon words for every sign spot and lit billboards on chosen roofs; update(time) drives flicker. glows lists
+ * the coloured light each sign spills onto the pavement below it.
+ */
 export function createSigns(buildings, timeOfDay, seed) {
   const random = createRandom(seed * 53 + 3);
   const atlas = neonAtlas();
   const builder = new MeshBuilder({ position: 3, normal: 3, uv: 2, aPhase: 1 });
+  const glows = [];
   for (const sign of buildings.signs) {
-    const randomSlot = atlas.slots[random.int(0, RANDOM_WORDS - 1)];
-    const slot = sign.word ? atlas.slots[WORD_INDEX[sign.word]] : randomSlot;
+    const randomIndex = random.int(0, RANDOM_WORDS - 1);
+    const wordIndex = sign.word ? WORD_INDEX[sign.word] : randomIndex;
+    const slot = atlas.slots[wordIndex];
     const phase = random.next();
+    if (sign.kind !== 'roof') {
+      const nx = Math.sin(sign.rot);
+      const nz = Math.cos(sign.rot);
+      const out = sign.kind === 'flat' ? 2.2 : 0.4;
+      glows.push({
+        x: sign.x + nx * out,
+        z: sign.z + nz * out,
+        rot: sign.rot,
+        width: sign.kind === 'flat' ? Math.max(5, sign.width + 3) : 4,
+        depth: sign.kind === 'flat' ? 4.4 : 4,
+        colour: WORDS[wordIndex][1],
+        strength: 0.55,
+      });
+    }
     if (sign.kind === 'flat') {
       const height = Math.min(1.9, (sign.width + 0.6) / slot.aspect);
       signQuad(builder, slot, [sign.x, sign.y, sign.z], sign.rot, height, phase, 0.02);
@@ -236,6 +255,7 @@ export function createSigns(buildings, timeOfDay, seed) {
   return {
     group,
     billboards,
+    glows,
     update(time) {
       uniforms.uTime.value = time;
     },

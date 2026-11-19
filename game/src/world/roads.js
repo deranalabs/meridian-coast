@@ -109,7 +109,8 @@ function line(builder, kind, start, dir, from, to, offset, width, cell, dash = 0
     for (let t = from; t + dash <= to; t += dash + gap) pieces.push([t, t + dash]);
   } else {
     const count = Math.max(1, Math.ceil((to - from) / PIECE));
-    for (let k = 0; k < count; k += 1) pieces.push([from + ((to - from) * k) / count, from + ((to - from) * (k + 1)) / count]);
+    const step = (to - from) / count;
+    for (let k = 0; k < count; k += 1) pieces.push([from + step * k, from + step * (k + 1)]);
   }
   for (const [a, b] of pieces) {
     const t = (a + b) / 2;

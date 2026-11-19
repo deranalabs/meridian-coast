@@ -23,6 +23,33 @@ void main() {
   gl_FragColor = vec4(uColour * pool * vFade, 1.0);
 }`;
 
+const GLOW_VERTEX = /* glsl */ `
+varying vec2 vUv;
+varying float vFade;
+varying vec3 vTint;
+void main() {
+  vUv = uv;
+  vec4 world = modelMatrix * instanceMatrix * vec4(position, 1.0);
+  vFade = 1.0 - smoothstep(70.0, 200.0, distance(world.xyz, cameraPosition));
+  vTint = vec3(1.0);
+  #ifdef USE_INSTANCING_COLOR
+    vTint = instanceColor;
+  #endif
+  gl_Position = projectionMatrix * viewMatrix * world;
+}`;
+
+const GLOW_FRAGMENT = /* glsl */ `
+uniform float uLevel;
+varying vec2 vUv;
+varying float vFade;
+varying vec3 vTint;
+void main() {
+  vec2 d = (vUv - 0.5) * 2.0;
+  float r = length(d * vec2(1.0, 1.15));
+  float glow = pow(max(1.0 - r, 0.0), 1.7);
+  gl_FragColor = vec4(vTint * glow * uLevel * vFade, 1.0);
+}`;
+
 const HALO_VERTEX = /* glsl */ `
 uniform float uSize;
 varying vec2 vUv;
@@ -61,8 +88,38 @@ function additive(vertexShader, fragmentShader, uniforms) {
   });
 }
 
-/** Light pools and halos for `lamps` [{x, y, z}]; update(point) keeps only those near the camera uploaded. */
-export function createLightPools(lamps, timeOfDay) {
+function createGlows(glows, timeOfDay) {
+  const geometry = new THREE.PlaneGeometry(1, 1);
+  geometry.rotateX(-Math.PI / 2);
+  const material = additive(GLOW_VERTEX, GLOW_FRAGMENT, {
+    uLevel: { value: timeOfDay.name === 'night' ? 1.2 : 0.6 },
+  });
+  material.polygonOffset = true;
+  material.polygonOffsetFactor = -4;
+  material.polygonOffsetUnits = -4;
+  const mesh = new THREE.InstancedMesh(geometry, material, Math.max(1, glows.length));
+  const matrices = [];
+  const colours = [];
+  const quaternion = new THREE.Quaternion();
+  const yAxis = new THREE.Vector3(0, 1, 0);
+  for (const glow of glows) {
+    const y = heightAt(glow.x, glow.z) + 0.2;
+    quaternion.setFromAxisAngle(yAxis, glow.rot);
+    matrices.push(new THREE.Matrix4().compose(new THREE.Vector3(glow.x, y, glow.z), quaternion,
+      new THREE.Vector3(glow.width, 1, glow.depth)));
+    colours.push(new THREE.Color(glow.colour).multiplyScalar(glow.strength));
+  }
+  if (glows.length) mesh.setColorAt(0, colours[0]);
+  mesh.renderOrder = 2;
+  mesh.name = 'glow-pools';
+  return createCulledInstances(mesh, matrices, colours, 200);
+}
+
+/**
+ * Light pools and halos for `lamps` [{x, y, z}], plus coloured `glows` [{x, z, rot, width, depth, colour,
+ * strength}] spilled by shops and neon; update(point) keeps only those near the camera uploaded.
+ */
+export function createLightPools(lamps, glows, timeOfDay) {
   const group = new THREE.Group();
   group.name = 'light-pools';
   const level = timeOfDay.lampLevel;
@@ -89,12 +146,14 @@ export function createLightPools(lamps, timeOfDay) {
   const haloSet = createCulledInstances(halos, haloMatrices, null, 420);
   pools.renderOrder = 2;
   halos.renderOrder = 3;
-  group.add(pools, halos);
+  const glowSet = createGlows(glows, timeOfDay);
+  group.add(pools, halos, glowSet.mesh);
   return {
     group,
     update(point) {
       poolSet.refresh(point);
       haloSet.refresh(point);
+      glowSet.refresh(point);
     },
   };
 }

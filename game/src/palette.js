@@ -35,7 +35,9 @@ export const FACTIONS = Object.freeze({
 /** Five skin tones from light to deep, in linear-friendly sRGB hex. */
 export const SKIN_TONES = Object.freeze(['#f1c9a5', '#d9a47c', '#b07850', '#8a5636', '#5c3824']);
 
-export const HAIR_COLOURS = Object.freeze(['#1b1410', '#3b2516', '#6b4424', '#a8763e', '#d9c08a', '#8c8c8c', '#b5322c']);
+export const HAIR_COLOURS = Object.freeze([
+  '#1b1410', '#3b2516', '#6b4424', '#a8763e', '#d9c08a', '#8c8c8c', '#b5322c',
+]);
 
 /** Ilo Rask's fixed outfit colours. */
 export const ILO = Object.freeze({
