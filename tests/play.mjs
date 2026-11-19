@@ -20,7 +20,19 @@ const KEYS = {
   ArrowDown: { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40 },
   ArrowLeft: { key: 'ArrowLeft', code: 'ArrowLeft', keyCode: 37 },
   Space: { key: ' ', code: 'Space', keyCode: 32 },
+  KeyN: { key: 'n', code: 'KeyN', keyCode: 78 },
 };
+
+/** Start job `id` the way the gold pillar does (story order is checked), then talk through its intro. */
+async function startJob(page, id) {
+  const started = await page.evaluate(`window.__meridian.game.missions.start('${id}')`);
+  for (let i = 0; i < 20 && (await job(page)).phase === 'intro'; i += 1) await tap(page, 'Enter');
+  return started && (await job(page)).phase === 'active';
+}
+
+/** Put the car Ilo drives on (x, z) at rest, as if driven there. */
+const parkAt = (page, target) => page.evaluate(`(() => { const v = window.__meridian.game.player.state.vehicle;
+  const t = ${target}; v.x = t.x; v.z = t.z; v.vx = 0; v.vz = 0; v.speed = 0; return true; })()`);
 
 async function key(page, name, type) {
   const k = KEYS[name];
@@ -222,6 +234,56 @@ try {
   check('mission one pays $1,200 into the wallet', paid.cash === unpaid + 1200 && (await job(page)).phase === 'idle');
   check('mission two opens on the phone', await page.evaluate(
     "window.__meridian.game.missions.available().some((def) => def.id === 'salt-and-chrome')"));
+
+  // The full map: N opens it over a held world, Space finds Ilo, N closes it.
+  const beforeMap = await state(page);
+  await tap(page, 'KeyN');
+  const mapOpen = await page.evaluate('window.__meridian.game.map.isOpen');
+  await tap(page, 'Space');
+  await sleep(300);
+  const onMap = await state(page);
+  const zoomed = await page.evaluate('window.__meridian.game.map.projection.view.zoom');
+  check('N opens the full map and the world holds still', mapOpen && onMap.time - beforeMap.time < 0.2);
+  check('Space on the map zooms in on Ilo', zoomed >= 2);
+  await tap(page, 'KeyN');
+  check('N closes the map', !(await page.evaluate('window.__meridian.game.map.isOpen')));
+
+  // Mission four, Headline: with missions two and three done it opens; the yard visit and the photo stake-out
+  // clear, then the phone's call-off ends it cleanly.
+  await page.evaluate("window.__meridian.game.missions.progress.done.push('salt-and-chrome', 'white-van')");
+  await goToMission(page, 'solis-steps');
+  check('Headline starts after mission three', await startJob(page, 'headline'));
+  await goToMission(page, 'voss-yard');
+  await sleep(600);
+  check('walking into the Voss yard clears stage one', (await job(page)).stage === 'Stage 2 of 5');
+  await sleep(5000);
+  check('holding the stake-out clears stage two', (await job(page)).stage === 'Stage 3 of 5');
+  await page.evaluate('window.__meridian.game.missions.quit()');
+  await sleep(300);
+  check('calling Headline off leaves no job and no heat', (await job(page)).phase === 'idle'
+    && (await state(page)).stars === 0);
+
+  // Rask Cabs: take the shift, get in the cab, collect the fare, beat the meter, get paid with a tip.
+  await goToMission(page, 'cab-rank');
+  check('Rask Cabs starts at the rank', await startJob(page, 'rask-cabs'));
+  await page.evaluate(`(() => { const m = window.__meridian; const c = m.game.missions.state.props.cars.cab.car;
+    return m.teleport(c.position.x + Math.cos(c.heading) * 2, c.position.z - Math.sin(c.heading) * 2, 0); })()`);
+  await sleep(200);
+  await tap(page, 'KeyE');
+  await sleep(1500);
+  check('getting in the cab clears stage one', (await state(page)).mode === 'driving'
+    && (await job(page)).stage.startsWith('Stage 2 of 3'));
+  const fareStart = (await state(page)).cash;
+  await parkAt(page, 'window.__meridian.game.missions.state.props.targets.fare');
+  await sleep(800);
+  check('reaching the fare starts the meter', (await job(page)).stage?.startsWith('Stage 3 of 3'));
+  await parkAt(page, 'window.__meridian.game.missions.state.props.targets.drop');
+  await sleep(1500);
+  for (let i = 0; i < 20 && (await job(page)).phase === 'outro'; i += 1) await tap(page, 'Enter');
+  const fared = await state(page);
+  check('the fare pays $250 plus a tip', fared.cash > fareStart + 250 && (await job(page)).phase === 'idle');
+  await tap(page, 'KeyE');
+  await sleep(1500);
 
   await goTo(page, 'safehouse');
   await sleep(300);

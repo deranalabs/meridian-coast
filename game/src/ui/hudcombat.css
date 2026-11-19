@@ -28,9 +28,10 @@
   stroke-width: 1.4;
   stroke-linejoin: round;
 }
+/* Lit stars are warm gold like the WANTED banner and the dispatch stars, outlined in cream. */
 #hud .wanted .star.lit path {
-  fill: #fff4d6;
-  stroke: #ffffff;
+  fill: #ffd27a;
+  stroke: #fff1cc;
   filter: drop-shadow(0 0 5px #ffb347) drop-shadow(0 0 2px #ff4fa0);
 }
 #hud .wanted.searching .star.lit { animation: star-blink 0.7s steps(2, jump-none) infinite; }

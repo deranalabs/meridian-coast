@@ -132,10 +132,11 @@ export const ACTION_SHOTS = {
           if (index === CHASE.steps - 2 && !game.dialogue.conversation.complete) game.dialogue.conversation.skip();
           if (index !== CHASE.steps - 1) return;
           const p = game.player.state.car.position;
-          Object.assign(police.helicopter.state, { x: p.x + 3, z: p.z + 30, y: p.y + 14, heading: 2.9 });
+          // Air-1 hangs back and higher, so its lamp's glare stays a small spot above the street, not a bloom.
+          Object.assign(police.helicopter.state, { x: p.x + 4, z: p.z + 40, y: p.y + 18, heading: 2.9 });
           police.helicopter.update(1 / 60, { x: p.x, y: p.y, z: p.z }, game.time);
           game.camera.position.set(p.x + 1.6, p.y + 1.35, p.z - 7.5);
-          game.camera.lookAt(p.x - 0.4, p.y + 3.6, p.z + 14);
+          game.camera.lookAt(p.x - 0.4, p.y + 2.9, p.z + 14);
           game.camera.fov = 60;
           game.camera.updateProjectionMatrix();
         },

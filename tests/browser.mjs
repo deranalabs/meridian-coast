@@ -107,7 +107,9 @@ async function runPerf(server) {
     await page.send('Emulation.setDeviceMetricsOverride', metrics);
     const scaleArg = process.argv.find((arg) => arg.startsWith('--scale='));
     const extra = scaleArg ? `&scale=${scaleArg.slice(8)}` : '';
-    await openScene(page, `${server.url}index.html?shot=drive&seed=1&live=1${extra}`, errors);
+    // --scene=mission measures the live heist chase: four stars, three cruisers, the helicopter and its light.
+    const scene = process.argv.find((arg) => arg.startsWith('--scene='))?.slice(8) ?? 'drive';
+    await openScene(page, `${server.url}index.html?shot=${scene}&seed=1&live=1${extra}`, errors);
     const gpu = await page.evaluate(`(() => {
       const gl = document.createElement('canvas').getContext('webgl2');
       const info = gl.getExtension('WEBGL_debug_renderer_info');
@@ -143,7 +145,8 @@ try {
   if (args.has('--shots')) await runShots(server, args.has('--nohud'));
   if (args.has('--perf')) await runPerf(server);
   if (!args.has('--shots') && !args.has('--perf')) {
-    console.log('usage: node tests/browser.mjs --shots [--nohud] | --perf [--dpr=N] [--scale=S]');
+    console.log('usage: node tests/browser.mjs --shots [--nohud]'
+      + ' | --perf [--scene=drive|mission] [--dpr=N] [--scale=S]');
   }
 } finally {
   server.stop();
