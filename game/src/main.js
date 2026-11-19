@@ -141,7 +141,8 @@ const pause = createPauseMenu({
   onQuit: () => window.location.reload(),
   onEvent: menuSound,
 });
-const canPause = () => !pause.isOpen() && !game.services.shops.openPlace && !game.services.respawn.active;
+const canPause = () => !pause.isOpen() && !game.services.shops.openPlace && !game.services.respawn.active
+  && !game.phone.isOpen;
 let pauseRequested = false;
 // Chrome swallows the Esc that releases pointer lock, so losing the lock during play also pauses.
 document.addEventListener('pointerlockchange', () => {

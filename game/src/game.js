@@ -27,6 +27,11 @@ import { createServices } from './systems/services.js';
 import { createStory } from './missions/setup.js';
 import { baseOutfit } from './shops/outfit.js';
 import { ammoView } from './combat/arsenal.js';
+import { createPhone } from './ui/phone.js';
+
+/** The same keyboard with this step's presses hidden (the phone has them); held keys still steer a car. */
+const pressFree = (input) => ({ mouse: input.mouse, down: (...codes) => input.down(...codes),
+  axis: (negative, positive) => input.axis(negative, positive), pressed: () => false, consume() {}, endFrame() {} });
 
 const PEDESTRIANS = 46;
 const TRAFFIC = 26;
@@ -105,10 +110,14 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
   game.ownedCars = [];
   game.services = createServices(game);
   game.missions = createStory(game);
+  game.phone = createPhone(game);
   game.prompt = null;
+  let heldInput = null;
 
-  game.step = (dt, input) => {
+  game.step = (dt, rawInput) => {
     game.time += dt;
+    const phoneKeys = !game.services.shops.openPlace && game.phone.update(rawInput);
+    const input = phoneKeys ? (heldInput ??= pressFree(rawInput)) : rawInput;
     game.prompt = game.services.update(dt, input);
     const missionPrompt = game.services.respawn.active ? null : game.missions.update(dt, input);
     game.prompt ??= missionPrompt;

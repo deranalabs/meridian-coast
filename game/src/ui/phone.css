@@ -1,0 +1,109 @@
+/* Phone styles: Ilo's handset on the right of the screen, with rank, contacts and the job list. */
+#phone {
+  position: fixed;
+  inset: 0;
+  display: none;
+  justify-content: flex-end;
+  align-items: center;
+  padding-right: 5vw;
+  pointer-events: none;
+  z-index: 30;
+  font-family: "Avenir Next", "Futura", "Helvetica Neue", Arial, sans-serif;
+  color: #fff6f0;
+  background: linear-gradient(270deg, rgba(16, 6, 30, 0.7) 0%, rgba(16, 6, 30, 0.3) 36%, rgba(16, 6, 30, 0) 60%);
+}
+#phone.open { display: flex; }
+#phone .handset {
+  width: 340px;
+  padding: 14px 16px 12px;
+  border-radius: 34px;
+  border: 3px solid #2a2140;
+  box-shadow: 0 0 0 2px #0b0716, 0 18px 50px rgba(5, 0, 15, 0.7), inset 0 0 40px rgba(196, 92, 255, 0.12);
+  background: linear-gradient(170deg, #1d1236 0%, #120a24 55%, #2a0f2e 100%);
+}
+#phone .phone-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--mc-ui-tint, #9fb7c9);
+  margin-bottom: 10px;
+}
+#phone .phone-rank b {
+  display: block;
+  font-size: 30px;
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+  color: var(--mc-gold, #ffc94a);
+  text-shadow: 0 0 16px rgba(255, 201, 74, 0.45);
+}
+#phone .phone-rank span { font-size: 12px; font-weight: 700; opacity: 0.8; }
+#phone .phone-rank .bar { height: 4px; margin: 6px 0 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); }
+#phone .phone-rank .bar i { display: block; height: 100%; border-radius: 2px; background: var(--mc-gold, #ffc94a); }
+#phone .phone-kicker {
+  margin: 10px 0 5px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #c45cff;
+}
+#phone .phone-contacts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+#phone .contact {
+  position: relative;
+  padding: 4px 2px 3px;
+  border-radius: 10px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.05);
+}
+#phone .contact canvas { width: 40px; height: 40px; border-radius: 50%; display: block; margin: 0 auto 2px; }
+#phone .contact b { display: block; font-size: 12px; }
+#phone .contact small { display: block; font-size: 9px; opacity: 0.65; white-space: nowrap; overflow: hidden; }
+#phone .contact.has-work::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  right: 14px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--mc-gold, #ffc94a);
+  box-shadow: 0 0 8px var(--mc-gold, #ffc94a);
+}
+#phone .phone-jobs { list-style: none; margin: 0; padding: 0; }
+#phone .phone-jobs li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  margin: 3px 0;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(30, 14, 50, 0.55);
+}
+#phone .phone-jobs canvas { width: 30px; height: 30px; border-radius: 50%; }
+#phone .job-text { flex: 1; min-width: 0; }
+#phone .job-text b { display: block; font-size: 14px; }
+#phone .job-text small { display: block; font-size: 10px; opacity: 0.7; }
+#phone .job-state { font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+#phone .phone-jobs li.open .job-state { color: var(--mc-gold, #ffc94a); }
+#phone .phone-jobs li.done { opacity: 0.6; }
+#phone .phone-jobs li.done .job-state { color: var(--mc-cash, #9dffb5); }
+#phone .phone-jobs li.locked { opacity: 0.35; }
+#phone .phone-jobs li.active {
+  border-color: var(--mc-gold, #ffc94a);
+  background: linear-gradient(90deg, rgba(255, 201, 74, 0.32), rgba(196, 92, 255, 0.3));
+}
+#phone .phone-note { min-height: 16px; margin-top: 6px; font-size: 12px; font-weight: 700; color: #ff9db8; }
+#phone .phone-keys { margin-top: 6px; font-size: 11px; opacity: 0.8; }
+#phone .phone-keys kbd {
+  display: inline-block;
+  padding: 0 5px;
+  margin-right: 2px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  font: inherit;
+  font-weight: 800;
+}

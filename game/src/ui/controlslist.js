@@ -28,6 +28,12 @@ export const CONTROLS = Object.freeze([
     [['←', '→'], 'Change a setting'],
     [['M'], 'Mute sound'],
   ]],
+  ['Story', [
+    [['P'], 'Phone: contacts, jobs, rank'],
+    [['E'], 'Meet the contact at a gold pillar'],
+    [['Enter'], 'Skip a line, retry a failed job'],
+    [['Backspace'], 'Call a failed job off'],
+  ]],
 ]);
 
 const escapeText = (text) => text.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
