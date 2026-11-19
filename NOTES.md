@@ -113,3 +113,41 @@ GPU: Apple M1 (ANGLE Metal), 1440x900 at device pixel ratio 1.5 (2160x1350 canva
 - Character faces read as simple shapes beyond a few metres; hands are mitten-shaped.
 - Car interiors are not modelled (the glass is opaque and tinted).
 - `game/` keeps the unit tests next to the modules; the page never loads them.
+
+## Recording 3a: sound, dispatch panel, weapon bar, pause and settings
+
+**What exists**
+- `audio/` (rewritten from scratch): `mixer.js` (AudioContext made on the first key or click, master gain with
+  volume 0..1, mute and a duck factor, buses for sfx, engine, police, radio and voice, one shared noise buffer),
+  `engine.js` (saw pair plus square sub through a low-pass; revs climb through five gears and drop at each shift;
+  band-passed noise for tyre squeal from slip), `siren.js` (triangle tone swept by an LFO: slow wail far off or
+  while searching, fast yelp under 45 m; rotor thump from low-passed noise chopped at 12.5 Hz), `sfx.js`
+  (one-shots: gunshot per weapon, impacts, UI notes, cash, shop bell, cruiser chirp when a unit joins, sting on
+  busted/wasted, spray hiss, voices), `stations.js` + `radiobed.js` (one pattern per station: CORAL 98.1 synth-pop
+  104 bpm A minor, KDRIFT 104.7 phrygian electro 124 bpm, CALDER CLASSIC 3/4 waltz 92 bpm, TALK MERIDIAN hosts
+  talking in voice blips; scheduled 150 ms ahead on voices built once; plays only while driving with no shop open),
+  `voice.js` (blip pattern from a character id and a line: pitch, spread, speed and wave per id, one blip per
+  syllable, pauses at punctuation, a rise on questions; `sfx.voice(id, line)` for the dialogue cards in 3b),
+  `sound.js` (the facade; `update()` only moves parameters).
+- `police/report.js`: dispatch rows with call signs (`2-Cobalt-31` from the car's fleet slot), `Air-1 Gull`,
+  roadblocks; `ui/policepanel.js` (PMPD DISPATCH: stars, Pursuit / Searching / Clear for 4 s after, six rows,
+  head count); `ui/weaponbar.js` (four numbered slots, clip + reserve); `ui/hudpolice.css` (left column, both
+  panels, compact rules for 768x480).
+- Pause (`ui/pausemenu.js`): Esc, or losing pointer lock, freezes the loop and ducks the sound to 30 %. Resume,
+  Settings, Controls, Save game (refused while wanted), Quit to title (asks twice, reloads the page). Settings
+  (`ui/settings.js`, `ui/settingspage.js`): master volume, mute, minimap size small/normal/large, kept in local
+  storage under `meridian-coast.settings`. The title menu now moves with the arrows and shares the settings and
+  controls pages (`ui/menulist.js`, `ui/controlslist.js`).
+- `palette.js`: `FACTION_INFO` (Salt Dogs, Velvet Hand, Calder Crew and the new Gilded Wake, with turf and shade)
+  and `UI_TOKENS` (mission gold, UI tint, ink, police lamps); `ui/theme.js` writes them as `--mc-*` CSS variables.
+
+**Keys**: WASD move/drive, Shift run, C crouch, E car/shop, Q aim, F or click fire, 1-4 weapons, Tab next weapon,
+R reload (radio in a car), Space handbrake, M mute, Esc pause/back, arrows + Enter in menus.
+
+**Tests**: `audio/audio.test.js` (volume clamp, mute, gear revs, distance fall-off, note math, one bed per station,
+voice patterns), `police/report.test.js` (sorting, call signs, roadblock, helicopter, officer count),
+`ui/settings.test.js` (settings store, theme names). `tests/play.mjs` now checks M, Esc, a volume notch and
+resume; `PLAY_SHOTS=1` saves the pause menu at 768x480 to `tmp/play-pause.jpg`.
+
+**Untested**: what the audio actually sounds like (headless runs only check that the context unlocks and no
+errors are thrown); the pointer-lock pause in a real window; Quit to title.
