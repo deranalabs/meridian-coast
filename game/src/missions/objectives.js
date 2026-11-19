@@ -9,11 +9,17 @@ export const OBJECTIVE_TYPES = Object.freeze({
   defeat: 'Defeat',
   evade: 'Lose the police',
   deliver: 'Deliver',
+  race: 'Race',
+  buy: 'Buy',
 });
 
 const CLOSE_GRACE = 3;
+const FAR = { x: 1e9, z: 1e9 };
 
 const distance = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+
+/** The point a goto, drive or deliver stage aims at: its fixed place, or a moving target the props name. */
+const aimOf = (stage, view) => stage.at ?? view.targets?.[stage.target] ?? FAR;
 
 /** Is the player in the right vehicle for a stage that names one (any car when none is named)? */
 export function inStageCar(stage, view) {
@@ -31,12 +37,26 @@ export function stageTarget(stage, view) {
 
 function gotoCheck(stage, view) {
   if (stage.onFoot && view.driving) return null;
-  return distance(view, stage.at) <= (stage.radius ?? 4) ? 'done' : null;
+  return distance(view, aimOf(stage, view)) <= (stage.radius ?? 4) ? 'done' : null;
 }
 
 function driveCheck(stage, view) {
-  return inStageCar(stage, view) && distance(view, stage.at) <= (stage.radius ?? 6) ? 'done' : null;
+  return inStageCar(stage, view) && distance(view, aimOf(stage, view)) <= (stage.radius ?? 6) ? 'done' : null;
 }
+
+/** A course of gates (props keep the current gate as the target); done when the last gate is passed. */
+function raceCheck(stage, view, memo) {
+  const course = view.targets?.[stage.target];
+  if (!course) return null;
+  memo.gate = course.gate;
+  memo.gates = course.gates;
+  if (stage.inCar && course.gate > 0 && !inStageCar(stage, view)) return 'fail:abandoned';
+  if (course.beaten) return 'fail:beaten';
+  return course.arrived ? 'done' : null;
+}
+
+/** Done once the shop sold the named item during this mission (view.bought lists item ids). */
+const buyCheck = (stage, view) => (view.bought?.includes(stage.item) ? 'done' : null);
 
 function followCheck(stage, view, memo, dt) {
   const target = view.targets?.[stage.target];
@@ -59,7 +79,7 @@ function defeatCheck(stage, view, memo) {
 }
 
 function deliverCheck(stage, view, memo, dt) {
-  const there = distance(view, stage.at) <= (stage.radius ?? 6);
+  const there = distance(view, aimOf(stage, view)) <= (stage.radius ?? 6);
   const carOk = stage.car ? inStageCar(stage, view) : !(stage.onFoot && view.driving);
   const ready = there && carOk && (!stage.clean || view.stars === 0);
   memo.wait = ready ? (memo.wait ?? 0) + dt : 0;
@@ -82,6 +102,8 @@ const CHECKS = {
   defeat: defeatCheck,
   evade: evadeCheck,
   deliver: deliverCheck,
+  race: raceCheck,
+  buy: buyCheck,
 };
 
 /**

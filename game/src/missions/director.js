@@ -38,7 +38,9 @@ export function createMissions(game, defs, places, hooks = {}) {
     if (restart) {
       game.action.police.standDown();
       const start = stage.start ?? state.run.def.startAt;
-      if (start && game.player.state.mode === 'foot') game.player.placeOnFoot(start.x, start.z, start.heading ?? 0);
+      // A stage that names its own start always puts Ilo there, out of any car (the stage respawns its cars).
+      const place = stage.start || game.player.state.mode === 'foot';
+      if (start && place) game.player.placeOnFoot(start.x, start.z, start.heading ?? 0);
     }
   }
 
@@ -99,7 +101,7 @@ export function createMissions(game, defs, places, hooks = {}) {
   function start(id) {
     const def = byId.get(id);
     if (!def || state.run || !availableMissions(progress, [def]).length) return false;
-    world.clearLatches();
+    world.clearLatches(true);
     state.run = createRun(def);
     state.phase = 'intro';
     setupStage(0, false);

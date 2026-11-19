@@ -43,18 +43,21 @@ export const BEATS = Object.freeze([
   },
   {
     number: 4, id: 'headline', title: 'Headline', giver: 'solis', places: ['solis-steps', 'voss-yard'],
-    beat: 'Captain Solis knows about the van. She offers a clean record for a camera planted in Voss\'s office.',
-    shapes: ['goto', 'deliver', 'evade'], reward: { cash: 2500, respect: 20 },
+    beat: 'Captain Solis knows about the van. She offers a clean record for a camera planted in Voss\'s office, '
+      + 'then sends a four-star dragnet anyway, and tells Ilo that Nell has been selling his routes.',
+    shapes: ['goto', 'deliver', 'defeat', 'evade'], reward: { cash: 3200, respect: 20 },
   },
   {
-    number: 5, id: 'hill-favour', title: 'Hill Favour', giver: 'priya', places: ['bluff', 'garage'],
-    beat: 'Priya pays Tavi\'s debt in kind: Ilo races her crew down the switchbacks, and the winner keeps the car.',
-    shapes: ['drive', 'defeat'], reward: { cash: 3500, respect: 25 },
+    number: 5, id: 'hill-favour', title: 'Hill Favour', giver: 'priya', places: ['bluff', 'cold-store', 'lockup-bay'],
+    beat: 'Priya pays Tavi\'s debt in kind: Ilo races her driver down to the quay, the winner keeps the car, and '
+      + 'Nell\'s Velvet Hand shooters wait at the finish.',
+    shapes: ['steal', 'race', 'defeat', 'drive'], reward: { cash: 3500, respect: 25 },
   },
   {
     number: 6, id: 'tarp-run', title: 'Tarp Run', giver: 'benny', places: ['gull-dock', 'pier-nine'],
-    beat: 'Dex flips and wants out; Benny takes him to Gull Key under a tarp while Voss\'s men search the piers.',
-    shapes: ['goto', 'follow', 'defeat'], reward: { cash: 4000, respect: 30 },
+    beat: 'Dex flips and wants out; Ilo breaks the search party on the piers and follows Benny\'s truck to the '
+      + 'Gull Key dock with the police behind him. Dex tells him about the vault and Nell\'s plan.',
+    shapes: ['goto', 'defeat', 'steal', 'follow', 'deliver'], reward: { cash: 4000, respect: 30 },
   },
   {
     number: 7, id: 'gilded-tide', title: 'Gilded Tide', giver: 'nell', places: ['pell-hotel', 'gull-dock'], heist: true,

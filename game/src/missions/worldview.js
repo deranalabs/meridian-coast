@@ -9,19 +9,24 @@ export function createWorldView(game) {
   const view = { x: 0, z: 0, driving: false, carTag: null, stars: 0, dead: false, busted: false,
     cars: {}, targets: {}, enemies: {} };
   const latched = { dead: false, busted: false };
+  view.bought = [];
   events.on('busted', () => {
     latched.busted = true;
   });
   events.on('wasted', () => {
     latched.dead = true;
   });
+  events.on('purchase', (e) => {
+    if (!view.bought.includes(e.id)) view.bought.push(e.id);
+  });
 
   return {
     view,
-    /** Forget any death or arrest that happened before now (a fresh start or a restart). */
-    clearLatches() {
+    /** Forget any death or arrest that happened before now; a fresh job (`fresh`) also forgets what was bought. */
+    clearLatches(fresh = false) {
       latched.dead = false;
       latched.busted = false;
+      if (fresh) view.bought.length = 0;
     },
     refresh(props) {
       const p = game.player.state;

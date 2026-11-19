@@ -11,6 +11,9 @@ export const FAIL_TEXT = Object.freeze({
   'target-lost': 'The target got away',
   quit: 'You called the job off',
   heat: 'You brought the police with you',
+  time: 'You ran out of time',
+  beaten: 'They got there first',
+  betrayed: 'Nell sold you out',
 });
 
 /** The text for a reason, with a fallback for unknown ones. */

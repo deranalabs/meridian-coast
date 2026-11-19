@@ -5,6 +5,7 @@ import { castAppearance } from '../actors/castlook.js';
 import { pointOf } from './resolve.js';
 import { createConvoy } from './convoy.js';
 import { createCrew } from './crew.js';
+import { createCourse } from './course.js';
 
 const WALL_SAFE = 3.5;
 const WALL_HURT = 7;
@@ -43,7 +44,7 @@ export function createMissionKit(game, places) {
   }
 
   function scope() {
-    const own = { actors: [], cars: [], convoys: [], crews: [] };
+    const own = { actors: [], cars: [], convoys: [], crews: [], courses: [] };
     const props = {
       cars: {}, targets: {}, enemies: {}, blips: [], focus: null,
       /** Place a cast member at a place id or point; the first one placed is the cutscene focus. */
@@ -73,6 +74,14 @@ export function createMissionKit(game, places) {
         props.targets[name] = convoy.target;
         return convoy;
       },
+      /** A race course of gates over the roads; its current gate shows as target `name`, with any rival car. */
+      course(name, options) {
+        const course = createCourse(game, { onGate: (gate, gates) => events.emit('ui', { kind: gate >= gates
+          ? 'buy' : 'move' }), ...options, from: pointOf(options.from, places), to: pointOf(options.to, places) });
+        own.courses.push(course);
+        props.targets[name] = course.target;
+        return course;
+      },
       /** Armed people of a group; enemies[group] counts those still standing. */
       crew(group, spots, options = {}) {
         const crew = createCrew(game, group, spots.map((spot) => pointOf(spot, places)), options);
@@ -94,12 +103,17 @@ export function createMissionKit(game, places) {
           }
         }
         for (const convoy of own.convoys) convoy.update(dt, view);
+        for (const course of own.courses) course.update(dt, view);
         for (const crew of own.crews) {
           crew.update(dt, view);
           props.enemies[crew.group] = crew.standing;
         }
         props.blips.length = 0;
         for (const crew of own.crews) crew.addBlips(props.blips);
+        for (const course of own.courses) {
+          const car = course.rival?.car;
+          if (car) props.blips.push({ x: car.position.x, z: car.position.z, enemy: true, colour: '#ff8a3d' });
+        }
       },
       dispose() {
         for (const character of own.actors) character.visible = false;
@@ -110,6 +124,7 @@ export function createMissionKit(game, places) {
           car.spare = true;
         }
         for (const convoy of own.convoys) convoy.dispose();
+        for (const course of own.courses) course.dispose();
         for (const crew of own.crews) crew.dispose();
         if (live === props) live = null;
       },

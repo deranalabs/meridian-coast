@@ -11,8 +11,21 @@ export function createRun(def) {
 
 export const currentStage = (run) => run.def.stages[run.stage];
 
-/** "Stage n of m" for the HUD. */
-export const stageLabel = (run) => `Stage ${run.stage + 1} of ${run.def.stages.length}`;
+/** Seconds left on a timed stage (`limit`), or null when the stage has no clock. */
+export function timeLeft(run) {
+  const limit = currentStage(run).limit;
+  return limit ? Math.max(0, limit - run.stageTime) : null;
+}
+
+/** m:ss for a clock. */
+export const clock = (seconds) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+
+/** "Stage n of m" for the HUD, with the clock on a timed stage. */
+export function stageLabel(run) {
+  const left = timeLeft(run);
+  const label = `Stage ${run.stage + 1} of ${run.def.stages.length}`;
+  return left === null ? label : `${label} · ${clock(Math.ceil(left))}`;
+}
 
 /** The objective text for now and the one after it (null on the last stage). */
 export function stageTexts(run) {
@@ -51,6 +64,7 @@ export function stepRun(run, view, dt) {
     const stage = currentStage(run);
     const failure = checkFailures(run.def, stage, view);
     if (failure) return events.concat(failRun(run, failure));
+    if (guard === 0 && timeLeft(run) === 0) return events.concat(failRun(run, 'time'));
     const result = checkObjective(stage, view, run.memo, guard === 0 ? dt : 0);
     if (result?.startsWith('fail:')) return events.concat(failRun(run, result.slice(5)));
     if (result !== 'done') break;

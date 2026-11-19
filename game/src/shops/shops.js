@@ -128,6 +128,7 @@ export function createShops(game, hooks) {
       state.note = result.message;
       game.action.events.emit('ui', { kind: result.ok ? 'buy' : 'deny' });
       if (result.ok) {
+        game.action.events.emit('purchase', { id: items[state.index].id, kind: state.place.kind });
         apply(result.effect ?? {});
         hooks.say?.(result.message);
       }

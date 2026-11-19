@@ -34,6 +34,10 @@ export function missionGuide(game) {
     pins.length = 0;
     out.blips = [...(view.blips ?? [])];
     if (stage.at) pins.push({ x: stage.at.x, y: stage.at.y, z: stage.at.z, size: BIG.has(stage.type) ? 2.2 : 1 });
+    else if (target && (stage.type === 'race' || BIG.has(stage.type))) {
+      pins.push({ x: target.x, y: target.y ?? game.ground.surfaceAt(target.x, target.z).height, z: target.z,
+        size: 2.2 });
+    }
     if (target) out.blips.push({ x: target.x, z: target.z, mission: true, target: !stage.at, colour: UI_TOKENS.gold });
     pillars.show(pins);
     return target;
@@ -67,6 +71,7 @@ export function missionGuide(game) {
       const stage = run.def.stages[run.stage];
       const memo = run.memo;
       if (stage.type === 'deliver') return memo.progress ?? 0;
+      if (stage.type === 'race' && memo.gates) return memo.gate / memo.gates;
       if (stage.type === 'defeat' && stage.count) return 1 - (memo.left ?? stage.count) / stage.count;
       if (stage.type === 'follow' && memo.metres !== undefined) {
         return Math.max(0, Math.min(1, 1 - memo.metres / (stage.max ?? 90)));
