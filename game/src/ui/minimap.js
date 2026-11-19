@@ -1,4 +1,4 @@
-// Minimap: the city pre-drawn once (water, beach, park, blocks, roads), shown rotated around the player.
+// Minimap: the city pre-drawn once, shown rotated around the player, with blips and the gold mission route.
 import { WORLD_BOUNDS, BOARDWALK, WATER_LEVEL, heightAt } from '../world/heightfield.js';
 import { PARK } from '../world/districts.js';
 import { DISTRICTS } from '../palette.js';
@@ -76,6 +76,11 @@ function drawBlip(ctx, blip, x, z, unit, heading) {
   ctx.save();
   ctx.translate(x, z);
   ctx.rotate(Math.PI - heading);
+  if (blip.mission) {
+    drawMissionBlip(ctx, blip, unit);
+    ctx.restore();
+    return;
+  }
   ctx.fillStyle = blip.colour;
   ctx.strokeStyle = 'rgba(255,255,255,0.9)';
   ctx.lineWidth = 2 * unit;
@@ -101,7 +106,59 @@ function drawBlip(ctx, blip, x, z, unit, heading) {
   ctx.restore();
 }
 
-/** A circular minimap inside `container`; update(x, z, heading, blips) redraws it. */
+/** The mission route hint: a glowing gold line along the road waypoints, in map space around (mx, mz). */
+function drawRoute(ctx, route, mx, mz, unit) {
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  route.forEach((point, index) => {
+    const [px, pz] = toMap(point.x, point.z);
+    if (index === 0) ctx.moveTo(px - mx, pz - mz);
+    else ctx.lineTo(px - mx, pz - mz);
+  });
+  ctx.strokeStyle = 'rgba(255, 201, 74, 0.3)';
+  ctx.lineWidth = 16 * unit;
+  ctx.stroke();
+  ctx.strokeStyle = '#ffc94a';
+  ctx.lineWidth = 6 * unit;
+  ctx.stroke();
+  ctx.restore();
+}
+
+/** A mission blip: a gold pin with a dark star, or a ring around a moving target to follow. */
+function drawMissionBlip(ctx, blip, unit) {
+  ctx.fillStyle = blip.colour ?? '#ffc94a';
+  ctx.strokeStyle = '#1a0f28';
+  ctx.lineWidth = 3 * unit;
+  ctx.beginPath();
+  if (blip.target) {
+    ctx.arc(0, 0, 13 * unit, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.lineWidth = 5 * unit;
+    ctx.strokeStyle = blip.colour ?? '#ffc94a';
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 0, 6 * unit, 0, Math.PI * 2);
+    ctx.fill();
+    return;
+  }
+  ctx.moveTo(0, 18 * unit);
+  ctx.bezierCurveTo(-16 * unit, -2 * unit, -12 * unit, -20 * unit, 0, -20 * unit);
+  ctx.bezierCurveTo(12 * unit, -20 * unit, 16 * unit, -2 * unit, 0, 18 * unit);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#1a0f28';
+  ctx.beginPath();
+  for (let i = 0; i < 10; i += 1) {
+    const r = (i % 2 ? 3.2 : 7.5) * unit;
+    const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
+    ctx.lineTo(Math.cos(a) * r, -6 * unit + Math.sin(a) * r);
+  }
+  ctx.fill();
+}
+
+/** A circular minimap inside `container`; update(x, z, heading, blips, route) redraws it. */
 export function createMinimap(container, layout) {
   const base = drawBase(layout);
   const canvas = document.createElement('canvas');
@@ -111,7 +168,7 @@ export function createMinimap(container, layout) {
   const ctx = canvas.getContext('2d');
   const scale = MAP_SIZE / (WORLD_BOUNDS.x1 - WORLD_BOUNDS.x0);
   return {
-    update(x, z, heading, blips = []) {
+    update(x, z, heading, blips = [], route = null) {
       const size = canvas.width;
       const zoom = size / (VIEW_METRES * scale);
       ctx.save();
@@ -123,12 +180,13 @@ export function createMinimap(container, layout) {
       const [mx, mz] = toMap(x, z);
       ctx.drawImage(base, -mx, -mz);
       const rim = (size / 2 - 16) / zoom;
+      if (route?.length > 1) drawRoute(ctx, route, mx, mz, 1 / zoom);
       for (const blip of blips) {
         const [bx, bz] = toMap(blip.x, blip.z);
         let dx = bx - mx;
         let dz = bz - mz;
         const d = Math.hypot(dx, dz);
-        if (d > rim && blip.police) {
+        if (d > rim && (blip.police || blip.mission)) {
           dx *= rim / d;
           dz *= rim / d;
         } else if (d > rim * 1.3) continue;

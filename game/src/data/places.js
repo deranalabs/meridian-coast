@@ -1,4 +1,4 @@
-// Named places: shops, the spray bay, food carts, the safe house, clinic and police station, near target spots.
+// Named places: shops, spray bay, food carts, safe house, clinic, police station and story spots, near targets.
 
 /**
  * kind picks the menu; near is the target (x, z) the place snaps to (the closest sidewalk of a block in that
@@ -21,3 +21,20 @@ export const PLACES = Object.freeze([
 
 /** Kinds the player can walk into and press E to use. */
 export const USABLE = new Set(['gun', 'clothes', 'dealer', 'spray', 'food', 'safehouse', 'garage']);
+
+/**
+ * Story locations: where characters wait, where jobs start and end. Resolved like PLACES (kind 'mission' never
+ * opens a menu); missions name them by id, and mission markers and minimap blips come from them.
+ */
+export const MISSION_PLACES = Object.freeze([
+  { id: 'lantern', kind: 'mission', name: 'Lucky Lantern Noodles', district: 'neon', near: [-18, -52] },
+  { id: 'newsbox', kind: 'mission', name: 'Kiosk on Coral Street', district: 'neon', near: [110, 30] },
+  { id: 'pell-hotel', kind: 'mission', name: 'Hotel Aurelio', district: 'beach', near: [300, -30] },
+  { id: 'voss-yard', kind: 'mission', name: 'Voss Freight Yard', district: 'harbor', near: [-30, 236] },
+  { id: 'lockup-bay', kind: 'mission', name: "Tavi's Bay", district: 'heights', near: [-250, 112], drive: true },
+  { id: 'pier-nine', kind: 'mission', name: 'Pier Nine Gate', district: 'harbor', near: [120, 290] },
+  { id: 'cold-store', kind: 'mission', name: 'Brinewater Cold Store', district: 'harbor', near: [-150, 280] },
+  { id: 'solis-steps', kind: 'mission', name: 'Precinct Steps', district: 'neon', near: [-96, -150] },
+  { id: 'bluff', kind: 'mission', name: 'Calder Bluff Lookout', district: 'heights', near: [-330, -20] },
+  { id: 'gull-dock', kind: 'mission', name: 'Gull Key Boat Dock', district: 'beach', near: [400, 80] },
+]);

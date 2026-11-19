@@ -24,6 +24,7 @@ import { createAction } from './systems/action.js';
 import { isSearching } from './police/wanted.js';
 import { policeReport } from './police/report.js';
 import { createServices } from './systems/services.js';
+import { createStory } from './missions/setup.js';
 import { baseOutfit } from './shops/outfit.js';
 import { ammoView } from './combat/arsenal.js';
 
@@ -101,11 +102,14 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
   game.outfit = baseOutfit(ilo.appearance);
   game.ownedCars = [];
   game.services = createServices(game);
+  game.missions = createStory(game);
   game.prompt = null;
 
   game.step = (dt, input) => {
     game.time += dt;
     game.prompt = game.services.update(dt, input);
+    const missionPrompt = game.services.respawn.active ? null : game.missions.update(dt, input);
+    game.prompt ??= missionPrompt;
     const event = player.update(dt, input, footCamera.state.yaw);
     if (event?.entered) chase.snap();
     if (input.pressed('KeyR') && player.state.mode === 'driving') radio.next();
@@ -151,13 +155,14 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
     post.render(scene, camera, time);
   };
 
-  /** The mission slot: a story job (next recording) or, while wanted, how to lose the heat. */
+  /** The slot under the mission panel: with no job running, where jobs are; while wanted, how to lose the heat. */
   game.objective = () => {
-    if (game.mission) return game.mission;
     const wanted = game.action.police.wanted;
     if (wanted.stars === 0) {
-      return { label: 'NO MISSION', text: 'Free roam: jobs open soon'
-        + '<small>Coloured markers on the map are shops; Taco Tide carts heal you</small>' };
+      const open = game.missions.available().length;
+      return { label: 'NO MISSION', text: open ? 'Free roam: a job is waiting at the <b>gold pin</b>'
+        + '<small>Walk into the gold pillar or press <kbd>P</kbd> for the phone</small>'
+        : 'Free roam: no calls right now<small>Coloured markers on the map are shops</small>' };
     }
     return isSearching(wanted)
       ? { label: 'HEAT', text: 'Stay out of sight to lose a star' }
@@ -179,13 +184,16 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
       menu: Boolean(game.services.shops.openPlace),
       police: () => policeReport(game.action.police, subject.x, subject.z),
       objective: game.objective(),
+      mission: game.missions.hudView(),
+      route: game.missions.route,
       speed: driving ? player.state.vehicle.speed : 0,
       driving,
       x: subject.x,
       z: subject.z,
       heading,
       radio: radio.line(),
-      blips: [...landmarks.blips, ...game.services.blips, ...game.action.police.blips(game.time)],
+      blips: [...landmarks.blips, ...game.services.blips, ...game.missions.blips,
+        ...game.action.police.blips(game.time)],
       hint: game.nearCarHint(),
     });
   };

@@ -1,0 +1,44 @@
+// Mission world view: the plain object the mission machine reads, filled from the live game once per step.
+
+/**
+ * One reused view over `game`. refresh(props) copies the player, the wanted level, death and arrest flags
+ * (latched from events until consumed) and the mission props' tagged cars, moving targets and enemy counts.
+ */
+export function createWorldView(game) {
+  const events = game.action.events;
+  const view = { x: 0, z: 0, driving: false, carTag: null, stars: 0, dead: false, busted: false,
+    cars: {}, targets: {}, enemies: {} };
+  const latched = { dead: false, busted: false };
+  events.on('busted', () => {
+    latched.busted = true;
+  });
+  events.on('wasted', () => {
+    latched.dead = true;
+  });
+
+  return {
+    view,
+    /** Forget any death or arrest that happened before now (a fresh start or a restart). */
+    clearLatches() {
+      latched.dead = false;
+      latched.busted = false;
+    },
+    refresh(props) {
+      const p = game.player.state;
+      const driving = p.mode === 'driving' && Boolean(p.car);
+      const at = driving ? p.car.position : game.ilo.position;
+      view.x = at.x;
+      view.z = at.z;
+      view.driving = driving;
+      view.carTag = driving ? p.car.missionTag ?? null : null;
+      view.stars = game.action.police.wanted.stars;
+      view.dead = latched.dead || p.vitals.health <= 0;
+      view.busted = latched.busted;
+      view.cars = props?.cars ?? view.cars;
+      view.targets = props?.targets ?? view.targets;
+      view.enemies = props?.enemies ?? view.enemies;
+      view.blips = props?.blips ?? null;
+      return view;
+    },
+  };
+}

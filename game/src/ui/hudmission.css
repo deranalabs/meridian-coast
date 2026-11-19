@@ -1,0 +1,80 @@
+/* HUD styles for the mission panel and the mission banners; colours come from the palette tokens (ui/theme.js). */
+#hud .mission-panel {
+  --mp-accent: var(--mc-gold);
+  display: none;
+  padding: 10px 14px 11px;
+  border-left: 4px solid var(--mp-accent);
+  background: linear-gradient(90deg, var(--mc-ui-deep), rgba(18, 8, 34, 0.3));
+  box-shadow: inset 0 1px 0 rgba(255, 201, 74, 0.18);
+}
+#hud .mission-panel.show { display: block; }
+#hud .mp-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+#hud .mp-title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--mc-gold);
+}
+#hud .mp-stage {
+  flex: none;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--mc-ui-tint);
+}
+#hud .mp-giver {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--mp-accent);
+  margin: 1px 0 5px;
+}
+#hud .mp-objective { font-size: 16px; font-weight: 650; line-height: 1.3; }
+#hud .mp-objective b { color: var(--mc-gold); }
+#hud .mp-bar { height: 4px; margin-top: 7px; background: rgba(255, 255, 255, 0.14); }
+#hud .mp-fill { height: 100%; width: 0; background: var(--mc-gold); transition: width 0.15s linear; }
+#hud .mp-next {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.72);
+}
+#hud .mp-next span {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--mc-ui-tint);
+  margin-right: 4px;
+}
+#hud .mp-failed { display: none; }
+#hud .mission-panel.failed { border-left-color: var(--mc-police-red); }
+#hud .mission-panel.failed .mp-objective,
+#hud .mission-panel.failed .mp-next,
+#hud .mission-panel.failed .mp-bar { display: none !important; }
+#hud .mission-panel.failed .mp-failed { display: block; font-size: 15px; font-weight: 650; }
+#hud .mp-failed b {
+  display: block;
+  font-size: 13px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--mc-police-red);
+}
+#hud .mp-failed small { display: block; margin-top: 5px; font-size: 12px; color: var(--mc-ui-tint); }
+#hud .mp-failed kbd, #hud .mp-objective kbd {
+  padding: 0 5px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 3px;
+  font: 700 11px "Avenir Next", Arial, sans-serif;
+}
+#hud .message.objective-line { color: var(--mc-gold); }
+#hud .message.passed-line {
+  font-size: 30px;
+  color: var(--mc-gold);
+  text-shadow: 0 0 18px rgba(255, 201, 74, 0.45);
+}
+#hud .message.failed-line { color: var(--mc-police-red); }
+#hud.map-large .leftcol .mission-panel { max-width: 300px; }

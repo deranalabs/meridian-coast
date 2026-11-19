@@ -1,5 +1,6 @@
-// HUD: cash, health, speedometer gauge, minimap with district name, radio line and context hints.
+// HUD: cash, health, speedometer, minimap with district name, mission panel, radio line and context hints.
 import { createMinimap } from './minimap.js';
+import { createMissionPanel } from './missionpanel.js';
 import { districtAt, PARK } from '../world/districts.js';
 import { BOARDWALK } from '../world/heightfield.js';
 import { createWantedStars } from './wantedstars.js';
@@ -86,6 +87,7 @@ export function createHud(layout, visible = true) {
   const weapon = createWeaponPanel(status);
   const weaponBar = createWeaponBar(status);
   const left = element(root, 'leftcol');
+  const missionPanel = createMissionPanel(left);
   const messages = createMessages(root, left);
   const policePanel = createPolicePanel(left);
   let policeTimer = 0;
@@ -103,7 +105,8 @@ export function createHud(layout, visible = true) {
 
   return {
     root,
-    say: (html, seconds) => messages.say(html, seconds),
+    messages,
+    say: (html, seconds, kind) => messages.say(html, seconds, kind),
     update(view) {
       root.classList.toggle('menu', Boolean(view.menu));
       cash.textContent = `$${view.cash.toLocaleString('en-US')}`;
@@ -121,12 +124,14 @@ export function createHud(layout, visible = true) {
         policeTimer = 0.25;
       }
       messages.update(view.dt ?? 1 / 60);
-      messages.setObjective(view.objective?.label ?? '', view.objective?.text ?? '');
+      missionPanel.update(view.mission ?? null);
+      const card = view.mission ? null : view.objective;
+      messages.setObjective(card?.label ?? '', card?.text ?? '');
       const line = view.radio;
       radio.innerHTML = `&#9835; <b>${line.station}</b> &nbsp;${line.text}`;
       radio.style.display = view.driving ? 'block' : 'none';
       district.textContent = placeName(view.x, view.z);
-      minimap.update(view.x, view.z, view.heading, view.blips);
+      minimap.update(view.x, view.z, view.heading, view.blips, view.route);
       speedoBox.style.display = view.driving ? 'block' : 'none';
       if (view.driving) drawSpeedo(speedoCtx, speedo.width, Math.abs(view.speed) * 3.6);
       if (view.hint !== lastHint) {
