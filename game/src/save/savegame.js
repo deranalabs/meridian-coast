@@ -1,5 +1,6 @@
-// Save format: versioned JSON of cash, weapons, outfit, owned cars, position and time; tolerant of bad data.
+// Save format: versioned JSON of cash, weapons, outfit, cars, position, time and story; tolerant of bad data.
 import { WEAPONS } from '../combat/weapons.js';
+import { createProgress, cleanProgress } from '../missions/progress.js';
 
 export const SAVE_VERSION = 2;
 const TIMES = ['dusk', 'night'];
@@ -25,6 +26,7 @@ export function defaultSave() {
     time: 'dusk',
     clock: 0,
     savedAt: 0,
+    missions: createProgress(),
   };
 }
 
@@ -90,6 +92,7 @@ export function normalise(input) {
     time: TIMES.includes(raw.time) ? raw.time : 'dusk',
     clock: number(raw.clock, 0, 0, 1e7),
     savedAt: number(raw.savedAt, 0, 0, 1e15),
+    missions: cleanProgress(raw.missions),
   };
 }
 

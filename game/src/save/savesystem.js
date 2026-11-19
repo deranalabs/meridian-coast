@@ -24,6 +24,7 @@ export function snapshot(game) {
     time: game.timeOfDay.name,
     clock: game.time,
     savedAt: Date.now(),
+    missions: game.missions ? game.missions.progress : null,
   };
 }
 
@@ -55,4 +56,5 @@ export function applySave(game, save) {
   game.ownedCars = save.cars.map((car) => ({ ...car }));
   if (save.position) game.player.placeOnFoot(save.position.x, save.position.z, save.position.heading);
   game.action.police.standDown();
+  if (save.missions) game.missions?.loadProgress(save.missions);
 }
