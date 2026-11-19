@@ -64,20 +64,23 @@ export function inflate(rings, factor = 1, extra = 0) {
 export function sliceRings(rings, y0, y1) {
   const lo = Math.min(y0, y1);
   const hi = Math.max(y0, y1);
+  // Rings may leave off cx, cz and flatten; both ends are padded so a short ring next to a long one blends
+  // its centre and flatten too, instead of dropping them.
+  const full = (ring) => [0, 1, 2, 3, 4, 5].map((k) => ring[k] ?? 0);
   const sample = (y) => {
     for (let index = 0; index + 1 < rings.length; index += 1) {
-      const a = rings[index];
-      const b = rings[index + 1];
+      const a = full(rings[index]);
+      const b = full(rings[index + 1]);
       const min = Math.min(a[0], b[0]);
       const max = Math.max(a[0], b[0]);
       if (y >= min && y <= max) {
         const t = max === min ? 0 : (y - a[0]) / (b[0] - a[0]);
-        return a.map((value, k) => (k === 0 ? y : value + ((b[k] ?? 0) - value) * t));
+        return a.map((value, k) => (k === 0 ? y : value + (b[k] - value) * t));
       }
     }
     const last = rings[rings.length - 1];
     const nearest = Math.abs(y - rings[0][0]) < Math.abs(y - last[0]) ? rings[0] : last;
-    return [y, ...nearest.slice(1)];
+    return [y, ...full(nearest).slice(1)];
   };
   const inside = rings.filter((ring) => ring[0] > lo && ring[0] < hi);
   const ordered = [sample(y0), ...inside.sort((a, b) => (y0 < y1 ? a[0] - b[0] : b[0] - a[0])), sample(y1)];
