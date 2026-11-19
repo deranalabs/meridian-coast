@@ -126,21 +126,26 @@ export function addGableRoof(builder, box, pitch, overhang, look) {
   const ridge = y + (span / 2) * pitch;
   const roofLook = { aTile: tileAttribute('roofTerracotta'), aTint: look.roofTint ?? [1, 1, 1], aSeed: look.seed };
   const s = 0.3;
+  // Each slope's normal from its real run and rise, so a shallow roof catches the low sun as a shallow roof.
+  const run = span / 2 + overhang;
+  const length = Math.hypot(run, ridge - y);
+  const up = run / length;
+  const out = (ridge - y) / length;
   if (alongX) {
     const mz = (box.z0 + box.z1) / 2;
     const slope = Math.hypot(mz - z0, ridge - y);
-    builder.quad([[x0, y, z1], [x1, y, z1], [x1, ridge, mz], [x0, ridge, mz]], [0, 0.7, 0.7],
+    builder.quad([[x0, y, z1], [x1, y, z1], [x1, ridge, mz], [x0, ridge, mz]], [0, up, out],
       [[x0 * s, 0], [x1 * s, 0], [x1 * s, slope * s], [x0 * s, slope * s]], roofLook);
-    builder.quad([[x1, y, z0], [x0, y, z0], [x0, ridge, mz], [x1, ridge, mz]], [0, 0.7, -0.7],
+    builder.quad([[x1, y, z0], [x0, y, z0], [x0, ridge, mz], [x1, ridge, mz]], [0, up, -out],
       [[x1 * s, 0], [x0 * s, 0], [x0 * s, slope * s], [x1 * s, slope * s]], roofLook);
     addGableEnd(builder, { x: box.x0, z: box.z1 }, { x: box.x0, z: box.z0 }, y, ridge, look, [-1, 0, 0]);
     addGableEnd(builder, { x: box.x1, z: box.z0 }, { x: box.x1, z: box.z1 }, y, ridge, look, [1, 0, 0]);
   } else {
     const mx = (box.x0 + box.x1) / 2;
     const slope = Math.hypot(mx - x0, ridge - y);
-    builder.quad([[x1, y, z1], [x1, y, z0], [mx, ridge, z0], [mx, ridge, z1]], [0.7, 0.7, 0],
+    builder.quad([[x1, y, z1], [x1, y, z0], [mx, ridge, z0], [mx, ridge, z1]], [out, up, 0],
       [[z1 * s, 0], [z0 * s, 0], [z0 * s, slope * s], [z1 * s, slope * s]], roofLook);
-    builder.quad([[x0, y, z0], [x0, y, z1], [mx, ridge, z1], [mx, ridge, z0]], [-0.7, 0.7, 0],
+    builder.quad([[x0, y, z0], [x0, y, z1], [mx, ridge, z1], [mx, ridge, z0]], [-out, up, 0],
       [[z0 * s, 0], [z1 * s, 0], [z1 * s, slope * s], [z0 * s, slope * s]], roofLook);
     addGableEnd(builder, { x: box.x0, z: box.z0 }, { x: box.x1, z: box.z0 }, y, ridge, look, [0, 0, -1]);
     addGableEnd(builder, { x: box.x1, z: box.z1 }, { x: box.x0, z: box.z1 }, y, ridge, look, [0, 0, 1]);
