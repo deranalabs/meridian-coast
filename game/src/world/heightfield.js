@@ -59,6 +59,23 @@ export function heightAt(x, z) {
   return h;
 }
 
+/** The Gull Key causeway deck: rises off the beach road, runs level over the water, lands on the island. */
+export const CAUSEWAY = Object.freeze({ x0: BEACH_ROAD_X, x1: ISLAND.x - 30, deck: 4.6, rampIn: 64, rampOut: 26 });
+
+export function deckHeight(x) {
+  const startHeight = 0;
+  const endHeight = heightAt(CAUSEWAY.x1, ISLAND.z);
+  if (x <= CAUSEWAY.x0) return startHeight;
+  if (x < CAUSEWAY.x0 + CAUSEWAY.rampIn) {
+    return startHeight + (CAUSEWAY.deck - startHeight) * smooth((x - CAUSEWAY.x0) / CAUSEWAY.rampIn);
+  }
+  if (x < CAUSEWAY.x1 - CAUSEWAY.rampOut) return CAUSEWAY.deck;
+  if (x < CAUSEWAY.x1) {
+    return CAUSEWAY.deck + (endHeight - CAUSEWAY.deck) * smooth((x - (CAUSEWAY.x1 - CAUSEWAY.rampOut)) / CAUSEWAY.rampOut);
+  }
+  return endHeight;
+}
+
 /** Ground slope as a unit normal [nx, ny, nz] by central differences. */
 export function normalAt(x, z) {
   const e = 1;

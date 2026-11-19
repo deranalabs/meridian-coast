@@ -80,8 +80,9 @@ const EMISSIVE_FRAGMENT = /* glsl */ `
   float windowHash = facadeHash(windowId);
   float windowLit = vTile.z > 0.5 ? (vTile.z > 1.5 ? 0.0 : 1.0) : step(windowHash, uWindowsLit);
   vec3 windowTint = mix(vec3(1.0), vec3(0.75, 0.9, 1.25), step(0.72, fract(windowHash * 13.7)));
-  windowTint *= 0.55 + 0.9 * fract(windowHash * 7.31);
-  totalEmissiveRadiance += facadeLight * windowLit * windowTint * uWindowLevel;
+  windowTint *= 0.35 + 0.9 * fract(windowHash * 7.31);
+  float shopDim = vTile.z > 0.5 ? 0.42 : 1.0;
+  totalEmissiveRadiance += facadeLight * facadeLight * windowLit * windowTint * shopDim * uWindowLevel;
 `;
 
 /** The single material every facade, roof and trim surface of the city shares. */
@@ -93,7 +94,7 @@ export function createFacadeMaterial(atlas, timeOfDay) {
     uMaterial: { value: atlas.material },
     uGrime: { value: grimeTexture(31) },
     uWindowsLit: { value: timeOfDay.windowsLit },
-    uWindowLevel: { value: timeOfDay.name === 'night' ? 2.6 : 1.7 },
+    uWindowLevel: { value: timeOfDay.name === 'night' ? 3.2 : 2.4 },
   };
   material.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniforms);

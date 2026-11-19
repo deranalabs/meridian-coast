@@ -91,6 +91,6 @@ export const SLOT = Object.freeze(Object.fromEntries(SLOTS.map((name, index) => 
 
 /** Colour channels a character's palette fills; geometry names one per vertex. */
 export const COLOUR_CHANNELS = Object.freeze([
-  'skin', 'hair', 'top', 'topTrim', 'bottom', 'shoe', 'shoeSole', 'outer', 'outerLining', 'accent',
+  'skin', 'hair', 'top', 'topTrim', 'bottom', 'shoe', 'shoeSole', 'outer', 'outerLining', 'accent', 'detail',
 ]);
 export const COLOUR = Object.freeze(Object.fromEntries(COLOUR_CHANNELS.map((name, index) => [name, index])));

@@ -169,7 +169,13 @@ function buildTower(builder, out, lot, box, ground, district, style, look, rando
     } else {
       addParapet(builder, roof, random.range(0.8, 1.3), 0.35, look);
       if (style !== STYLES.glass && style !== STYLES.office) addCornice(builder, roof, roof.y1 - 0.5, 0.6, 0.45, look);
-      out.roofs.push({ ...inset(roof, 1.4), y: roof.y1, district: district.id, kind: look.tall ? 'tower' : 'flat' });
+      out.roofs.push({
+        ...inset(roof, 1.4),
+        y: roof.y1,
+        district: district.id,
+        kind: look.tall ? 'tower' : 'flat',
+        fronts: lot.fronts,
+      });
       if (district.id === 'beach' && random.chance(0.45)) {
         out.signs.push({
           kind: 'roof',

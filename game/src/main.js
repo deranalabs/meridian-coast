@@ -8,6 +8,9 @@ import { createLighting } from './render/lighting.js';
 import { installFog } from './render/fog.js';
 import { getTimeOfDay } from './render/timeofday.js';
 import { createCity } from './world/city.js';
+import { createCharacters } from './actors/characters.js';
+import { createPedestrians } from './actors/pedestrians.js';
+import { iloAppearance } from './actors/appearance.js';
 import { getShot } from './shots.js';
 
 const STEP = 1 / 60;
@@ -32,9 +35,15 @@ const lighting = createLighting(scene, timeOfDay);
 const city = createCity(seed, timeOfDay);
 scene.add(city.group);
 
+const characters = createCharacters(72, city.surfaces.data);
+scene.add(characters.mesh);
+const ilo = characters.add(iloAppearance());
+const focusStart = new THREE.Vector3(-40, 0, -60);
+const pedestrians = createPedestrians(characters, city.layout, 56, seed, focusStart);
+
 const camera = new THREE.PerspectiveCamera(58, 16 / 10, 0.1, 2600);
 const post = createPost(renderer, timeOfDay);
-const game = { scene, camera, city, lighting, timeOfDay, seed, time: 0 };
+const game = { scene, camera, city, lighting, timeOfDay, seed, time: 0, characters, ilo, pedestrians };
 
 function onResize() {
   const width = window.innerWidth;
@@ -50,6 +59,8 @@ onResize();
 function step(dt) {
   game.time += dt;
   city.update(game.time);
+  pedestrians.update(dt, game.focus ?? focusStart);
+  characters.update(dt, game.time);
 }
 
 function draw(dt) {
