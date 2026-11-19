@@ -1,4 +1,5 @@
 // Deterministic screenshot scenes behind ?shot=<name>&seed=N: each sets time of day, actors and camera.
+import { ACTION_SHOTS } from './shotsaction.js';
 
 const CLUTTER = ['bin', 'news', 'hydrant', 'bench', 'meter', 'bollard', 'shelter', 'planter', 'palm', 'palmTall',
   'tree', 'lamp', 'sign', 'signal'];
@@ -155,5 +156,5 @@ export const SHOTS = {
 };
 
 export function getShot(name) {
-  return SHOTS[name] ?? null;
+  return SHOTS[name] ?? ACTION_SHOTS[name] ?? null;
 }

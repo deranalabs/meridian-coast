@@ -20,6 +20,9 @@ import { createChaseCamera, createFootCamera } from './vehicles/camera.js';
 import { createHud } from './ui/hud.js';
 import { createRadio } from './ui/radio.js';
 import { CAR_PAINTS } from './palette.js';
+import { createAction } from './systems/action.js';
+import { isSearching } from './police/wanted.js';
+import { ammoView } from './combat/arsenal.js';
 
 const PEDESTRIANS = 46;
 const TRAFFIC = 26;
@@ -68,12 +71,13 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
   const smoke = createSmoke(400, timeOfDay);
   scene.add(smoke.points);
 
-  const characters = createCharacters(PEDESTRIANS + 8, city.surfaces.data);
+  const characters = createCharacters(PEDESTRIANS + 20, city.surfaces.data);
   scene.add(characters.mesh);
   const ilo = characters.add(iloAppearance());
   ilo.position.set(focus.x, ground.surfaceAt(focus.x, focus.z).height, focus.z);
   const pedestrians = createPedestrians(characters, city.layout, PEDESTRIANS, seed, focus);
-  const player = createPlayer(ilo, { fleet, colliders, ground, smoke, traffic });
+  const playerHooks = {};
+  const player = createPlayer(ilo, { fleet, colliders, ground, smoke, traffic }, playerHooks);
 
   const camera = new THREE.PerspectiveCamera(58, 16 / 10, 0.1, 2600);
   const chase = createChaseCamera(camera);
@@ -87,14 +91,16 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
   const game = {
     scene, camera, city, landmarks, ground, colliders, fleet, traffic, smoke, characters, ilo, pedestrians, player,
     chase, footCamera, post, hud, radio, lighting, sky, timeOfDay, seed, time: 0, cameraMode: 'auto',
-    chaseOptions: undefined,
+    chaseOptions: undefined, playerHooks,
   };
+  game.action = createAction(game);
 
   game.step = (dt, input) => {
     game.time += dt;
     const event = player.update(dt, input, footCamera.state.yaw);
     if (event?.entered) chase.snap();
-    if (input.pressed('KeyR')) radio.next();
+    if (input.pressed('KeyR') && player.state.mode === 'driving') radio.next();
+    game.action.update(dt, input, game.time);
     const subject = player.state.car ? player.state.car.position : ilo.position;
     focusPoint.copy(subject);
     traffic.update(dt, focusPoint, [subject]);
@@ -131,7 +137,18 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
     lighting.follow(lookPoint);
     lighting.lightSubject(ilo.position, camera);
     sky.update(camera, time);
+    game.action.draw(time);
     post.render(scene, camera, time);
+  };
+
+  /** The mission slot: a story job (next recording) or, while wanted, how to lose the heat. */
+  game.objective = () => {
+    if (game.mission) return game.mission;
+    const wanted = game.action.police.wanted;
+    if (wanted.stars === 0) return null;
+    return isSearching(wanted)
+      ? { label: 'HEAT', text: 'Stay out of sight to lose a star' }
+      : { label: 'HEAT', text: 'Lose the police: break their line of sight or hit a <b>spray bay</b>' };
   };
 
   game.updateHud = () => {
@@ -139,8 +156,13 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
     const subject = driving ? player.state.car.position : ilo.position;
     const heading = driving ? player.state.car.heading : footCamera.state.yaw;
     hud.update({
-      cash: player.state.cash,
-      health: player.state.health,
+      cash: player.state.wallet.cash,
+      health: player.state.vitals.health,
+      armour: player.state.vitals.armour,
+      stars: game.action.police.wanted.stars,
+      searching: isSearching(game.action.police.wanted),
+      weapon: ammoView(player.state.arsenal),
+      objective: game.objective(),
       speed: driving ? player.state.vehicle.speed : 0,
       driving,
       x: subject.x,

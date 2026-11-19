@@ -69,6 +69,21 @@ export function createFleet(capacityPerType, noiseTexture, timeOfDay) {
       wheels.count = cars.length * 4;
       return car;
     },
+    /** Repaint a car (the spray bay uses this). */
+    setColour(car, colour) {
+      car.colour.set(colour);
+      meshes[car.type].setColorAt(car.index, car.colour);
+      meshes[car.type].instanceColor.needsUpdate = true;
+    },
+    /** A free (hidden, unused) car of `type`, or a new one; used to spawn police and bought cars. */
+    reuse(type, colour) {
+      const spare = cars.find((car) => car.type === type && car.spare);
+      if (!spare) return this.add(type, colour);
+      spare.spare = false;
+      spare.visible = true;
+      this.setColour(spare, colour);
+      return spare;
+    },
     /** Write every car's body and wheel matrices. */
     update() {
       cars.forEach((car, carIndex) => {

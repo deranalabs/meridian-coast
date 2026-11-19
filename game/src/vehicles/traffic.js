@@ -21,7 +21,9 @@ function speedFor(edge) {
  * `count` traffic cars from `fleet` placed on edges near `focus`; update(dt, focus, obstacles) drives them.
  * `ground.surfaceAt` gives road heights. obstacles is a list of {x, z} positions to brake for (the player).
  */
-export function createTraffic(fleet, layout, ground, count, seed, focus, radius = 170) {
+export function createTraffic(fleet, layout, ground, count, seed, focus, radius = 170, options = {}) {
+  const types = options.types ?? ['sedan', 'sedan', 'coupe', 'pickup'];
+  const paints = options.paints ?? CAR_PAINTS;
   const random = createRandom(seed * 613 + 29);
   const { nodes, edges } = layout.graph;
   const drivable = edges.filter((edge) => edge.length > 18);
@@ -92,8 +94,8 @@ export function createTraffic(fleet, layout, ground, count, seed, focus, radius 
   }
 
   for (let index = 0; index < count; index += 1) {
-    const type = random.pick(['sedan', 'sedan', 'coupe', 'pickup']);
-    const car = fleet.add(type, random.pick(CAR_PAINTS));
+    const type = random.pick(types);
+    const car = fleet.add(type, random.pick(paints));
     if (!car) break;
     const agent = { car, edge: 0, from: 0, lane: 0, distance: 0, speed: 0, cruise: 12, turn: null,
       position: { x: 0, z: 0 } };
@@ -213,5 +215,15 @@ export function createTraffic(fleet, layout, ground, count, seed, focus, radius 
     if (index >= 0) agents.splice(index, 1);
   }
 
-  return { agents, update, release, placeNear };
+  /** Take `car` back into traffic, respawned on a road out of the way of `centre`. */
+  function adopt(car, centre) {
+    if (agents.some((agent) => agent.car === car)) return;
+    const agent = { car, edge: 0, from: 0, lane: 0, distance: 0, speed: 0, cruise: 12, turn: null,
+      position: { x: 0, z: 0 } };
+    car.visible = true;
+    spawn(agent, centre, true);
+    agents.push(agent);
+  }
+
+  return { agents, update, release, placeNear, adopt };
 }

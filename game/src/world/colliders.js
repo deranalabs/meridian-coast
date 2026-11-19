@@ -38,6 +38,28 @@ export function createColliders() {
       insert({ type: 'circle', ...circle }, circle.x - circle.r, circle.z - circle.r, circle.x + circle.r,
         circle.z + circle.r);
     },
+    /** Whether the point is inside a building box or landmark circle. */
+    inside(x, z) {
+      for (const shape of nearby(x, z, 0)) {
+        if (shape.type === 'box') {
+          if (x > shape.x0 && x < shape.x1 && z > shape.z0 && z < shape.z1) return true;
+        } else if (Math.hypot(x - shape.x, z - shape.z) < shape.r) return true;
+      }
+      return false;
+    },
+    /**
+     * The fraction 0..1 along the segment a to b where it first enters a collider (sampled every `step`
+     * metres), or 1 when the way is clear. Used for line of sight and bullets.
+     */
+    segmentHit(ax, az, bx, bz, step = 1.5) {
+      const length = Math.hypot(bx - ax, bz - az);
+      const samples = Math.max(1, Math.ceil(length / step));
+      for (let index = 1; index <= samples; index += 1) {
+        const t = index / samples;
+        if (this.inside(ax + (bx - ax) * t, az + (bz - az) * t)) return Math.max(0, (index - 1) / samples);
+      }
+      return 1;
+    },
     /** Push circle (x, z, r) out of colliders; returns {x, z, hit, nx, nz} with the last contact normal. */
     resolveCircle(x, z, r) {
       let px = x;

@@ -2,6 +2,9 @@
 import { createMinimap } from './minimap.js';
 import { districtAt, PARK } from '../world/districts.js';
 import { BOARDWALK } from '../world/heightfield.js';
+import { createWantedStars } from './wantedstars.js';
+import { createWeaponPanel } from './weaponpanel.js';
+import { createMessages } from './messages.js';
 
 function element(parent, className, tag = 'div') {
   const node = document.createElement(tag);
@@ -76,6 +79,10 @@ export function createHud(layout, visible = true) {
   const status = element(root, 'status');
   const cash = element(status, 'cash');
   const healthBar = element(element(status, 'health'), '');
+  const armourBar = element(element(status, 'armour'), '');
+  const wanted = createWantedStars(status);
+  const weapon = createWeaponPanel(status);
+  const messages = createMessages(root);
   const radio = element(root, 'radio');
   const district = element(root, 'district');
   const minimap = createMinimap(element(root, 'minimap'), layout);
@@ -90,9 +97,17 @@ export function createHud(layout, visible = true) {
 
   return {
     root,
+    say: (html, seconds) => messages.say(html, seconds),
     update(view) {
       cash.textContent = `$${view.cash.toLocaleString('en-US')}`;
       healthBar.style.width = `${Math.max(0, Math.min(100, view.health))}%`;
+      armourBar.style.width = `${Math.max(0, Math.min(100, view.armour ?? 0))}%`;
+      armourBar.parentElement.style.display = view.armour > 0 ? 'block' : 'none';
+      wanted.update(view.stars ?? 0, Boolean(view.searching));
+      if (view.weapon) weapon.update(view.weapon);
+      weapon.root.style.display = view.driving ? 'none' : 'flex';
+      messages.update(view.dt ?? 1 / 60);
+      messages.setObjective(view.objective?.label ?? '', view.objective?.text ?? '');
       const line = view.radio;
       radio.innerHTML = `&#9835; <b>${line.station}</b> &nbsp;${line.text}`;
       radio.style.display = view.driving ? 'block' : 'none';

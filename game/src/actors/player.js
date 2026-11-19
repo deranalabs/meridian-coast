@@ -1,8 +1,12 @@
 // The player, Ilo Rask: walking and running on foot, aiming, and entering, driving and leaving cars with E.
 import { createVehicleState, stepVehicle } from '../vehicles/driving.js';
+import { createWallet } from '../economy/wallet.js';
+import { createVitals } from '../combat/vitals.js';
+import { createArsenal } from '../combat/arsenal.js';
 
 const WALK = 1.7;
 const RUN = 5.6;
+const CROUCH = 1.1;
 const RADIUS = 0.35;
 const ENTER_RANGE = 3.6;
 const ENTER_SECONDS = 0.9;
@@ -18,15 +22,22 @@ function doorPoint(car) {
  * Wires Ilo's character to input, the fleet, colliders and ground. mode is 'foot', 'entering', 'driving'
  * or 'exiting'; update(dt, input, cameraYaw) runs one step and returns events such as {entered: car}.
  */
-export function createPlayer(character, { fleet, colliders, ground, smoke, traffic }) {
+export function createPlayer(character, { fleet, colliders, ground, smoke, traffic }, hooks = {}) {
   const state = {
     mode: 'foot',
     car: null,
     vehicle: null,
     timer: 0,
-    health: 100,
-    cash: 2480,
+    wallet: createWallet(2480),
+    vitals: createVitals(),
+    arsenal: createArsenal(),
     autopilot: null,
+    aiming: false,
+    crouch: false,
+    inCover: false,
+    actionTimer: 0,
+    down: false,
+    frozen: false,
   };
 
   function groundY(x, z) {
@@ -49,6 +60,7 @@ export function createPlayer(character, { fleet, colliders, ground, smoke, traff
   }
 
   function takeCar(car) {
+    hooks.onTakeCar?.(car);
     traffic?.release(car);
     state.car = car;
     state.vehicle = createVehicleState(car.spec, car.position.x, car.position.z, car.heading);
@@ -65,9 +77,12 @@ export function createPlayer(character, { fleet, colliders, ground, smoke, traff
     const forward = input.axis(['KeyS', 'ArrowDown'], ['KeyW', 'ArrowUp']);
     const strafe = input.axis(['KeyA', 'ArrowLeft'], ['KeyD', 'ArrowRight']);
     const running = input.down('ShiftLeft', 'ShiftRight');
-    const aiming = input.down('KeyQ');
+    const aiming = input.down('KeyQ', 'Mouse2');
+    if (input.pressed('KeyC')) state.crouch = !state.crouch;
+    if (running && forward !== 0) state.crouch = false;
+    state.aiming = aiming;
     const moving = forward !== 0 || strafe !== 0;
-    const speed = moving ? (running && !aiming ? RUN : WALK) : 0;
+    const speed = moving ? (state.crouch ? CROUCH : running && !aiming ? RUN : WALK) : 0;
     if (moving) {
       const rightX = -Math.cos(cameraYaw);
       const rightZ = Math.sin(cameraYaw);
@@ -94,7 +109,12 @@ export function createPlayer(character, { fleet, colliders, ground, smoke, traff
     if (aiming) character.heading = cameraYaw;
     character.position.y = groundY(character.position.x, character.position.z);
     character.speed = speed;
-    character.play(aiming ? 'aim' : speed > 3 ? 'run' : speed > 0 ? 'walk' : 'idle');
+    state.actionTimer = Math.max(0, state.actionTimer - dt);
+    state.shootTimer = Math.max(0, (state.shootTimer ?? 0) - dt);
+    const raised = aiming || state.shootTimer > 0;
+    if (state.actionTimer > 0) character.speed = 0;
+    else if (state.crouch) character.play(raised ? 'aim' : 'crouch');
+    else character.play(raised ? 'aim' : speed > 3 ? 'run' : speed > 0 ? 'walk' : 'idle');
     if (input.pressed('KeyE')) {
       const car = nearestCar();
       if (car) {
@@ -181,7 +201,20 @@ export function createPlayer(character, { fleet, colliders, ground, smoke, traff
     character,
     enterNow,
     driveStep,
+    /** Put Ilo on foot at (x, z) facing `heading`, out of any car (respawns, busted, loading a save). */
+    placeOnFoot(x, z, heading = 0) {
+      state.mode = 'foot';
+      state.car = null;
+      state.vehicle = null;
+      state.autopilot = null;
+      state.crouch = false;
+      character.visible = true;
+      character.position.set(x, groundY(x, z), z);
+      character.heading = heading;
+      character.play('idle');
+    },
     update(dt, input, cameraYaw) {
+      if (state.down || state.frozen) return null;
       if (state.mode === 'foot') updateFoot(dt, input, cameraYaw);
       else if (state.mode === 'entering') return updateEntering(dt);
       else if (state.mode === 'driving') updateDriving(dt, input);

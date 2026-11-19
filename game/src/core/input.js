@@ -24,6 +24,15 @@ export function createInput(target) {
   document.addEventListener('pointerlockchange', () => {
     mouse.locked = document.pointerLockElement === target;
   });
+  target.addEventListener('mousedown', (event) => {
+    const code = `Mouse${event.button}`;
+    if (!held.has(code)) presses.add(code);
+    held.add(code);
+  });
+  window.addEventListener('mouseup', (event) => held.delete(`Mouse${event.button}`));
+  target.addEventListener('contextmenu', (event) => event.preventDefault());
+  target.addEventListener('wheel', (event) => presses.add(event.deltaY > 0 ? 'WheelDown' : 'WheelUp'),
+    { passive: true });
   window.addEventListener('mousemove', (event) => {
     if (!mouse.locked) return;
     mouse.dx += event.movementX;

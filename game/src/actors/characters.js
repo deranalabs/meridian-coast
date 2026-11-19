@@ -4,7 +4,8 @@ import { createCrowd, BONE_FLOATS } from './crowdmesh.js';
 import { Animator } from './animation.js';
 import { solvePose, createJointMatrices, POSE_SIZE } from './rig.js';
 
-const yAxis = new THREE.Vector3(0, 1, 0);
+const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+const lifted = new THREE.Vector3();
 
 /** Holds up to `capacity` characters; add() returns a character whose position/heading/clip you drive. */
 export function createCharacters(capacity, fabricTexture) {
@@ -34,8 +35,15 @@ export function createCharacters(capacity, fabricTexture) {
         heading: 0,
         speed: 0,
         visible: true,
+        tilt: 0,
+        lift: 0,
+        held: null,
+        owner: null,
         play(name) {
           this.animator.play(name);
+        },
+        replay(name) {
+          this.animator.replay(name);
         },
       };
       crowd.setAppearance(row, appearance);
@@ -44,14 +52,23 @@ export function createCharacters(capacity, fabricTexture) {
       crowd.mesh.geometry.instanceCount = characters.length;
       return character;
     },
+    /** Change a character's outfit (the clothing shop uses this). */
+    restyle(character, appearance) {
+      character.appearance = appearance;
+      crowd.setAppearance(character.row, appearance);
+      crowd.setVisible(character.row, character.visible);
+    },
     update(dt, time) {
       for (const character of characters) {
         crowd.setVisible(character.row, character.visible);
         if (!character.visible) continue;
         character.animator.update(dt, character.speed);
         character.animator.sample(time, character.pose);
-        quaternion.setFromAxisAngle(yAxis, character.heading);
-        root.compose(character.position, quaternion, unit);
+        euler.set(character.tilt, character.heading, 0, 'YXZ');
+        quaternion.setFromEuler(euler);
+        lifted.copy(character.position);
+        lifted.y += character.lift;
+        root.compose(lifted, quaternion, unit);
         solvePose(character.pose, character.appearance.build, root, character.joints, bones, 0);
         crowd.setBones(character.row, bones);
       }

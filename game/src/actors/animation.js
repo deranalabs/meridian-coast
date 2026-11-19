@@ -1,6 +1,7 @@
 // Animation: procedural clips (idle, walk, run, aim, flee, sit, enter and exit car) and an eased blender.
 import { PART } from '../palette.js';
 import { POSE_SIZE } from './rig.js';
+import { ACTION_CLIPS, ONE_SHOT_CLIPS } from './actionclips.js';
 
 const TAU = Math.PI * 2;
 
@@ -134,6 +135,7 @@ export const CLIPS = {
   },
 };
 
+Object.assign(CLIPS, ACTION_CLIPS);
 export const CLIP_NAMES = Object.keys(CLIPS);
 const FADE_SECONDS = 0.28;
 
@@ -154,16 +156,27 @@ export class Animator {
     this.scratch = new Float32Array(POSE_SIZE);
   }
 
+  /** Start a one-shot clip again from the beginning even if it is already playing. */
+  replay(name) {
+    this.target = name;
+    this.oneShot = 0;
+  }
+
+  /** Whether the current one-shot clip has finished. */
+  get done() {
+    return this.oneShot >= 1;
+  }
+
   play(name) {
     if (name === this.target) return;
     this.target = name;
-    if (name === 'enter' || name === 'exit') this.oneShot = 0;
+    if (ONE_SHOT_CLIPS.has(name)) this.oneShot = 0;
   }
 
   update(dt, speed) {
     const stride = this.target === 'run' || this.target === 'flee' ? 2.5 : 1.45;
     this.phase = (this.phase + (dt * Math.max(speed, 0.6)) / stride) % 1;
-    this.oneShot = Math.min(1, this.oneShot + dt / 0.9);
+    this.oneShot = Math.min(1, this.oneShot + dt / (ONE_SHOT_CLIPS.get(this.target) ?? 0.9));
     const rate = dt / FADE_SECONDS;
     for (const name of CLIP_NAMES) {
       const goal = name === this.target ? 1 : 0;
@@ -179,7 +192,7 @@ export class Animator {
       const weight = ease(this.levels[name]);
       if (weight < 0.001) continue;
       this.scratch.fill(0);
-      const phase = name === 'enter' || name === 'exit' ? this.oneShot : this.phase;
+      const phase = ONE_SHOT_CLIPS.has(name) ? (name === this.target ? this.oneShot : 1) : this.phase;
       CLIPS[name](this.scratch, phase, time);
       for (let index = 0; index < POSE_SIZE; index += 1) pose[index] += this.scratch[index] * weight;
       total += weight;

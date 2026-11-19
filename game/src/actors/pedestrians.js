@@ -5,6 +5,7 @@ import { heightAt } from '../world/heightfield.js';
 import { randomAppearance } from './appearance.js';
 import { createRandom } from '../core/random.js';
 import { UNITS } from '../palette.js';
+import { standUp } from './ragdoll.js';
 
 const KERB = UNITS.kerbHeight;
 
@@ -73,12 +74,58 @@ export function createPedestrians(characters, layout, count, seed, focus, radius
     peds.push(ped);
   }
 
-  const system = { peds, enabled: true, update };
+  const system = { peds, enabled: true, update, centre: { x: focus.x, z: focus.z } };
+
+  /** A fallen person comes back as a fresh passer-by on a block near the focus. */
+  system.revive = (ped) => {
+    standUp(ped.character);
+    ped.down = false;
+    ped.react = null;
+    ped.calm = false;
+    ped.character.held = null;
+    if (ped.vitals) ped.vitals.health = 80;
+    place(ped, system.centre);
+  };
+
+  /** Put a person who calmed down back on the nearest sidewalk loop, at the closest point. */
+  function rejoin(ped) {
+    const c = ped.character;
+    let best = null;
+    for (const { ring } of rings) {
+      let walked = 0;
+      ring.points.forEach((p, i) => {
+        const q = ring.points[(i + 1) % ring.points.length];
+        const length = ring.lengths[i] || 1;
+        const t = Math.max(0, Math.min(1, ((c.position.x - p.x) * (q.x - p.x) + (c.position.z - p.z) * (q.z - p.z))
+          / (length * length)));
+        const d = Math.hypot(p.x + (q.x - p.x) * t - c.position.x, p.z + (q.z - p.z) * t - c.position.z);
+        if (!best || d < best.d) best = { d, ring, distance: walked + t * length };
+        walked += ring.lengths[i];
+      });
+    }
+    ped.ring = best.ring;
+    ped.distance = best.distance;
+    ped.calm = false;
+  }
 
   function update(dt, centre) {
     if (!system.enabled) return;
+    if (centre) system.centre = { x: centre.x, z: centre.z };
     for (const ped of peds) {
       const c = ped.character;
+      if (ped.down) {
+        const far = centre && Math.hypot(c.position.x - centre.x, c.position.z - centre.z) > 60;
+        if (ped.downTime > 40 || (far && ped.downTime > 12)) system.revive?.(ped);
+        else continue;
+      }
+      if (ped.react) {
+        if (centre && Math.hypot(c.position.x - centre.x, c.position.z - centre.z) > radius * 1.3) {
+          ped.react = null;
+          c.held = null;
+          place(ped, centre);
+        } else continue;
+      }
+      if (ped.calm) rejoin(ped);
       if (ped.pause > 0) {
         ped.pause -= dt;
         c.speed = 0;
