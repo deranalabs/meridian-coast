@@ -30,6 +30,28 @@ export const FACTIONS = Object.freeze({
   saltDogs: '#2ec4c9',
   velvetHand: '#c45cff',
   calderCrew: '#f2b84b',
+  gildedWake: '#ff8a5c',
+});
+
+/** The four story factions: display name, colour, and a darker shade for card borders and portrait backs. */
+export const FACTION_INFO = Object.freeze({
+  saltDogs: { name: 'Salt Dogs', colour: FACTIONS.saltDogs, shade: '#136c70', turf: 'harbor' },
+  velvetHand: { name: 'Velvet Hand', colour: FACTIONS.velvetHand, shade: '#5e2382', turf: 'neon' },
+  calderCrew: { name: 'Calder Crew', colour: FACTIONS.calderCrew, shade: '#7f5a17', turf: 'heights' },
+  gildedWake: { name: 'Gilded Wake', colour: FACTIONS.gildedWake, shade: '#8a3a1c', turf: 'beach' },
+});
+
+/** HUD and menu tokens (mission gold, a neutral tint, panel ink, police lamps); ui/theme.js makes CSS variables. */
+export const UI_TOKENS = Object.freeze({
+  gold: '#ffc94a',
+  goldDeep: '#a8741a',
+  uiTint: '#9fb7c9',
+  uiInk: '#120a24',
+  uiDeep: 'rgba(14, 8, 30, 0.8)',
+  cash: '#9dffb5',
+  policeRed: FACTIONS.policeSiren,
+  policeBlue: '#6f97ff',
+  policeAmber: '#ffb03a',
 });
 
 /** Five skin tones from light to deep, in linear-friendly sRGB hex. */

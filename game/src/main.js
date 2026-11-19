@@ -9,8 +9,11 @@ import { createGame } from './game.js';
 import { createInput } from './core/input.js';
 import { createTitleScreen } from './ui/titlescreen.js';
 import { getShot } from './shots.js';
-import { loadSave, applySave } from './save/savesystem.js';
+import { loadSave, applySave, saveGame } from './save/savesystem.js';
 import { createSound } from './audio/sound.js';
+import { applyTheme } from './ui/theme.js';
+import { createSettings } from './ui/settings.js';
+import { createPauseMenu } from './ui/pausemenu.js';
 
 const STEP = 1 / 60;
 const MAX_FRAME = 0.1;
@@ -87,6 +90,9 @@ window.__meridian = {
       respawning: game.services.respawn.active,
       audio: sound.mixer.ctx?.state ?? 'locked',
       muted: sound.mixer.muted,
+      volume: sound.mixer.volume,
+      paused: pause.isOpen(),
+      title: Boolean(document.querySelector('#title:not(.hidden)')),
     };
   },
   /** Triangles per mesh (instances included), largest first: a quick profile of where geometry goes. */
@@ -105,7 +111,47 @@ window.__meridian = {
   },
 };
 
-const sound = createSound(game);
+applyTheme();
+const settings = createSettings();
+const sound = createSound(game, game.action.events, settings.get());
+const menuSound = (kind) => sound.sfx.ui(kind);
+settings.onChange((s) => {
+  sound.mixer.setVolume(s.volume);
+  sound.mixer.setMuted(s.muted);
+  for (const size of ['small', 'large']) game.hud.root.classList.toggle(`map-${size}`, s.minimap === size);
+});
+window.addEventListener('keydown', (event) => {
+  if (event.code === 'KeyM') settings.syncMute(sound.mixer.muted);
+});
+
+/** Saving from the pause menu works anywhere except with the police on Ilo's tail. */
+function saveFromMenu() {
+  if (game.action.police.wanted.stars > 0) return 'Lose the police before you save.';
+  if (game.services.respawn.active) return 'Not now.';
+  const ok = saveGame(game);
+  game.action.events.emit('saved', { ok });
+  return ok ? 'Game saved.' : 'Could not save: this browser blocks storage.';
+}
+
+const pause = createPauseMenu({
+  settings,
+  place: () => game.hud.root.querySelector('.district')?.textContent ?? '',
+  onSave: saveFromMenu,
+  onQuit: () => window.location.reload(),
+  onEvent: menuSound,
+});
+const canPause = () => !pause.isOpen() && !game.services.shops.openPlace && !game.services.respawn.active;
+let pauseRequested = false;
+// Chrome swallows the Esc that releases pointer lock, so losing the lock during play also pauses.
+document.addEventListener('pointerlockchange', () => {
+  if (!document.pointerLockElement && !shot) pauseRequested = true;
+});
+
+function openPause() {
+  pause.open();
+  sound.setPaused(true);
+  if (document.pointerLockElement) document.exitPointerLock?.();
+}
 
 function frame(dt) {
   sound.update();
@@ -123,15 +169,32 @@ function runLoop(title) {
     const dt = Math.min(MAX_FRAME, raw);
     last = now;
     if (!fixedScale) dynamicResolution.update(raw * 1000, dt);
+    const playing = !title?.isOpen();
+    if (playing && canPause() && (input.pressed('Escape') || pauseRequested)) {
+      openPause();
+      input.endFrame();
+    } else if (pause.isOpen()) {
+      if (pause.update(input) === 'resume') sound.setPaused(false);
+      input.endFrame();
+    }
+    pauseRequested = false;
+    if (pause.isOpen()) {
+      accumulator = 0;
+      frame(dt);
+      requestAnimationFrame(loop);
+      return;
+    }
     accumulator += dt;
-    const controls = title?.isOpen() ? idleInput : input;
+    const controls = playing ? input : idleInput;
     while (accumulator >= STEP) {
       game.step(STEP, controls);
       if (controls === input) input.endFrame();
       accumulator -= STEP;
     }
-    if (title?.isOpen() && input.pressed('Enter')) title.close();
-    if (title?.isOpen()) input.endFrame();
+    if (title?.isOpen()) {
+      title.update(input);
+      input.endFrame();
+    }
     frame(dt);
     requestAnimationFrame(loop);
   };
@@ -144,7 +207,7 @@ if (shot) {
     game.step(STEP, scripted.input?.(index) ?? idleInput);
     scripted.afterStep?.(index);
   }
-  if (shot.title) createTitleScreen(true);
+  if (shot.title) createTitleScreen(true, { settings });
   let frames = 0;
   const paint = () => {
     frame(STEP);
@@ -157,6 +220,6 @@ if (shot) {
   };
   requestAnimationFrame(paint);
 } else {
-  const title = createTitleScreen(false);
+  const title = createTitleScreen(false, { settings, onEvent: menuSound });
   runLoop(title);
 }
