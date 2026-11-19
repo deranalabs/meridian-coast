@@ -9,6 +9,13 @@
   gap: 10px;
 }
 #hud .leftcol .objective { position: static; max-width: none; }
+#hud .leftcol .objective small {
+  display: block;
+  margin-top: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mc-ui-tint, #9fb7c9);
+}
 
 /* Dispatch panel */
 #hud .dispatch {

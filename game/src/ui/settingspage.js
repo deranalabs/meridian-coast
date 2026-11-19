@@ -23,7 +23,7 @@ export function createSettingsPage(parent, settings, onEvent = () => {}) {
   ]);
   const note = document.createElement('div');
   note.className = 'menu-note';
-  note.textContent = '← → change   Enter toggle   Esc back';
+  note.textContent = '← → change · Enter toggle · Esc back';
   root.appendChild(note);
 
   return {

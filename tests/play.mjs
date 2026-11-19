@@ -1,5 +1,7 @@
-// Gameplay smoke test: title, walk, drive and stop, buy a pistol at Halcyon Arms, fire, get a wanted star and see
-// police respond, save at the safe house, reload and find the same cash; fails on any console error.
+// Gameplay smoke test: title, walk, mute, pause and settings, drive and stop, buy a pistol, fire, get a wanted star,
+// see police respond, save at the safe house, reload and find the same cash; fails on any console error.
+// PLAY_SHOTS=1 also saves the pause menu at 768x480 to tmp/play-pause.jpg.
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { launchChrome, startServer, sleep } from './cdp.mjs';
 
 const KEYS = {
@@ -12,6 +14,9 @@ const KEYS = {
   KeyQ: { key: 'q', code: 'KeyQ', keyCode: 81 },
   KeyF: { key: 'f', code: 'KeyF', keyCode: 70 },
   Digit2: { key: '2', code: 'Digit2', keyCode: 50 },
+  KeyM: { key: 'm', code: 'KeyM', keyCode: 77 },
+  ArrowDown: { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40 },
+  ArrowLeft: { key: 'ArrowLeft', code: 'ArrowLeft', keyCode: 37 },
   Space: { key: ' ', code: 'Space', keyCode: 32 },
 };
 
@@ -149,6 +154,36 @@ try {
   check('police units respond', units > 0);
 
   await page.evaluate('window.__meridian.game.action.police.standDown()');
+
+  // Mute, pause, turn the volume down one notch in Settings, back out and resume.
+  await tap(page, 'KeyM');
+  const muted = (await state(page)).muted;
+  await tap(page, 'KeyM');
+  check('M toggles mute', muted === true && (await state(page)).muted === false);
+  await tap(page, 'Escape');
+  const paused = await state(page);
+  await sleep(400);
+  check('Esc pauses the game', paused.paused && (await state(page)).time === paused.time);
+  await tap(page, 'ArrowDown');
+  await tap(page, 'Enter');
+  await tap(page, 'ArrowLeft');
+  const quieter = await state(page);
+  const expected = Math.max(0, Math.round((paused.volume - 0.1) * 10) / 10);
+  check('settings turn the volume down', Math.abs(quieter.volume - expected) < 1e-6);
+  if (process.env.PLAY_SHOTS) {
+    await page.send('Emulation.setDeviceMetricsOverride', { ...metrics, width: 768, height: 480 });
+    await sleep(300);
+    const { data } = await page.send('Page.captureScreenshot', { format: 'jpeg', quality: 80 });
+    mkdirSync('tmp', { recursive: true });
+    writeFileSync('tmp/play-pause.jpg', Buffer.from(data, 'base64'));
+    await page.send('Emulation.setDeviceMetricsOverride', metrics);
+  }
+  await tap(page, 'Escape');
+  await tap(page, 'Escape');
+  await sleep(300);
+  const resumed = await state(page);
+  check('Esc twice resumes play', !resumed.paused && resumed.time > paused.time);
+
   await goTo(page, 'safehouse');
   await sleep(300);
   await tap(page, 'KeyE');

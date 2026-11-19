@@ -36,7 +36,7 @@ export function createPolicePanel(parent) {
       detail: make(li, 'detail', 'span'),
       metres: make(li, 'metres', 'span'),
       state: make(li, 'state', 'span'),
-      key: '',
+      key: null,
     });
   }
   const count = make(root, 'dispatch-count');
