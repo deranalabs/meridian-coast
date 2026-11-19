@@ -57,6 +57,12 @@ try {
   const walked = await state(page);
   checks.push(['title dismissed and on foot', start.mode === 'foot']);
   checks.push(['walking moves the camera', walked.camera.join() !== start.camera.join()]);
+  await page.evaluate(`(() => { const m = window.__meridian; const car = m.game.fleet.add('coupe', '#f0a800');
+    car.position.set(102, 0, -10); car.heading = Math.PI; car.parked = true;
+    for (const other of m.game.fleet.cars) if (other !== car && other.parked
+      && Math.abs(other.position.x - 102) < 9 && other.position.z < 0 && other.position.z > -90) other.visible = false;
+    m.teleport(99.6, -10, Math.PI / 2); })()`);
+  await sleep(300);
   await tap(page, 'KeyE');
   await sleep(1600);
   const entered = await state(page);
@@ -66,8 +72,11 @@ try {
   checks.push(['throttle builds speed', driving.speedKmh > 12]);
   await hold(page, ['KeyW', 'KeyA', 'Space'], 900);
   await key(page, 'KeyS', 'keyDown');
-  for (let i = 0; i < 50 && (await state(page)).speedKmh > 4; i += 1) await sleep(100);
+  for (let i = 0; i < 80 && (await state(page)).speedKmh > 10; i += 1) await sleep(50);
   await key(page, 'KeyS', 'keyUp');
+  await key(page, 'Space', 'keyDown');
+  for (let i = 0; i < 60 && (await state(page)).speedKmh > 3; i += 1) await sleep(100);
+  await key(page, 'Space', 'keyUp');
   await sleep(300);
   const stopped = await state(page);
   await tap(page, 'KeyE');
