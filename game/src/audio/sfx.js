@@ -1,98 +1,132 @@
-// One-shot sounds: gunshots per weapon, bullet impacts, crashes, being hit, shop clicks and the cash chime.
+// One-shot effects: gunshots by weapon class, impacts, UI clicks, cash chime, shop bell, police chirp and voices.
+import { distanceGain } from './siren.js';
+import { voicePattern, playVoice } from './voice.js';
 
-const GUNS = {
-  pistol: { cut: 2600, body: 150, length: 0.22, level: 0.9 },
-  smg: { cut: 3400, body: 190, length: 0.12, level: 0.65 },
-  shotgun: { cut: 1500, body: 90, length: 0.4, level: 1.1 },
-  fists: { cut: 700, body: 110, length: 0.08, level: 0.4 },
-};
+/** Gunshot recipe per weapon: noise crack (Hz, seconds), body thump (Hz) and loudness. */
+export const SHOT_PROFILES = Object.freeze({
+  pistol: { crack: 2600, decay: 0.09, thump: 140, level: 0.8 },
+  smg: { crack: 3400, decay: 0.05, thump: 180, level: 0.55 },
+  shotgun: { crack: 1300, decay: 0.22, thump: 85, level: 1 },
+  rifle: { crack: 2100, decay: 0.12, thump: 110, level: 0.9 },
+});
 
-/** Sounds over a started mixer; every call is a no-op until audio exists. */
+/** The recipe for a weapon id; unknown guns sound like a pistol. */
+export const shotProfile = (weapon) => SHOT_PROFILES[weapon] ?? SHOT_PROFILES.pistol;
+
+/** Note lists (Hz, start s, length s) for the menu sounds. */
+export const UI_NOTES = Object.freeze({
+  move: [[880, 0, 0.04]],
+  open: [[660, 0, 0.06], [990, 0.05, 0.08]],
+  close: [[740, 0, 0.05], [494, 0.05, 0.08]],
+  buy: [[784, 0, 0.06], [1175, 0.06, 0.1]],
+  deny: [[220, 0, 0.09], [185, 0.09, 0.14]],
+  pause: [[523, 0, 0.07], [392, 0.07, 0.1]],
+  resume: [[392, 0, 0.06], [587, 0.06, 0.09]],
+  select: [[1046, 0, 0.03]],
+  reload: [[330, 0, 0.03], [440, 0.12, 0.03]],
+  dry: [[1500, 0, 0.015]],
+});
+
 export function createSfx(mixer) {
-  function noiseBurst(bus, at, { cut, q = 0.8, type = 'lowpass', length, level, offset = 0 }) {
+  const live = () => mixer.ctx && mixer.ctx.state !== 'closed';
+
+  function tone(freq, start, length, { type = 'square', level = 0.15, bus = 'sfx', glide = 0 } = {}) {
     const ctx = mixer.ctx;
+    const t = ctx.currentTime + 0.005 + start;
+    const osc = ctx.createOscillator();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    if (glide) osc.frequency.exponentialRampToValueAtTime(Math.max(20, freq * glide), t + length);
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(level, t);
+    gain.gain.exponentialRampToValueAtTime(0.0005, t + length);
+    osc.connect(gain).connect(mixer.bus[bus]);
+    osc.start(t);
+    osc.stop(t + length + 0.02);
+  }
+
+  function burst(filterType, freq, length, level, q = 0.8) {
+    const ctx = mixer.ctx;
+    const t = ctx.currentTime + 0.005;
     const source = ctx.createBufferSource();
     source.buffer = mixer.noise;
     const filter = ctx.createBiquadFilter();
-    filter.type = type;
-    filter.frequency.value = cut;
+    filter.type = filterType;
+    filter.frequency.value = freq;
     filter.Q.value = q;
     const gain = ctx.createGain();
-    gain.gain.setValueAtTime(level, at);
-    gain.gain.exponentialRampToValueAtTime(0.001, at + length);
-    source.connect(filter).connect(gain).connect(mixer.bus[bus]);
-    source.start(at, offset, length + 0.05);
+    gain.gain.setValueAtTime(level, t);
+    gain.gain.exponentialRampToValueAtTime(0.0005, t + length);
+    source.connect(filter).connect(gain).connect(mixer.bus.sfx);
+    source.start(t, Math.random() * 1.5);
+    source.stop(t + length + 0.02);
   }
-
-  function tone(bus, at, { type = 'sine', from, to = from, length, level }) {
-    const ctx = mixer.ctx;
-    const osc = ctx.createOscillator();
-    osc.type = type;
-    osc.frequency.setValueAtTime(from, at);
-    if (to !== from) osc.frequency.exponentialRampToValueAtTime(to, at + length);
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.0001, at);
-    gain.gain.exponentialRampToValueAtTime(level, at + 0.006);
-    gain.gain.exponentialRampToValueAtTime(0.0001, at + length);
-    osc.connect(gain).connect(mixer.bus[bus]);
-    osc.start(at);
-    osc.stop(at + length + 0.02);
-  }
-
-  const ready = () => Boolean(mixer.ctx) && mixer.ctx.state === 'running';
 
   return {
-    /** A gunshot `distance` metres away. */
-    gunshot(weapon, distance) {
-      if (!ready()) return;
-      const gun = GUNS[weapon] ?? GUNS.pistol;
-      const near = 1 / (1 + distance / 18);
-      const at = mixer.now();
-      noiseBurst('sfx', at, { cut: gun.cut * (0.4 + near * 0.6), length: gun.length, level: gun.level * near,
-        offset: Math.random() * 1.5 });
-      tone('sfx', at, { type: 'triangle', from: gun.body, to: 40, length: gun.length * 0.8, level: gun.level * near });
-      if (distance > 40) noiseBurst('sfx', at + 0.09, { cut: 600, length: 0.5, level: 0.15 * near });
+    /** A gunshot heard from `metres` away. */
+    gunshot(weapon, metres = 0) {
+      if (!live()) return;
+      const p = shotProfile(weapon);
+      const near = Math.max(0.08, distanceGain(metres, 6, 400));
+      burst('bandpass', p.crack * (0.6 + near * 0.4), p.decay, p.level * near, 0.7);
+      tone(p.thump, 0, p.decay * 1.6, { type: 'sine', level: 0.7 * p.level * near, glide: 0.45 });
     },
-    impact(kind) {
-      if (!ready()) return;
-      const at = mixer.now();
-      if (kind === 'car') tone('sfx', at, { type: 'square', from: 900, to: 300, length: 0.07, level: 0.12 });
-      noiseBurst('sfx', at, { cut: kind === 'body' ? 500 : 3000, type: 'bandpass', q: 1.5, length: 0.06,
-        level: 0.3 });
-    },
-    crash(speed, distance) {
-      if (!ready()) return;
-      const level = Math.min(1, speed / 14) / (1 + distance / 20);
-      if (level < 0.03) return;
-      const at = mixer.now();
-      noiseBurst('sfx', at, { cut: 900, length: 0.45, level: level * 1.1, offset: Math.random() });
-      tone('sfx', at, { type: 'sawtooth', from: 120, to: 45, length: 0.3, level: level * 0.5 });
-      noiseBurst('sfx', at + 0.05, { cut: 5200, type: 'highpass', length: 0.25, level: level * 0.35 });
-    },
-    hurt() {
-      if (!ready()) return;
-      tone('sfx', mixer.now(), { type: 'sine', from: 160, to: 70, length: 0.18, level: 0.5 });
+    /** kind: body, metal, punch, swing or crash; strength 0..1 scales crashes. */
+    impact(kind, strength = 1) {
+      if (!live()) return;
+      if (kind === 'metal') {
+        tone(520, 0, 0.18, { type: 'triangle', level: 0.18 });
+        tone(1370, 0, 0.12, { type: 'triangle', level: 0.1 });
+      } else if (kind === 'crash') {
+        const s = Math.min(1, Math.max(0.2, strength));
+        burst('lowpass', 900, 0.35 * s + 0.1, 0.9 * s);
+        tone(70, 0, 0.3, { type: 'sine', level: 0.6 * s, glide: 0.5 });
+      } else if (kind === 'swing') {
+        burst('bandpass', 700, 0.14, 0.25, 1.5);
+      } else {
+        burst('lowpass', 420, 0.1, 0.55);
+        tone(kind === 'punch' ? 110 : 90, 0, 0.1, { type: 'sine', level: 0.5, glide: 0.6 });
+      }
     },
     ui(kind) {
-      if (!ready()) return;
-      const at = mixer.now();
-      if (kind === 'move') tone('ui', at, { type: 'triangle', from: 1320, length: 0.05, level: 0.25 });
-      else if (kind === 'deny') tone('ui', at, { type: 'square', from: 180, to: 140, length: 0.16, level: 0.18 });
-      else if (kind === 'buy') {
-        tone('ui', at, { type: 'triangle', from: 880, length: 0.09, level: 0.3 });
-        tone('ui', at + 0.08, { type: 'triangle', from: 1320, length: 0.16, level: 0.3 });
-      } else tone('ui', at, { type: 'sine', from: kind === 'open' ? 660 : 520, to: kind === 'open' ? 990 : 330,
-        length: 0.12, level: 0.25 });
+      if (!live()) return;
+      for (const [freq, start, length] of UI_NOTES[kind] ?? UI_NOTES.move) {
+        tone(freq, start, length, { type: 'square', level: 0.08 });
+      }
     },
+    /** Two bright coin pings rising. */
     cash() {
-      if (!ready()) return;
-      const at = mixer.now();
-      [1568, 2093, 2637].forEach((f, i) => tone('ui', at + i * 0.06, { type: 'sine', from: f, length: 0.2,
-        level: 0.2 }));
+      if (!live()) return;
+      tone(1319, 0, 0.12, { type: 'triangle', level: 0.18 });
+      tone(1976, 0.07, 0.25, { type: 'triangle', level: 0.16 });
     },
-    click() {
-      if (!ready()) return;
-      tone('sfx', mixer.now(), { type: 'square', from: 2400, length: 0.025, level: 0.12 });
+    /** The door bell when a shop opens: two inharmonic partials ringing out. */
+    bell() {
+      if (!live()) return;
+      tone(1245, 0, 0.9, { type: 'sine', level: 0.12 });
+      tone(3110, 0, 0.5, { type: 'sine', level: 0.05 });
+      tone(988, 0.18, 1.0, { type: 'sine', level: 0.1 });
+    },
+    /** The cruiser's short whoop when a unit joins the chase. */
+    chirp(metres = 40) {
+      if (!live()) return;
+      const level = 0.25 * Math.max(0.15, distanceGain(metres, 20, 300));
+      tone(600, 0, 0.22, { type: 'sawtooth', level, glide: 2.1, bus: 'police' });
+    },
+    /** A low sting for busted and wasted. */
+    sting() {
+      if (!live()) return;
+      tone(196, 0, 0.9, { type: 'sawtooth', level: 0.12, glide: 0.5 });
+      tone(233, 0.05, 0.9, { type: 'sawtooth', level: 0.08, glide: 0.5 });
+    },
+    /** Spray-can hiss for the respray shop. */
+    spray() {
+      if (live()) burst('highpass', 4000, 0.9, 0.3);
+    },
+    /** Speaks a dialogue line as blips; returns its length in seconds (0 when audio is locked). */
+    voice(characterId, line) {
+      if (!live()) return 0;
+      return playVoice(mixer.ctx, mixer.bus.voice, voicePattern(characterId, line));
     },
   };
 }

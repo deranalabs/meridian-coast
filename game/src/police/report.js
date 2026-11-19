@@ -1,33 +1,58 @@
-// Police report: a plain list of the units on the player (cruisers, the helicopter, officers, roadblocks) for the HUD.
+// Dispatch report: turns the live police state into radio-style rows (call sign, job, distance, state) for the HUD.
 
-const ROLE_LABEL = { ram: 'Ram', left: 'Flank L', right: 'Flank R', block: 'Cut-off' };
-const MODE_LABEL = { pursue: 'Pursuit', search: 'Search', leave: 'Clear' };
-const CALL = ['Adam', 'Bravo', 'Cobalt', 'Delta', 'Echo', 'Fin'];
+/** Port Meridian PD radio names; a cruiser's call sign comes from its fleet slot so it stays the same all chase. */
+export const CALL_NAMES = Object.freeze(['Cobalt', 'Marlin', 'Palmetto', 'Lantern', 'Harbor', 'Solano', 'Pelican']);
 
-/** Rows for police near (x, z), nearest first: {call, kind, detail, metres, state}, plus totals. */
+/** What each pursuit role does, in dispatch words. */
+export const ROLE_DETAIL = Object.freeze({ ram: 'Ram', left: 'Flank left', right: 'Flank right', block: 'Cut off' });
+
+/** Unit mode to the state word on the panel. */
+export const MODE_STATE = Object.freeze({ pursue: 'Pursuit', search: 'Search', leave: 'Return' });
+
+/** "2-Cobalt-31": district division, radio name and unit number, all from the car's slot. */
+export function callSign(index) {
+  const i = Math.max(0, index | 0);
+  const division = 1 + (i % 4);
+  const name = CALL_NAMES[(i * 3) % CALL_NAMES.length];
+  const number = 11 + ((i * 17) % 78);
+  return `${division}-${name}-${number}`;
+}
+
+/** policeReport(police, x, z) → { rows, cars, officers, nearest }; rows sorted nearest first. */
 export function policeReport(police, x, z) {
   const rows = [];
-  const dist = (px, pz) => Math.round(Math.hypot(px - x, pz - z));
+  const metresTo = (px, pz) => Math.round(Math.hypot(px - x, pz - z));
   for (const unit of police.units.units) {
-    const index = unit.car.index ?? rows.length;
+    const onFoot = unit.officersOut && unit.mode !== 'leave';
     rows.push({
-      call: `${1 + (index % 4)}-${CALL[index % CALL.length]}-${10 + ((index * 7) % 40)}`,
+      call: callSign(unit.car?.index ?? rows.length),
       kind: 'car',
-      detail: ROLE_LABEL[unit.driver.role] ?? 'Unit',
-      metres: dist(unit.vehicle.x, unit.vehicle.z),
-      state: unit.officersOut && unit.mode !== 'leave' ? 'On foot' : MODE_LABEL[unit.mode] ?? 'Pursuit',
+      detail: onFoot ? 'Officers out' : ROLE_DETAIL[unit.driver?.role] ?? 'Patrol',
+      metres: metresTo(unit.vehicle.x, unit.vehicle.z),
+      state: MODE_STATE[unit.mode] ?? 'Pursuit',
     });
   }
-  const heli = police.helicopter.state;
-  if (heli.active) {
-    rows.push({ call: 'Air-1 Gull', kind: 'air', detail: 'Searchlight', metres: dist(heli.x, heli.z),
-      state: heli.spot ? 'Tracking' : 'Inbound' });
+  const air = police.helicopter?.state;
+  if (air?.active) {
+    rows.push({
+      call: 'Air-1 Gull',
+      kind: 'air',
+      detail: air.spot ? 'Searchlight' : 'Overhead',
+      metres: metresTo(air.x, air.z),
+      state: air.spot ? 'Eyes on' : 'Search',
+    });
   }
-  for (const block of police.roadblocks.blocks) {
-    rows.push({ call: 'Roadblock', kind: 'block', detail: 'Two cars', metres: dist(block.x, block.z),
-      state: 'Holding' });
+  for (const block of police.roadblocks?.blocks ?? []) {
+    const standing = block.officers.filter((o) => o.active && !o.down).length;
+    rows.push({
+      call: 'Roadblock',
+      kind: 'block',
+      detail: `${block.cars.length} cars, ${standing} out`,
+      metres: metresTo(block.x, block.z),
+      state: 'Holding',
+    });
   }
   rows.sort((a, b) => a.metres - b.metres);
   const officers = police.officers.pool.filter((o) => o.active && !o.down).length;
-  return { rows, cars: police.units.units.length, officers, nearest: rows[0]?.metres ?? null };
+  return { rows, cars: police.units.units.length, officers, nearest: rows.length ? rows[0].metres : null };
 }

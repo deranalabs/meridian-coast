@@ -1,104 +1,92 @@
-// Radio beds: one procedural loop per station (synthwave, driving electro, a hillside waltz, talk-show babble).
+// Radio beds: one procedural looping pattern per station (tempo, key, bass, chords, lead, drums), plus note math.
 
-const hz = (midi) => 440 * 2 ** ((midi - 69) / 12);
+export const SCALES = Object.freeze({
+  minor: [0, 2, 3, 5, 7, 8, 10],
+  phrygian: [0, 1, 3, 5, 7, 8, 10],
+  major: [0, 2, 4, 5, 7, 9, 11],
+  dorian: [0, 2, 3, 5, 7, 9, 10],
+});
 
-/** Per station: beats per minute, steps per beat, steps per bar, chord roots per bar and a step() voice plan. */
-const BEDS = [
-  { bpm: 96, sub: 4, bar: 16, roots: [45, 41, 43, 40], plan(s, root, v) {
-    if (s % 4 === 0) v.note('sawtooth', hz(root - 12), 0.32, 0.22, 500);
-    const arp = [0, 7, 12, 16, 12, 7, 3, 7][s % 8];
-    v.note('triangle', hz(root + 12 + arp), 0.14, 0.07, 3000);
-    if (s % 8 === 4) v.hat(0.05);
-  } },
-  { bpm: 118, sub: 4, bar: 16, roots: [38, 38, 41, 36], plan(s, root, v) {
-    if (s % 4 === 0) v.kick();
-    if (s % 4 === 2) v.hat(0.09);
-    if (s % 2 === 1) v.note('square', hz(root - 12 + (s % 8 === 7 ? 12 : 0)), 0.1, 0.09, 700);
-    if ([0, 3, 6, 10, 12].includes(s)) v.note('sawtooth', hz(root + 24 + [0, 3, 7, 10, 12][s % 5]), 0.12, 0.05, 2400);
-  } },
-  { bpm: 84, sub: 2, bar: 6, roots: [48, 53, 55, 48], plan(s, root, v) {
-    if (s === 0) v.note('sine', hz(root - 12), 0.6, 0.2, 900);
-    if (s === 2 || s === 4) [4, 7].forEach((i) => v.note('triangle', hz(root + i), 0.3, 0.06, 2000));
-    const tune = [12, 16, 19, 17, 16, 14][s];
-    v.note('triangle', hz(root + tune), 0.34, 0.08, 4000);
-  } },
-  { bpm: 150, sub: 2, bar: 8, roots: [0], plan(s, root, v, seed) {
-    if ((seed >> 3) % 5 !== 0) v.voice(260 + ((seed >> 5) % 6) * 140, 0.08 + ((seed >> 9) % 3) * 0.04);
-  } },
-];
+/** Equal-tempered pitch of a MIDI note (69 = A4 = 440 Hz). */
+export const midiToHz = (note) => 440 * 2 ** ((note - 69) / 12);
 
-/** A radio on a started mixer: update(station, on) keeps about 0.2 s of notes scheduled ahead. */
-export function createStations(mixer) {
-  const ctx = mixer.ctx;
-  const out = ctx.createGain();
-  out.gain.value = 0;
-  out.connect(mixer.bus.radio);
-  const state = { station: -1, step: 0, next: 0, seed: 1, at: 0 };
+/** MIDI note of a scale degree (0-based, may go past 6 or below 0 into other octaves). */
+export function degreeNote(root, scale, degree) {
+  const steps = SCALES[scale];
+  const octave = Math.floor(degree / steps.length);
+  const index = ((degree % steps.length) + steps.length) % steps.length;
+  return root + octave * 12 + steps[index];
+}
 
-  const voices = {
-    note(type, freq, length, level, cut) {
-      const osc = ctx.createOscillator();
-      osc.type = type;
-      osc.frequency.value = freq;
-      const filter = ctx.createBiquadFilter();
-      filter.frequency.value = cut;
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.0001, state.at);
-      gain.gain.exponentialRampToValueAtTime(level, state.at + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, state.at + length);
-      osc.connect(filter).connect(gain).connect(out);
-      osc.start(state.at);
-      osc.stop(state.at + length + 0.02);
-    },
-    kick() {
-      const osc = ctx.createOscillator();
-      osc.frequency.setValueAtTime(140, state.at);
-      osc.frequency.exponentialRampToValueAtTime(42, state.at + 0.12);
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.4, state.at);
-      gain.gain.exponentialRampToValueAtTime(0.0001, state.at + 0.2);
-      osc.connect(gain).connect(out);
-      osc.start(state.at);
-      osc.stop(state.at + 0.22);
-    },
-    hat(level) {
-      voices.noise('highpass', 7000, 2, 0.04, level);
-    },
-    voice(freq, length) {
-      voices.noise('bandpass', freq, 6, length, 0.35);
-    },
-    noise(type, freq, q, length, level) {
-      const source = ctx.createBufferSource();
-      source.buffer = mixer.noise;
-      const filter = ctx.createBiquadFilter();
-      filter.type = type;
-      filter.frequency.value = freq;
-      filter.Q.value = q;
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(level, state.at);
-      gain.gain.exponentialRampToValueAtTime(0.0001, state.at + length);
-      source.connect(filter).connect(gain).connect(out);
-      source.start(state.at, (state.seed % 997) / 600, length + 0.02);
-    },
-  };
+/** Seconds per pattern step: a sixteenth note, or an eighth for waltz-time stations. */
+export const stepSeconds = (station) => 60 / station.bpm / (station.stepsPerBeat ?? 4);
 
+const _ = null;
+
+/**
+ * Index-matched with STATIONS in ui/radio.js. Lines of `bass` and `lead` are scale degrees per step (null = rest);
+ * `chords` holds one triad of degrees per bar; `kick` and `hat` list the steps that hit.
+ */
+export const STATION_BEDS = Object.freeze([
+  {
+    id: 'coral', bpm: 104, root: 45, scale: 'minor', steps: 16, waves: { bass: 'sawtooth', lead: 'square' },
+    bass: [0, _, 0, _, 0, _, 7, _, 5, _, 5, _, 3, _, 4, _],
+    chords: [[0, 2, 4], [5, 7, 9], [3, 5, 7], [4, 6, 8]],
+    lead: [_, _, 11, _, 9, _, 7, _, _, _, 9, _, 11, 12, _, _],
+    kick: [0, 4, 8, 12], hat: [2, 6, 10, 14], snare: [4, 12],
+  },
+  {
+    id: 'kdrift', bpm: 124, root: 40, scale: 'phrygian', steps: 16, waves: { bass: 'square', lead: 'sawtooth' },
+    bass: [0, 0, 7, 0, 0, 1, 0, 7, 0, 0, 7, 0, 3, 1, 0, _],
+    chords: [[0, 2, 4], [0, 2, 4], [1, 3, 5], [-1, 1, 3]],
+    lead: [7, _, _, 8, _, _, 7, _, 10, _, _, 8, _, 7, _, _],
+    kick: [0, 4, 8, 12], hat: [1, 2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15], snare: [4, 12],
+  },
+  {
+    id: 'calder', bpm: 92, root: 53, scale: 'major', steps: 12, stepsPerBeat: 2,
+    waves: { bass: 'triangle', lead: 'triangle' },
+    bass: [0, _, _, _, _, _, 4, _, _, _, _, _],
+    chords: [[0, 2, 4], [3, 5, 7], [4, 6, 8], [0, 2, 4]],
+    lead: [7, 9, 11, 9, 7, _, 8, 7, 6, 4, 2, _],
+    kick: [], hat: [], snare: [],
+  },
+  {
+    id: 'talk', bpm: 70, root: 50, scale: 'dorian', steps: 16, talk: true, waves: { bass: 'sine', lead: 'square' },
+    bass: [0, _, _, _, _, _, _, _, 3, _, _, _, _, _, _, _],
+    chords: [[0, 2, 4], [3, 5, 7]],
+    lead: [],
+    kick: [], hat: [], snare: [],
+  },
+]);
+
+/** The bed for a station index (wraps). */
+export const bedFor = (index) => {
+  const n = STATION_BEDS.length;
+  return STATION_BEDS[((index % n) + n) % n];
+};
+
+/** What plays on one step: { bass, lead, chord, kick, hat, snare } with MIDI notes or null, booleans for drums. */
+export function stepEvents(bed, step) {
+  const s = step % bed.steps;
+  const bar = Math.floor(step / bed.steps) % bed.chords.length;
+  const note = (degree, octave) => (degree === null || degree === undefined
+    ? null : degreeNote(bed.root + octave * 12, bed.scale, degree));
   return {
-    update(station, on) {
-      const now = ctx.currentTime;
-      out.gain.setTargetAtTime(on ? 1 : 0, now, 0.2);
-      if (!on) return;
-      if (station !== state.station) Object.assign(state, { station, step: 0, next: now + 0.05 });
-      if (state.next < now - 0.3) state.next = now + 0.05;
-      const bed = BEDS[station % BEDS.length];
-      const stepLength = 60 / bed.bpm / bed.sub;
-      while (state.next < now + 0.2) {
-        state.seed = (state.seed * 1103515245 + 12345) >>> 0;
-        const bar = Math.floor(state.step / bed.bar);
-        state.at = state.next;
-        bed.plan(state.step % bed.bar, bed.roots[bar % bed.roots.length], voices, state.seed);
-        state.step += 1;
-        state.next += stepLength;
-      }
-    },
+    bass: note(bed.bass[s], 0),
+    lead: bed.lead.length ? note(bed.lead[s], 1) : null,
+    chord: s === 0 ? bed.chords[bar].map((d) => note(d, 1)) : null,
+    kick: bed.kick.includes(s),
+    hat: bed.hat.includes(s),
+    snare: bed.snare.includes(s),
   };
 }
+
+/** Talk radio hosts: who speaks and what (spoken as voice blips). */
+export const TALK_LINES = Object.freeze([
+  ['dawn-ruiz', 'Caller, you are on the air with Late Calls on the Coast.'],
+  ['caller-ray', 'Yeah, hi, somebody parked a boat on my driveway again.'],
+  ['dawn-ruiz', 'Again? How does that even happen in Calder Heights?'],
+  ['caller-ray', 'Ask the tide, Dawn. Ask the tide!'],
+  ['ben-achterberg', 'Traffic on the Gull Key Causeway is backed up past the lighthouse.'],
+  ['dawn-ruiz', 'Stay cool out there, Port Meridian.'],
+]);

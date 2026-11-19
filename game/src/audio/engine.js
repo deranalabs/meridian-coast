@@ -1,67 +1,88 @@
-// Car sound: a two-oscillator engine whose pitch follows speed through five gears, plus tyre squeal from slip.
+// Engine and tyre voice: a detuned saw pair through a low-pass for the motor, band-passed noise for tyre squeal.
+import { noiseSource } from './mixer.js';
 
-const GEARS = [0, 9, 17, 26, 36, 60];
+/** Where each gear ends, as a fraction of top speed. */
+export const GEAR_TOPS = Object.freeze([0.16, 0.34, 0.55, 0.78, 1]);
 
-/** Revs 0..1 within the current gear for a speed in m/s. */
-export function revsFor(speed) {
-  const s = Math.abs(speed);
-  for (let gear = 1; gear < GEARS.length; gear += 1) {
-    if (s < GEARS[gear]) return (s - GEARS[gear - 1]) / (GEARS[gear] - GEARS[gear - 1]);
+/** Engine revs 0..1 from the speed ratio: they climb through a gear and drop at each shift. */
+export function engineRevs(speedRatio) {
+  const s = Math.min(1, Math.max(0, Math.abs(speedRatio)));
+  let low = 0;
+  for (let gear = 0; gear < GEAR_TOPS.length; gear += 1) {
+    const top = GEAR_TOPS[gear];
+    if (s <= top || gear === GEAR_TOPS.length - 1) {
+      const through = (s - low) / (top - low);
+      const floor = gear === 0 ? 0.12 : 0.42;
+      return floor + (1 - floor) * through;
+    }
+    low = top;
   }
   return 1;
 }
 
-/** Persistent engine and tyre voices on a started mixer; update() only moves parameters. */
-export function createEngineSound(mixer) {
-  const ctx = mixer.ctx;
-  const low = ctx.createOscillator();
-  low.type = 'sawtooth';
-  const high = ctx.createOscillator();
-  high.type = 'square';
-  const tone = ctx.createBiquadFilter();
-  tone.type = 'lowpass';
-  tone.Q.value = 2;
-  const engine = ctx.createGain();
-  engine.gain.value = 0;
-  const highLevel = ctx.createGain();
-  highLevel.gain.value = 0.25;
-  low.connect(tone);
-  high.connect(highLevel).connect(tone);
-  tone.connect(engine).connect(mixer.bus.engine);
+/** Motor pitch (Hz), filter cutoff (Hz) and level from revs and throttle. */
+export function engineTone(speedRatio, throttle) {
+  const revs = engineRevs(speedRatio);
+  const load = Math.min(1, Math.abs(throttle));
+  return {
+    freq: 34 + revs * 88,
+    cutoff: 260 + revs * 900 + load * 700,
+    level: 0.22 + load * 0.32 + revs * 0.14,
+  };
+}
 
-  const tyre = ctx.createBufferSource();
-  tyre.buffer = mixer.noise;
-  tyre.loop = true;
-  const squeal = ctx.createBiquadFilter();
-  squeal.type = 'bandpass';
-  squeal.frequency.value = 2300;
-  squeal.Q.value = 9;
-  const tyreGain = ctx.createGain();
-  tyreGain.gain.value = 0;
-  tyre.connect(squeal).connect(tyreGain).connect(mixer.bus.engine);
-  low.start();
-  high.start();
-  tyre.start();
+/** Builds the voice when the context exists; update() only moves parameters. */
+export function createEngine(mixer) {
+  let nodes = null;
+  mixer.whenReady((ctx) => {
+    const body = ctx.createOscillator();
+    const growl = ctx.createOscillator();
+    const sub = ctx.createOscillator();
+    body.type = 'sawtooth';
+    growl.type = 'sawtooth';
+    sub.type = 'square';
+    growl.detune.value = 14;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.Q.value = 3;
+    const subGain = ctx.createGain();
+    subGain.gain.value = 0.35;
+    const motor = ctx.createGain();
+    motor.gain.value = 0;
+    body.connect(filter);
+    growl.connect(filter);
+    sub.connect(subGain).connect(filter);
+    filter.connect(motor).connect(mixer.bus.engine);
+    const tyreFilter = ctx.createBiquadFilter();
+    tyreFilter.type = 'bandpass';
+    tyreFilter.frequency.value = 1900;
+    tyreFilter.Q.value = 5;
+    const tyres = ctx.createGain();
+    tyres.gain.value = 0;
+    noiseSource(mixer).connect(tyreFilter).connect(tyres).connect(mixer.bus.engine);
+    for (const osc of [body, growl, sub]) osc.start();
+    nodes = { body, growl, sub, filter, motor, tyres, tyreFilter };
+  });
 
   return {
-    /** car = {driving, speed (m/s), throttle (-1..1), slip, handbrake}. */
-    update(car) {
-      const at = ctx.currentTime;
-      if (!car.driving) {
-        engine.gain.setTargetAtTime(0, at, 0.15);
-        tyreGain.gain.setTargetAtTime(0, at, 0.08);
+    /** active: player is driving; slip in m/s of sideways slide. */
+    update(active, speedRatio, throttle, slip) {
+      if (!nodes) return;
+      const t = mixer.ctx.currentTime;
+      if (!active) {
+        nodes.motor.gain.setTargetAtTime(0, t, 0.15);
+        nodes.tyres.gain.setTargetAtTime(0, t, 0.08);
         return;
       }
-      const load = Math.max(0, car.throttle);
-      const revs = revsFor(car.speed);
-      const base = 38 + revs * 70 + Math.min(1, Math.abs(car.speed) / 60) * 30 + load * 8;
-      low.frequency.setTargetAtTime(base, at, 0.05);
-      high.frequency.setTargetAtTime(base * 2.01, at, 0.05);
-      tone.frequency.setTargetAtTime(380 + load * 900 + revs * 500, at, 0.08);
-      engine.gain.setTargetAtTime(0.16 + load * 0.16, at, 0.08);
-      const slide = Math.max(0, Math.min(1, (car.slip - 2.5) / 6)) * Math.min(1, Math.abs(car.speed) / 8);
-      squeal.frequency.setTargetAtTime(1900 + slide * 900, at, 0.1);
-      tyreGain.gain.setTargetAtTime(slide * 0.5, at, 0.06);
+      const tone = engineTone(speedRatio, throttle);
+      nodes.body.frequency.setTargetAtTime(tone.freq, t, 0.06);
+      nodes.growl.frequency.setTargetAtTime(tone.freq * 1.5, t, 0.06);
+      nodes.sub.frequency.setTargetAtTime(tone.freq / 2, t, 0.06);
+      nodes.filter.frequency.setTargetAtTime(tone.cutoff, t, 0.05);
+      nodes.motor.gain.setTargetAtTime(tone.level, t, 0.08);
+      const squeal = Math.min(1, Math.max(0, (slip - 1.5) / 5)) * Math.min(1, Math.abs(speedRatio) * 4);
+      nodes.tyres.gain.setTargetAtTime(squeal * 0.5, t, 0.05);
+      nodes.tyreFilter.frequency.setTargetAtTime(1600 + squeal * 900, t, 0.1);
     },
   };
 }

@@ -1,54 +1,68 @@
-// Police sound: a wailing siren from the nearest cruiser, louder as it closes, and the helicopter's rotor thump.
+// Police voices: the cruiser siren (slow wail far off or while searching, fast yelp up close) and the rotor thump.
+import { noiseSource } from './mixer.js';
 
-/** Persistent siren and rotor voices on a started mixer; update() only moves parameters. */
-export function createSirenSound(mixer) {
-  const ctx = mixer.ctx;
-  const siren = ctx.createOscillator();
-  siren.type = 'triangle';
-  siren.frequency.value = 860;
-  const wail = ctx.createOscillator();
-  wail.frequency.value = 0.28;
-  const depth = ctx.createGain();
-  depth.gain.value = 330;
-  wail.connect(depth).connect(siren.frequency);
-  const shape = ctx.createBiquadFilter();
-  shape.type = 'bandpass';
-  shape.frequency.value = 1100;
-  shape.Q.value = 0.7;
-  const sirenGain = ctx.createGain();
-  sirenGain.gain.value = 0;
-  siren.connect(shape).connect(sirenGain).connect(mixer.bus.siren);
+/** 1 inside ref metres, fading with distance to 0 at max metres. */
+export function distanceGain(metres, ref = 12, max = 220) {
+  if (!Number.isFinite(metres) || metres >= max) return 0;
+  if (metres <= ref) return 1;
+  const fall = ref / metres;
+  const edge = 1 - (metres - ref) / (max - ref);
+  return fall * Math.sqrt(edge);
+}
 
-  const rotor = ctx.createBufferSource();
-  rotor.buffer = mixer.noise;
-  rotor.loop = true;
-  const rotorTone = ctx.createBiquadFilter();
-  rotorTone.type = 'lowpass';
-  rotorTone.frequency.value = 220;
-  const chop = ctx.createGain();
-  chop.gain.value = 0;
-  const blade = ctx.createOscillator();
-  blade.type = 'square';
-  blade.frequency.value = 11;
-  const bladeDepth = ctx.createGain();
-  bladeDepth.gain.value = 0;
-  blade.connect(bladeDepth).connect(chop.gain);
-  rotor.connect(rotorTone).connect(chop).connect(mixer.bus.siren);
-  siren.start();
-  wail.start();
-  rotor.start();
-  blade.start();
+/** Siren sweep: rate in Hz of the LFO and its depth in Hz around the centre pitch. */
+export function sirenSweep(metres, searching) {
+  if (searching) return { rate: 0.22, depth: 220, centre: 760 };
+  return metres < 45 ? { rate: 3.6, depth: 300, centre: 980 } : { rate: 0.42, depth: 330, centre: 900 };
+}
+
+/** Builds the siren and rotor once; update() moves pitch, sweep and level. */
+export function createSiren(mixer) {
+  let nodes = null;
+  mixer.whenReady((ctx) => {
+    const tone = ctx.createOscillator();
+    tone.type = 'triangle';
+    const lfo = ctx.createOscillator();
+    const depth = ctx.createGain();
+    lfo.connect(depth).connect(tone.frequency);
+    const shape = ctx.createBiquadFilter();
+    shape.type = 'peaking';
+    shape.frequency.value = 1400;
+    shape.gain.value = 6;
+    const siren = ctx.createGain();
+    siren.gain.value = 0;
+    tone.connect(shape).connect(siren).connect(mixer.bus.police);
+
+    const rotorFilter = ctx.createBiquadFilter();
+    rotorFilter.type = 'lowpass';
+    rotorFilter.frequency.value = 340;
+    const chop = ctx.createGain();
+    chop.gain.value = 0.5;
+    const chopper = ctx.createOscillator();
+    chopper.type = 'square';
+    chopper.frequency.value = 12.5;
+    const chopDepth = ctx.createGain();
+    chopDepth.gain.value = 0.5;
+    chopper.connect(chopDepth).connect(chop.gain);
+    const rotor = ctx.createGain();
+    rotor.gain.value = 0;
+    noiseSource(mixer).connect(rotorFilter).connect(chop).connect(rotor).connect(mixer.bus.police);
+    for (const osc of [tone, lfo, chopper]) osc.start();
+    nodes = { tone, lfo, depth, siren, rotor };
+  });
 
   return {
-    /** police = {nearest: metres or null, searching, heli: metres or null}. */
-    update(police) {
-      const at = ctx.currentTime;
-      const near = police.nearest === null ? 0 : 1 / (1 + police.nearest / 25);
-      sirenGain.gain.setTargetAtTime(near * (police.searching ? 0.5 : 1), at, 0.3);
-      wail.frequency.setTargetAtTime(police.nearest !== null && police.nearest < 30 ? 2.2 : 0.28, at, 0.5);
-      const air = police.heli === null ? 0 : 1 / (1 + police.heli / 30);
-      chop.gain.setTargetAtTime(air * 0.6, at, 0.4);
-      bladeDepth.gain.setTargetAtTime(air * 0.6, at, 0.4);
+    /** sirenMetres / rotorMetres: Infinity when there is nothing to hear. */
+    update(sirenMetres, searching, rotorMetres) {
+      if (!nodes) return;
+      const t = mixer.ctx.currentTime;
+      const sweep = sirenSweep(sirenMetres, searching);
+      nodes.tone.frequency.setTargetAtTime(sweep.centre, t, 0.2);
+      nodes.lfo.frequency.setTargetAtTime(sweep.rate, t, 0.2);
+      nodes.depth.gain.setTargetAtTime(sweep.depth, t, 0.2);
+      const level = distanceGain(sirenMetres, 14, 260) * (searching ? 0.55 : 1);
+      nodes.siren.gain.setTargetAtTime(level * 0.32, t, 0.12);
+      nodes.rotor.gain.setTargetAtTime(distanceGain(rotorMetres, 30, 320) * 0.7, t, 0.2);
     },
   };
 }

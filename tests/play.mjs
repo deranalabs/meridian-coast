@@ -134,7 +134,13 @@ try {
   await sleep(800);
   const fired = await page.evaluate('window.__meridian.game.player.state.arsenal.shotsFired');
   check('F fires the pistol', fired > 0);
-  check('shooting someone raises a wanted star', (await state(page)).stars >= 1);
+  // A witness may phone it in a moment after the shots, so give the star a few seconds to appear.
+  let stars = 0;
+  for (let i = 0; i < 20 && stars === 0; i += 1) {
+    stars = (await state(page)).stars;
+    if (!stars) await sleep(200);
+  }
+  check('shooting someone raises a wanted star', stars >= 1);
   let units = 0;
   for (let i = 0; i < 60 && units === 0; i += 1) {
     await sleep(250);
