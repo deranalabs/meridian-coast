@@ -215,6 +215,24 @@ export function createPlayer(character, { fleet, colliders, ground, smoke, traff
       character.heading = heading;
       character.play('idle');
     },
+    /**
+     * Hold Ilo for a scene (a mission cutscene or the phone): no input moves him; on foot he stops, turns to
+     * face (x, z) when given, and plays `clip`. A car he sits in is stopped.
+     */
+    holdForScene(x = null, z = null, clip = 'idle') {
+      state.frozen = true;
+      state.crouch = false;
+      if (state.vehicle) Object.assign(state.vehicle, { speed: 0, vx: 0, vz: 0, lateral: 0, yawRate: 0, slip: 0 });
+      if (state.mode !== 'foot') return;
+      character.speed = 0;
+      if (x !== null) character.heading = Math.atan2(x - character.position.x, z - character.position.z);
+      character.play(clip);
+    },
+    /** Hand control back after holdForScene. */
+    releaseScene() {
+      state.frozen = false;
+      if (state.mode === 'foot' && !state.down) character.play('idle');
+    },
     update(dt, input, cameraYaw) {
       if (state.down || state.frozen) return null;
       if (state.mode === 'foot') updateFoot(dt, input, cameraYaw);

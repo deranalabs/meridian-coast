@@ -115,6 +115,7 @@ applyTheme();
 const settings = createSettings();
 const sound = createSound(game, game.action.events, settings.get());
 const menuSound = (kind) => sound.sfx.ui(kind);
+game.dialogue.setVoice((characterId, line) => sound.sfx.voice(characterId, line));
 settings.onChange((s) => {
   sound.mixer.setVolume(s.volume);
   sound.mixer.setMuted(s.muted);

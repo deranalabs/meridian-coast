@@ -31,6 +31,8 @@ import { ammoView } from './combat/arsenal.js';
 const PEDESTRIANS = 46;
 const TRAFFIC = 26;
 const PARKED = 34;
+/** Room in the crowd for the story: cast members on set plus a mission crew. */
+const STORY_ACTORS = 12;
 
 function addParkedCars(fleet, parking, focus, random) {
   const spots = [...parking].sort((a, b) => Math.hypot(a.x - focus.x, a.z - focus.z)
@@ -75,7 +77,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
   const smoke = createSmoke(400, timeOfDay);
   scene.add(smoke.points);
 
-  const characters = createCharacters(PEDESTRIANS + 20, city.surfaces.data);
+  const characters = createCharacters(PEDESTRIANS + 20 + STORY_ACTORS, city.surfaces.data);
   scene.add(characters.mesh);
   const ilo = characters.add(iloAppearance());
   ilo.position.set(focus.x, ground.surfaceAt(focus.x, focus.z).height, focus.z);
@@ -110,6 +112,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
     game.prompt = game.services.update(dt, input);
     const missionPrompt = game.services.respawn.active ? null : game.missions.update(dt, input);
     game.prompt ??= missionPrompt;
+    game.dialogue.update(dt, input);
     const event = player.update(dt, input, footCamera.state.yaw);
     if (event?.entered) chase.snap();
     if (input.pressed('KeyR') && player.state.mode === 'driving') radio.next();

@@ -62,17 +62,19 @@ export function createMissions(game, defs, places, hooks = {}) {
     else if (event.type === 'cleared') emit('cleared', { id: run.def.id, index: event.index });
     else if (event.type === 'failed') {
       progress.fails += 1;
+      hooks.hush?.();
       say(`Mission failed: ${failText(event.reason)}`, 3.5, 'failed');
       state.phase = 'failed';
       emit('failed', { id: run.def.id, reason: event.reason });
     } else if (event.type === 'passed') {
       state.phase = 'outro';
       state.props?.onPassed?.();
-      talk(run.def.outro ?? [], finish);
+      talk(run.def.outro ?? [], finish, { scene: true, focus: state.props?.focus ?? null });
     }
   }
 
   function stop() {
+    if (state.phase !== 'outro') hooks.hush?.();
     state.props?.dispose?.();
     state.props = null;
     state.run = null;
@@ -93,7 +95,7 @@ export function createMissions(game, defs, places, hooks = {}) {
       if (!state.run) return;
       state.phase = 'active';
       announce(currentStage(state.run));
-    });
+    }, { scene: true, focus: state.props?.focus ?? def.startAt });
     return true;
   }
 
