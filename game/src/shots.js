@@ -115,6 +115,18 @@ export const SHOTS = {
       return {};
     },
   },
+  aerial: {
+    time: 'dusk',
+    steps: 10,
+    hud: false,
+    focus: [-200, 0, 200],
+    stage(game) {
+      game.cameraMode = 'manual';
+      game.camera.position.set(-120, 150, 560);
+      game.camera.lookAt(-260, 0, 120);
+      return {};
+    },
+  },
   cast: {
     time: 'dusk',
     steps: 30,

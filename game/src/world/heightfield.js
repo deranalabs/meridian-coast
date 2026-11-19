@@ -18,7 +18,7 @@ function smooth(t) {
 
 function hills(x, z) {
   const west = 30 * smooth((-200 - x) / 320) + 34 * smooth((-500 - x) / 200);
-  const ripple = 3.5 * Math.sin(z * 0.011) + 2 * Math.sin(z * 0.023 + x * 0.013);
+  const ripple = (5.5 + 3.5 * Math.sin(z * 0.011) + 2 * Math.sin(z * 0.023 + x * 0.013)) * 0.5;
   const north = 18 * smooth((-440 - z) / 220) * smooth((x + 260) / 200) * smooth((420 - x) / 60);
   return west + ripple * smooth((-210 - x) / 140) + north;
 }
