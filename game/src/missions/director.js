@@ -207,7 +207,8 @@ export function createMissions(game, defs, places, hooks = {}) {
         if (input.pressed('Enter')) retry();
         else if (input.pressed('Backspace')) this.quit();
       } else if (run) state.props?.update?.(dt, world.view);
-      guide.update(dt, run && state.phase === 'active' ? run : null, world.view, resolved, progress, pillars);
+      if (run && state.phase !== 'active') guide.hold(pillars);
+      else guide.update(dt, run, world.view, resolved, progress, pillars);
       pillars.update(game.time);
       return state.prompt;
     },

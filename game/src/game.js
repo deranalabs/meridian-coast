@@ -174,9 +174,11 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
   game.objective = () => {
     const wanted = game.action.police.wanted;
     if (wanted.stars === 0) {
-      const open = game.missions.available().length;
-      return { label: 'NO MISSION', text: open ? 'Free roam: a job is waiting at the <b>gold pin</b>'
-        + '<small>Walk into the gold pillar or press <kbd>P</kbd> for the phone</small>'
+      const open = game.missions.available();
+      // Name the next story job when there is one; repeatable activities only fill in after the story.
+      const next = open.find((def) => !def.activity) ?? open[0];
+      return { label: 'NO MISSION', text: next ? `Free roam: <b>${next.title}</b> waits at the gold pin`
+        + '<small>Press <kbd>E</kbd> at the gold pillar, or <kbd>P</kbd> for the phone</small>'
         : 'Free roam: no calls right now<small>Coloured markers on the map are shops</small>' };
     }
     return isSearching(wanted)

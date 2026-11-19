@@ -51,6 +51,14 @@ export function missionGuide(game) {
     get route() {
       return out.route;
     },
+    /** A job is in a scene (briefing, outro) or failed: no pillars, pins or route, so nothing stands in the shot. */
+    hold(pillars) {
+      pins.length = 0;
+      out.blips = [];
+      out.route = null;
+      pillars.show(pins);
+      timers.blips = 0;
+    },
     update(dt, run, view, defs, progress, pillars) {
       timers.blips -= dt;
       timers.route -= dt;
