@@ -376,12 +376,25 @@ const PAINTERS = {
   },
 };
 
+/**
+ * Weathering grain over the albedo. The noise repeats every tile (each tile is one bay by one storey and repeats
+ * along a wall), so the grain runs on across every bay and storey seam; each tile reads it at its own offset.
+ */
+export function grainIndex(x, y) {
+  const column = Math.floor(x / TILE);
+  const row = Math.floor(y / TILE);
+  const gx = (x + column * 37 + row * 11) % TILE;
+  const gy = (y + row * 53 + column * 19) % TILE;
+  return gy * TILE + gx;
+}
+
 function addGrain(canvas, ctx, seed, amount) {
-  const noise = tileableNoise(WIDTH, 64, 3, seed);
+  const noise = tileableNoise(TILE, TILE / 16, 3, seed);
   const image = ctx.getImageData(0, 0, WIDTH, HEIGHT);
   const random = createRandom(seed + 1);
   for (let index = 0; index < WIDTH * HEIGHT; index += 1) {
-    const grain = (noise[index] - 0.5) * amount + (random.next() - 0.5) * amount * 0.6;
+    const field = noise[grainIndex(index % WIDTH, Math.floor(index / WIDTH))];
+    const grain = (field - 0.5) * amount + (random.next() - 0.5) * amount * 0.6;
     image.data[index * 4] = clamp255(image.data[index * 4] + grain);
     image.data[index * 4 + 1] = clamp255(image.data[index * 4 + 1] + grain);
     image.data[index * 4 + 2] = clamp255(image.data[index * 4 + 2] + grain);
