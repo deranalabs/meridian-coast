@@ -22,6 +22,8 @@ import { createRadio } from './ui/radio.js';
 import { CAR_PAINTS } from './palette.js';
 import { createAction } from './systems/action.js';
 import { isSearching } from './police/wanted.js';
+import { createServices } from './systems/services.js';
+import { baseOutfit } from './shops/outfit.js';
 import { ammoView } from './combat/arsenal.js';
 
 const PEDESTRIANS = 46;
@@ -94,9 +96,15 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
     chaseOptions: undefined, playerHooks,
   };
   game.action = createAction(game);
+  game.baseLook = ilo.appearance;
+  game.outfit = baseOutfit(ilo.appearance);
+  game.ownedCars = [];
+  game.services = createServices(game);
+  game.prompt = null;
 
   game.step = (dt, input) => {
     game.time += dt;
+    game.prompt = game.services.update(dt, input);
     const event = player.update(dt, input, footCamera.state.yaw);
     if (event?.entered) chase.snap();
     if (input.pressed('KeyR') && player.state.mode === 'driving') radio.next();
@@ -124,7 +132,8 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
   };
 
   game.nearCarHint = () => {
-    if (player.state.mode !== 'foot') return null;
+    if (game.prompt) return game.prompt;
+    if (player.state.mode !== 'foot' || player.state.down) return null;
     for (const car of fleet.cars) {
       if (car.visible && car.position.distanceTo(ilo.position) < 4) return 'Press <kbd>E</kbd> to take the car';
     }
@@ -169,7 +178,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
       z: subject.z,
       heading,
       radio: radio.line(),
-      blips: landmarks.blips,
+      blips: [...landmarks.blips, ...game.services.blips, ...game.action.police.blips(game.time)],
       hint: game.nearCarHint(),
     });
   };

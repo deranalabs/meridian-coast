@@ -1,0 +1,95 @@
+/* Menu styles: the shop panel and the busted / wasted screens over the game canvas. */
+#shop {
+  --accent: #ff5fa2;
+  position: fixed;
+  inset: 0;
+  display: none;
+  justify-content: flex-end;
+  align-items: center;
+  padding-right: 6vw;
+  pointer-events: none;
+  font-family: "Avenir Next", "Futura", "Helvetica Neue", Arial, sans-serif;
+  color: #fff6f0;
+  background: linear-gradient(270deg, rgba(16, 6, 30, 0.82) 0%, rgba(16, 6, 30, 0.45) 40%, rgba(16, 6, 30, 0) 62%);
+}
+#shop.open { display: flex; }
+#shop .panel { width: 430px; }
+#shop .kicker {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+#shop .name {
+  font-size: 46px;
+  line-height: 1;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -1px;
+  margin: 6px 0 4px;
+  text-shadow: 0 0 22px var(--accent), 0 4px 10px rgba(10, 2, 20, 0.8);
+}
+#shop .sub { font-size: 16px; font-weight: 600; color: #e8dcf4; margin-bottom: 16px; }
+#shop ul { list-style: none; margin: 0; padding: 0; }
+#shop li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 7px 14px;
+  margin: 3px 0;
+  border-radius: 6px;
+  background: rgba(30, 14, 50, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 18px;
+  font-weight: 700;
+}
+#shop li small { display: block; font-size: 12px; font-weight: 600; opacity: 0.7; letter-spacing: 0.5px; }
+#shop li .price { font-size: 19px; font-weight: 800; color: #9dffb5; }
+#shop li.active {
+  background: linear-gradient(90deg, var(--accent), rgba(196, 92, 255, 0.75));
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 18px var(--accent);
+}
+#shop li.active .price { color: #ffffff; }
+#shop li.disabled { opacity: 0.55; }
+#shop li.disabled .price { color: #ffb3c0; }
+#shop .note { min-height: 22px; margin-top: 10px; font-size: 15px; font-weight: 700; color: #ffd166; }
+#shop .foot { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 14px; }
+#shop .foot .cash { font-size: 26px; font-weight: 800; color: #9dffb5; }
+#shop kbd, #screen kbd {
+  display: inline-block;
+  padding: 1px 7px;
+  margin: 0 2px;
+  border-radius: 5px;
+  background: #fff;
+  color: #2a1640;
+  font-family: inherit;
+  font-weight: 800;
+}
+#screen {
+  position: fixed;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+  font-family: "Avenir Next", "Futura", "Helvetica Neue", Arial, sans-serif;
+  color: #fff;
+  background: radial-gradient(ellipse at center, rgba(40, 0, 20, 0.25) 0%, rgba(20, 0, 14, 0.75) 100%);
+  transition: background 0.6s;
+}
+#screen.show { display: flex; }
+#screen.black { background: rgba(8, 2, 12, 1); }
+#screen .big {
+  font-size: 120px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+#screen.busted .big { color: #9fc4ff; text-shadow: 0 0 30px #2a5cff, 0 6px 20px #000; }
+#screen.wasted .big { color: #ff6b7a; text-shadow: 0 0 30px #ff1f3d, 0 6px 20px #000; }
+#screen .line { font-size: 22px; font-weight: 700; margin-top: 8px; }
+#screen .line em { color: #ffd166; font-style: normal; }

@@ -50,6 +50,10 @@ export function createInput(target) {
     axis(negative, positive) {
       return (this.down(...positive) ? 1 : 0) - (this.down(...negative) ? 1 : 0);
     },
+    /** Swallow a press so later systems this frame do not see it (a shop takes E before the car does). */
+    consume(code) {
+      presses.delete(code);
+    },
     /** Call once at the end of each frame. */
     endFrame() {
       presses.clear();

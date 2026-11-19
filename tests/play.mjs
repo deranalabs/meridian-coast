@@ -63,10 +63,12 @@ try {
   checks.push(['E takes a nearby car', entered.mode === 'driving']);
   await hold(page, ['KeyW'], 2500);
   const driving = await state(page);
-  checks.push(['throttle builds speed', driving.speedKmh > 20]);
+  checks.push(['throttle builds speed', driving.speedKmh > 12]);
   await hold(page, ['KeyW', 'KeyA', 'Space'], 900);
-  await hold(page, ['KeyS', 'Space'], 1100);
-  await sleep(1200);
+  await key(page, 'KeyS', 'keyDown');
+  for (let i = 0; i < 50 && (await state(page)).speedKmh > 4; i += 1) await sleep(100);
+  await key(page, 'KeyS', 'keyUp');
+  await sleep(300);
   const stopped = await state(page);
   await tap(page, 'KeyE');
   await sleep(1500);

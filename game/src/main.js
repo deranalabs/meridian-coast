@@ -9,6 +9,7 @@ import { createGame } from './game.js';
 import { createInput } from './core/input.js';
 import { createTitleScreen } from './ui/titlescreen.js';
 import { getShot } from './shots.js';
+import { loadSave, applySave } from './save/savesystem.js';
 
 const STEP = 1 / 60;
 const MAX_FRAME = 0.1;
@@ -18,13 +19,16 @@ const shot = getShot(params.get('shot'));
 const live = params.get('live') === '1';
 const seedParam = Number.parseInt(params.get('seed') ?? '1', 10);
 const seed = Number.isInteger(seedParam) ? seedParam : 1;
-const timeOfDay = getTimeOfDay(shot?.time ?? params.get('time') ?? 'dusk');
+const stored = shot || params.get('fresh') === '1' ? null : loadSave();
+const resume = stored?.status === 'ok' ? stored.save : null;
+const timeOfDay = getTimeOfDay(shot?.time ?? params.get('time') ?? resume?.time ?? 'dusk');
 const showHud = params.get('hud') !== '0' && (shot ? shot.hud !== false : true);
 
 const canvas = document.getElementById('game');
 const { renderer, stats, resize } = createRenderer(canvas);
 const focus = shot?.focus ? new THREE.Vector3(...shot.focus) : new THREE.Vector3(36, 0, -68);
 const game = createGame({ renderer, seed, timeOfDay, focus, showHud });
+if (resume) applySave(game, resume);
 const input = createInput(canvas);
 const dynamicResolution = createDynamicResolution(game.post);
 const fixedScale = params.has('scale');
@@ -48,6 +52,14 @@ window.addEventListener('resize', onResize);
 onResize();
 
 window.__meridian = {
+  /** The live game, for the automated tests (teleporting, reading wallets and shops). */
+  game,
+  /** Move Ilo on foot to (x, z), facing `heading`. */
+  teleport(x, z, heading = 0) {
+    if (game.player.state.mode !== 'foot') return false;
+    game.player.placeOnFoot(x, z, heading);
+    return true;
+  },
   getState() {
     const player = game.player.state;
     return {
@@ -63,6 +75,14 @@ window.__meridian = {
       camera: game.camera.position.toArray().map((v) => Math.round(v * 10) / 10),
       characters: game.characters.characters.length,
       cars: game.fleet.cars.length,
+      cash: player.wallet.cash,
+      health: Math.round(player.vitals.health),
+      stars: game.action.police.wanted.stars,
+      policeUnits: game.action.police.units.units.length,
+      helicopter: game.action.police.helicopter.state.active,
+      weapon: player.arsenal.current,
+      shop: game.services.shops.openPlace?.id ?? null,
+      respawning: game.services.respawn.active,
     };
   },
   /** Triangles per mesh (instances included), largest first: a quick profile of where geometry goes. */

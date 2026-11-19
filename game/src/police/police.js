@@ -77,7 +77,10 @@ export function createPolice({ fleet, layout, ground, colliders, characters, eff
   });
   events.on('hit', (e) => {
     if (e.source !== 'player') return;
-    if (e.owner.kind === 'officer') reportCrime(e.killed ? 'killPolice' : 'hitPolice', e.x, e.z, true);
+    if (e.owner.kind === 'officer') {
+      reportCrime(e.killed ? 'killPolice' : 'hitPolice', e.x, e.z, true);
+      if (e.killed) events.emit('drop', { x: e.x, z: e.z, kind: 'officer' });
+    }
     else reportCrime(e.killed ? 'killPedestrian' : 'assault', e.x, e.z);
   });
   events.on('run-over', (e) => reportCrime(e.officer ? 'hitPolice' : 'hitPedestrian', e.x, e.z, e.officer));
@@ -208,6 +211,13 @@ export function createPolice({ fleet, layout, ground, colliders, characters, eff
     helicopter,
     reportCrime,
     update,
+    /** Minimap dots for pursuing cruisers and the helicopter, flashing red and blue. */
+    blips(time) {
+      const colour = Math.sin(time * 12) > 0 ? '#ff2a4a' : '#3b6bff';
+      const list = units.units.map((unit) => ({ x: unit.vehicle.x, z: unit.vehicle.z, colour }));
+      if (helicopter.state.active) list.push({ x: helicopter.state.x, z: helicopter.state.z, colour });
+      return list;
+    },
     draw(time) {
       beacons.begin();
       drawLightBars(beacons, fleet.cars, time, lightLevel);
