@@ -1,5 +1,6 @@
 // Gameplay smoke test: title, walk, mute, pause and settings, drive and stop, buy a pistol, fire, get a wanted star,
-// see police respond, save at the safe house, reload and find the same cash; fails on any console error.
+// see police respond, take mission one from the phone (fail it, retry, pass it, get paid), save at the safe house,
+// reload and find the same cash; fails on any console error.
 // PLAY_SHOTS=1 also saves the pause menu at 768x480 to tmp/play-pause.jpg.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { launchChrome, startServer, sleep } from './cdp.mjs';
@@ -15,6 +16,7 @@ const KEYS = {
   KeyF: { key: 'f', code: 'KeyF', keyCode: 70 },
   Digit2: { key: '2', code: 'Digit2', keyCode: 50 },
   KeyM: { key: 'm', code: 'KeyM', keyCode: 77 },
+  KeyP: { key: 'p', code: 'KeyP', keyCode: 80 },
   ArrowDown: { key: 'ArrowDown', code: 'ArrowDown', keyCode: 40 },
   ArrowLeft: { key: 'ArrowLeft', code: 'ArrowLeft', keyCode: 37 },
   Space: { key: ' ', code: 'Space', keyCode: 32 },
@@ -54,6 +56,15 @@ async function boot(page, url) {
 const goTo = (page, id) => page.evaluate(`(() => { const m = window.__meridian;
   const p = m.game.services.shops.places.find((entry) => entry.id === '${id}');
   return m.teleport(p.x + p.outX * 0.6, p.z + p.outZ * 0.6, p.heading + Math.PI); })()`);
+
+/** Teleport Ilo onto a story place (missions resolve these on the map). */
+const goToMission = (page, id) => page.evaluate(`(() => { const m = window.__meridian;
+  const p = m.game.missions.places.get('${id}');
+  return m.teleport(p.x + p.outX, p.z + p.outZ, p.heading + Math.PI); })()`);
+
+/** The running job: its phase (idle, intro, active, failed, outro), stage label and whether it failed. */
+const job = (page) => page.evaluate(`(() => { const m = window.__meridian.game.missions; const v = m.hudView();
+  return { phase: m.state.phase, stage: v?.stage ?? null, failed: Boolean(v?.failed) }; })()`);
 
 const server = await startServer(8135);
 const chrome = await launchChrome({ port: 9337 });
@@ -183,6 +194,34 @@ try {
   await sleep(300);
   const resumed = await state(page);
   check('Esc twice resumes play', !resumed.paused && resumed.time > paused.time);
+
+  // Mission one from the phone: take it, reach the kiosk, bring the police (fail), retry, hand over, get paid.
+  await tap(page, 'KeyP');
+  check('P opens the phone', await page.evaluate('window.__meridian.game.phone.isOpen'));
+  await tap(page, 'Enter');
+  check('Enter on the phone starts mission one', (await job(page)).phase === 'intro');
+  for (let i = 0; i < 20 && (await job(page)).phase === 'intro'; i += 1) await tap(page, 'Enter');
+  check('the intro plays out to the first objective', (await job(page)).phase === 'active');
+  await goToMission(page, 'newsbox');
+  await sleep(600);
+  check('reaching the kiosk marker clears stage one', (await job(page)).stage === 'Stage 2 of 2');
+  await page.evaluate('(() => { const g = window.__meridian.game; const i = g.ilo.position; '
+    + 'g.action.police.alert(1, i.x, i.z); })()');
+  await sleep(500);
+  check('police on your heels fail the job', (await job(page)).failed);
+  await tap(page, 'Enter');
+  await sleep(300);
+  const retried = await job(page);
+  check('Enter retries from the checkpoint', !retried.failed && retried.stage === 'Stage 2 of 2'
+    && (await state(page)).stars === 0);
+  const unpaid = (await state(page)).cash;
+  await goToMission(page, 'pell-hotel');
+  await sleep(2600);
+  for (let i = 0; i < 20 && (await job(page)).phase === 'outro'; i += 1) await tap(page, 'Enter');
+  const paid = await state(page);
+  check('mission one pays $1,200 into the wallet', paid.cash === unpaid + 1200 && (await job(page)).phase === 'idle');
+  check('mission two opens on the phone', await page.evaluate(
+    "window.__meridian.game.missions.available().some((def) => def.id === 'salt-and-chrome')"));
 
   await goTo(page, 'safehouse');
   await sleep(300);
