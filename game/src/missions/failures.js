@@ -10,6 +10,7 @@ export const FAIL_TEXT = Object.freeze({
   abandoned: 'You walked away from the job',
   'target-lost': 'The target got away',
   quit: 'You called the job off',
+  heat: 'You brought the police with you',
 });
 
 /** The text for a reason, with a fallback for unknown ones. */
@@ -23,6 +24,7 @@ export const failText = (reason) => FAIL_TEXT[reason] ?? 'The job went wrong';
 export function checkFailures(def, stage, view) {
   if (view.dead) return 'dead';
   if (view.busted) return 'caught';
+  if (stage.noWanted && view.stars > 0) return 'heat';
   const tag = stage.car ?? def.car;
   if (tag && view.cars?.[tag] && view.cars[tag].health <= 0) return 'car-destroyed';
   const leash = stage.leash;

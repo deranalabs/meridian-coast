@@ -1,6 +1,7 @@
 // Police system: wanted level, witnesses and crimes, patrols, pursuit units, officers, roadblocks, helicopter, busts.
 import * as THREE from '../../vendor/three.module.min.js';
-import { createWanted, commitCrime, updateWanted, clearWanted, setStars, dispatchFor } from './wanted.js';
+import { createWanted, commitCrime, updateWanted, clearWanted, setStars, dispatchFor, isSearching }
+  from './wanted.js';
 import { createTraffic } from '../vehicles/traffic.js';
 import { resolveCarContacts } from '../vehicles/carcollide.js';
 import { createUnits } from './units.js';
@@ -40,6 +41,7 @@ export function createPolice({ fleet, layout, ground, colliders, characters, eff
   const lightLevel = timeOfDay.name === 'night' ? 1.3 : 0.9;
   const state = { spawnTimer: 0, bustTimer: 0, sightTimer: 0, seen: false, ramCooldown: 0, siren: Infinity, clock: 0,
     cooldowns: {} };
+  const heatView = { stars: 0, seen: false, searching: false, closing: false };
 
   function watchers() {
     const list = [];
@@ -230,6 +232,28 @@ export function createPolice({ fleet, layout, ground, colliders, characters, eff
     setStars(stars) {
       setStars(wanted, stars);
       wanted.seen = stars > 0;
+    },
+    /**
+     * A mission raises the alarm (a stolen job car, a tripped yard): at least `stars`, the police told Ilo is
+     * at (x, z). Returns whether the level rose.
+     */
+    alert(stars, x, z) {
+      if (wanted.stars >= stars) return false;
+      setStars(wanted, stars);
+      wanted.seen = true;
+      wanted.lastKnown = { x, z };
+      wanted.lastCrime = 'mission';
+      state.spawnTimer = 0;
+      events.emit('wanted', { stars: wanted.stars, crime: 'mission' });
+      return true;
+    },
+    /** The real heat a mission reads: stars, whether units see Ilo now, searching, and a bust closing in. */
+    heat() {
+      heatView.stars = wanted.stars;
+      heatView.seen = wanted.stars > 0 && wanted.seen;
+      heatView.searching = isSearching(wanted);
+      heatView.closing = state.bustTimer > 0;
+      return heatView;
     },
     /** Called on busted, wasted and respray: everyone stands down. */
     standDown() {

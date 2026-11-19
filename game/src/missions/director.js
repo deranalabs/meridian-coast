@@ -41,6 +41,13 @@ export function createMissions(game, defs, places, hooks = {}) {
     }
   }
 
+  /** A stage begins: the props hear about it and a stage with `alert` raises the real wanted level. */
+  function enterStage(index) {
+    state.props?.onStage?.(index);
+    const stage = state.run.def.stages[index];
+    if (stage.alert) game.action.police.alert(stage.alert, world.view.x, world.view.z);
+  }
+
   function announce(stage) {
     say(stage.text, 3.5, 'objective');
     if (stage.talk?.length) talk(stage.talk, () => {});
@@ -58,7 +65,10 @@ export function createMissions(game, defs, places, hooks = {}) {
 
   function handle(event) {
     const run = state.run;
-    if (event.type === 'stage') announce(event.stage);
+    if (event.type === 'stage') {
+      enterStage(event.index);
+      announce(event.stage);
+    }
     else if (event.type === 'cleared') emit('cleared', { id: run.def.id, index: event.index });
     else if (event.type === 'failed') {
       progress.fails += 1;
@@ -104,6 +114,7 @@ export function createMissions(game, defs, places, hooks = {}) {
     const [event] = restartRun(state.run);
     state.phase = 'active';
     setupStage(event.index, true);
+    enterStage(event.index);
     say(`Checkpoint: ${event.stage.text}`, 3, 'objective');
     emit('retry', { id: state.run.def.id, stage: event.index });
   }

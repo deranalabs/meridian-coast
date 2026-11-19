@@ -31,7 +31,10 @@ export function createWorldView(game) {
       view.z = at.z;
       view.driving = driving;
       view.carTag = driving ? p.car.missionTag ?? null : null;
-      view.stars = game.action.police.wanted.stars;
+      const heat = game.action.police.heat();
+      view.stars = heat.stars;
+      view.seen = heat.seen;
+      view.searching = heat.searching;
       view.dead = latched.dead || p.vitals.health <= 0;
       view.busted = latched.busted;
       view.cars = props?.cars ?? view.cars;

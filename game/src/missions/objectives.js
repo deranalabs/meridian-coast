@@ -60,10 +60,18 @@ function defeatCheck(stage, view, memo) {
 
 function deliverCheck(stage, view, memo, dt) {
   const there = distance(view, stage.at) <= (stage.radius ?? 6);
-  const ready = there && (stage.car ? inStageCar(stage, view) : true) && (!stage.clean || view.stars === 0);
+  const carOk = stage.car ? inStageCar(stage, view) : !(stage.onFoot && view.driving);
+  const ready = there && carOk && (!stage.clean || view.stars === 0);
   memo.wait = ready ? (memo.wait ?? 0) + dt : 0;
   memo.progress = Math.min(1, memo.wait / (stage.wait ?? 2));
   return memo.wait >= (stage.wait ?? 2) ? 'done' : null;
+}
+
+/** Clear when the stars are gone; a stage that raises the alarm (`alert`) must first see them go up. */
+function evadeCheck(stage, view, memo) {
+  if (view.stars > 0) memo.hot = true;
+  if (stage.alert && !memo.hot) return null;
+  return view.stars === 0 ? 'done' : null;
 }
 
 const CHECKS = {
@@ -72,7 +80,7 @@ const CHECKS = {
   steal: (stage, view) => (inStageCar(stage, view) ? 'done' : null),
   follow: followCheck,
   defeat: defeatCheck,
-  evade: (stage, view) => (view.stars === 0 ? 'done' : null),
+  evade: evadeCheck,
   deliver: deliverCheck,
 };
 
