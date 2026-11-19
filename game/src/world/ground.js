@@ -19,6 +19,16 @@ export function createGround(layout) {
     }
   });
   const winding = layout.winding;
+  // The hill road's box (grown by its half-width): points outside it skip the per-segment test, which every
+  // walker and car would otherwise pay on each step anywhere west of the old town.
+  const reach = 5;
+  const box = { x0: Infinity, z0: Infinity, x1: -Infinity, z1: -Infinity };
+  for (const p of winding) {
+    box.x0 = Math.min(box.x0, p.x - reach);
+    box.z0 = Math.min(box.z0, p.z - reach);
+    box.x1 = Math.max(box.x1, p.x + reach);
+    box.z1 = Math.max(box.z1, p.z + reach);
+  }
 
   function blockAt(x, z) {
     const list = grid.get(`${Math.floor(x / CELL)},${Math.floor(z / CELL)}`);
@@ -28,15 +38,17 @@ export function createGround(layout) {
   }
 
   function onWinding(x, z) {
+    if (x < box.x0 || x > box.x1 || z < box.z0 || z > box.z1) return false;
     const point = { x, z };
     for (let index = 0; index + 1 < winding.length; index += 1) {
-      if (distanceToSegment(point, winding[index], winding[index + 1]).distance < 5) return true;
+      if (distanceToSegment(point, winding[index], winding[index + 1]).distance < reach) return true;
     }
     return false;
   }
 
   return {
     blockAt,
+    onWinding,
     surfaceAt(x, z) {
       const base = heightAt(x, z);
       if (Math.abs(z - layout.causewayZ) < 6.2 && x > CAUSEWAY.x0 + 4 && x < CAUSEWAY.x1 + 4) {
