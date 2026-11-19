@@ -13,7 +13,8 @@ const FAIL_KEYS = '<kbd>Enter</kbd> retry from checkpoint &nbsp; <kbd>Backspace<
 /**
  * Missions over a game: `defs` are mission definitions, `places` maps place ids to resolved places.
  * hooks: say(html, s, kind), talk(lines, done), kit (prop spawner for def.setup), cast (id to character),
- * save(), onEvent(name, data). update(dt, input) runs before the player moves.
+ * save(), onEvent(name, data), dress(pieceIds) and undress() for a mission's story outfit. update(dt, input) runs
+ * before the player moves.
  */
 export function createMissions(game, defs, places, hooks = {}) {
   const resolved = defs.map((def) => resolveMission(def, places));
@@ -79,6 +80,7 @@ export function createMissions(game, defs, places, hooks = {}) {
     } else if (event.type === 'passed') {
       state.phase = 'outro';
       state.props?.onPassed?.();
+      emit('complete', { id: run.def.id, colour: run.def.colour });
       talk(run.def.outro ?? [], finish, { scene: true, focus: state.props?.focus ?? null });
     }
   }
@@ -90,6 +92,7 @@ export function createMissions(game, defs, places, hooks = {}) {
     state.run = null;
     state.phase = 'idle';
     game.player.state.frozen = false;
+    hooks.undress?.();
   }
 
   /** Start mission `id` if it is open and nothing else runs; returns whether it started. */
@@ -100,6 +103,7 @@ export function createMissions(game, defs, places, hooks = {}) {
     state.run = createRun(def);
     state.phase = 'intro';
     setupStage(0, false);
+    if (def.outfit?.length) hooks.dress?.(def.outfit);
     emit('started', { id });
     talk(def.intro ?? [], () => {
       if (!state.run) return;
@@ -115,6 +119,7 @@ export function createMissions(game, defs, places, hooks = {}) {
     state.phase = 'active';
     setupStage(event.index, true);
     enterStage(event.index);
+    hooks.unsay?.('failed');
     say(`Checkpoint: ${event.stage.text}`, 3, 'objective');
     emit('retry', { id: state.run.def.id, stage: event.index });
   }

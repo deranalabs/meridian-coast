@@ -36,6 +36,14 @@ export function dressed(base, outfit, makeColour) {
   return { ...base, variants, colours };
 }
 
+/**
+ * A costume over the saved outfit: the outfit to show while story `pieces` are worn. The saved outfit is not
+ * changed, so taking the costume off is just showing `outfit` again, and a save never keeps a story piece.
+ */
+export function costume(outfit, pieces) {
+  return pieces.filter(Boolean).reduce((shown, piece) => withItem(shown, piece), outfit);
+}
+
 /** The starting outfit (Ilo's own clothes) expressed as saved slots. */
 export function baseOutfit(base) {
   return { hair: base.variants.hair, top: base.variants.top, bottom: base.variants.bottom, outer: base.variants.outer,

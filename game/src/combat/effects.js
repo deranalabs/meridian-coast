@@ -1,4 +1,5 @@
-// Gunfire effects: pooled tracer ribbons, muzzle flashes and spark bursts, one draw for each kind.
+// Gunfire and mission effects: pooled tracer ribbons, muzzle flashes, spark bursts, mission pass and fail
+// showers; one draw for each kind.
 import * as THREE from '../../vendor/three.module.min.js';
 
 const TRACER_VERTEX = /* glsl */ `
@@ -152,6 +153,7 @@ const FLASH = new THREE.Color('#ffd28a').multiplyScalar(4);
 const SPARK = new THREE.Color('#ffb347').multiplyScalar(3);
 const DUST = new THREE.Color('#a89a90').multiplyScalar(0.5);
 const BLOOD = new THREE.Color('#8a0f18').multiplyScalar(0.9);
+const FAIL = new THREE.Color('#ff2a4a').multiplyScalar(3);
 
 /** tracer(a, b), muzzle(p, dir), impact(p, normal, kind) where kind is 'wall', 'ground', 'car' or 'body'. */
 export function createEffects() {
@@ -178,6 +180,26 @@ export function createEffects() {
           (normal.z + j() * 1.6) * speed, colour, kind === 'body' ? 0.07 : 0.035, 0.25 + j() * 0.2, 9);
       }
       if (kind !== 'body') sparks.spawn(p.x, p.y, p.z, 0, 0, 0, SPARK, 0.12, 0.06, 0);
+    },
+    /** Mission passed: a ring of sparks in the job's colour around p, then a fountain rising from it. */
+    celebrate(p, hex = '#ffc94a') {
+      const colour = new THREE.Color(hex).multiplyScalar(3.2);
+      for (let i = 0; i < 36; i += 1) {
+        const angle = (i / 36) * Math.PI * 2;
+        sparks.spawn(p.x, p.y + 0.2, p.z, Math.sin(angle) * 5, 0.6, Math.cos(angle) * 5, colour, 0.09, 0.7, 0);
+      }
+      for (let i = 0; i < 44; i += 1) {
+        sparks.spawn(p.x, p.y + 0.4, p.z, j() * 2.2, 7 + j() * 2.5, j() * 2.2, i % 3 ? colour : FLASH, 0.07,
+          1.1 + j() * 0.3, 7);
+      }
+    },
+    /** Mission failed: a red shower that falls in on p and dies quickly. */
+    failBurst(p) {
+      for (let i = 0; i < 30; i += 1) {
+        const angle = (i / 30) * Math.PI * 2;
+        sparks.spawn(p.x + Math.sin(angle) * 2.4, p.y + 2.2, p.z + Math.cos(angle) * 2.4, -Math.sin(angle) * 2.5,
+          -0.5, -Math.cos(angle) * 2.5, FAIL, 0.08, 0.55, 6);
+      }
     },
     update(dt) {
       tracers.update(dt);

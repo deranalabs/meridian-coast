@@ -20,13 +20,14 @@ export const LANTERN_RUN = Object.freeze({
   startAt: 'lantern',
   colour: '#c45cff',
   reward: { cash: 1200, respect: 10 },
-  outfit: 'courier-jacket',
+  outfit: ['courier-jacket', 'courier-cap'],
   intro: [
     ['nell', 'Ilo Rask. Gus says you owe him forty. Gus says a lot of things.'],
     ['ilo', 'He also says you have work.'],
     ['nell', 'A parcel at the Coral Street kiosk. You walk it to Gus. Walk, not drive.'],
     ['ilo', 'What is in it?'],
     ['nell', 'Your first payment, if it gets there sealed. And no police on your heels. Couriers stay boring.'],
+    ['nell', 'Wear the jacket and the cap. Gold and plum: the kiosk only hands parcels to Lantern colours.'],
   ],
   stages: [
     {
@@ -44,7 +45,7 @@ export const LANTERN_RUN = Object.freeze({
   outro: [
     ['gus', 'Sealed. Good boy. That is the interest for this week.'],
     ['ilo', 'The interest? That was supposed to be payment.'],
-    ['gus', 'Payment starts when the interest stops, Ilo. Keep the jacket. Nell likes her runners to look the part.'],
+    ['gus', 'Payment starts when the interest stops, Ilo. Now give Nell back her jacket. You look like a lemon.'],
   ],
   setup,
 });

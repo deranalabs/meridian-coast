@@ -1,4 +1,5 @@
-// Saltwater Threads stock: each item sets one wardrobe slot to a style and colour (prices live in prices.js).
+// Clothing: Saltwater Threads stock and the story pieces missions hand out; each item sets one wardrobe slot to a
+// style and colour (prices live in prices.js).
 
 /** slot is top, bottom, outer or hat; style is a wardrobe variant name (null removes the piece). */
 export const CLOTHING = Object.freeze([
@@ -22,3 +23,17 @@ export const CLOTHING = Object.freeze([
   { id: 'beanie', slot: 'hat', style: 'beanie', colour: '#2a3d66', name: 'Harbor Beanie' },
   { id: 'no-hat', slot: 'hat', style: 'crop', name: 'No Hat' },
 ]);
+
+/**
+ * Story pieces: never sold. A mission lists them in `outfit`, Ilo wears them for the job, and his own clothes come
+ * back when it ends (passed, failed off or quit).
+ */
+export const STORY_CLOTHING = Object.freeze([
+  { id: 'courier-jacket', slot: 'outer', style: 'windbreaker', colour: '#ffc94a', lining: '#5e2382',
+    name: 'Lantern Courier Jacket', mission: 'lantern-run' },
+  { id: 'courier-cap', slot: 'hat', style: 'cap', colour: '#5e2382', name: 'Lantern Courier Cap',
+    mission: 'lantern-run' },
+]);
+
+/** A story piece by id, or null. */
+export const storyPiece = (id) => STORY_CLOTHING.find((piece) => piece.id === id) ?? null;

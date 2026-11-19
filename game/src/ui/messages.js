@@ -47,6 +47,17 @@ export function createMessages(parent, cardParent = parent) {
       }
       queue.push(entry);
     },
+    /** Drop the lines of one kind (a retry ends the 'failed' line); the next waiting line shows at once. */
+    drop(kind) {
+      for (let i = queue.length - 1; i >= 0; i -= 1) if (queue[i].kind === kind) queue.splice(i, 1);
+      if (state.current?.kind !== kind) return;
+      state.timer = 0;
+      if (queue.length) show(queue.shift());
+      else {
+        state.current = null;
+        line.classList.remove('show');
+      }
+    },
     /** Drop every waiting line and hide the one on screen. */
     clear() {
       queue.length = 0;
