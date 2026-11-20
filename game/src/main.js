@@ -2,10 +2,10 @@
 // ?shot=drive|foot|title&seed=N stages a deterministic screenshot scene; &live=1 keeps it running; &hud=0
 // hides the HUD.
 import * as THREE from '../vendor/three.module.min.js';
+import { createGame } from './game.js';
 import { createRenderer } from './render/renderer.js';
 import { createDynamicResolution } from './render/dynamicres.js';
 import { getTimeOfDay } from './render/timeofday.js';
-import { createGame } from './game.js';
 import { createInput } from './core/input.js';
 import { createTitleScreen } from './ui/titlescreen.js';
 import { getShot } from './shots.js';

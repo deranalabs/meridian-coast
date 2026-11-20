@@ -1,5 +1,25 @@
 // Game assembly: builds the world, actors, vehicles, cameras and HUD, and runs one fixed step and one draw.
 import * as THREE from '../vendor/three.module.min.js';
+import { createStory } from './missions/setup.js';
+import { createAction } from './systems/action.js';
+import { isSearching } from './police/wanted.js';
+import { policeReport } from './police/report.js';
+import { createServices } from './systems/services.js';
+import { baseOutfit } from './shops/outfit.js';
+import { ammoView } from './combat/arsenal.js';
+import { createPlayer } from './actors/player.js';
+import { createFleet } from './vehicles/fleet.js';
+import { createTraffic } from './vehicles/traffic.js';
+import { createSmoke } from './vehicles/smoke.js';
+import { createChaseCamera, createFootCamera } from './vehicles/camera.js';
+import { createCharacters } from './actors/characters.js';
+import { createPedestrians } from './actors/pedestrians.js';
+import { iloAppearance } from './actors/appearance.js';
+import { CAR_PAINTS } from './palette.js';
+import { createHud } from './ui/hud.js';
+import { createRadio } from './ui/radio.js';
+import { createPhone } from './ui/phone.js';
+import { createMapScreen } from './ui/mapscreen.js';
 import { createPost } from './render/post.js';
 import { createSky } from './render/sky.js';
 import { createEnvironment } from './render/environment.js';
@@ -9,26 +29,6 @@ import { createCity } from './world/city.js';
 import { createLandmarks } from './world/landmarks.js';
 import { createGround } from './world/ground.js';
 import { createColliders } from './world/colliders.js';
-import { createCharacters } from './actors/characters.js';
-import { createPedestrians } from './actors/pedestrians.js';
-import { iloAppearance } from './actors/appearance.js';
-import { createPlayer } from './actors/player.js';
-import { createFleet } from './vehicles/fleet.js';
-import { createTraffic } from './vehicles/traffic.js';
-import { createSmoke } from './vehicles/smoke.js';
-import { createChaseCamera, createFootCamera } from './vehicles/camera.js';
-import { createHud } from './ui/hud.js';
-import { createRadio } from './ui/radio.js';
-import { CAR_PAINTS } from './palette.js';
-import { createAction } from './systems/action.js';
-import { isSearching } from './police/wanted.js';
-import { policeReport } from './police/report.js';
-import { createServices } from './systems/services.js';
-import { createStory } from './missions/setup.js';
-import { baseOutfit } from './shops/outfit.js';
-import { ammoView } from './combat/arsenal.js';
-import { createPhone } from './ui/phone.js';
-import { createMapScreen } from './ui/mapscreen.js';
 
 /** The same keyboard with this step's presses hidden (the phone has them); held keys still steer a car. */
 const pressFree = (input) => ({ mouse: input.mouse, down: (...codes) => input.down(...codes),
