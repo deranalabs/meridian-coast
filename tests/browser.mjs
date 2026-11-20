@@ -51,7 +51,7 @@ function watchErrors(page) {
 const COVER_PANELS = {
   mission: '#hud .mission-panel.show', dispatch: '#hud .dispatch.show', wanted: '#hud .status .wanted',
   weapons: '#hud .weaponbar', card: '#hud .dialogue-card.show', minimap: '#hud .minimap', radio: '#hud .radio',
-  speedo: '#hud .speedo',
+  speedo: '#hud .speedo', rank: '#hud .rankbar', armour: '#hud .status .armour',
 };
 
 /** The cover's HUD panels are all there, on screen, apart and readable at contact-sheet size, or the run fails. */

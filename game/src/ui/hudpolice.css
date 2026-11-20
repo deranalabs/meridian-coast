@@ -83,49 +83,63 @@
 @keyframes dispatch-blink { 50% { opacity: 0.25; } }
 
 /* Weapon bar */
-#hud .weaponbar { display: flex; justify-content: flex-end; gap: 4px; margin-top: 8px; }
-/* In a car: the loadout stays visible but stowed, a little smaller and dimmer, with a small label. */
-#hud .weaponbar.stowed { position: relative; margin-top: 18px; filter: saturate(0.75); }
+/* One dark tray behind all four slots, clear of the stars above it, so it reads over sky, glass or sunlit walls. */
+#hud .weaponbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: stretch;
+  gap: 4px;
+  width: max-content;
+  margin: 12px 0 0 auto;
+  padding: 4px;
+  border-radius: 6px;
+  background: rgba(10, 5, 22, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+/* In a car the loadout stays up as it will be on foot, tagged Stowed at the tray's left end, not above it. */
 #hud .weaponbar.stowed::before {
   content: 'Stowed';
-  position: absolute;
-  top: -15px;
-  right: 2px;
+  align-self: center;
+  padding: 0 5px 0 3px;
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  opacity: 0.7;
+  color: #cfc4e8;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
 }
-#hud .weaponbar.stowed .wslot.owned { opacity: 0.72; }
 #hud .wslot {
   position: relative;
   width: 74px;
   /* The slot number gets its own top row, so it never sits on a long name. */
-  padding: 12px 3px 3px;
+  padding: 13px 3px 3px;
   border-radius: 4px;
-  background: rgba(14, 8, 30, 0.64);
+  background: rgba(40, 26, 64, 0.82);
   border: 2px solid transparent;
   text-align: center;
-  opacity: 0.38;
+  color: #8f86a6;
 }
-#hud .wslot.owned { opacity: 0.9; }
+#hud .wslot.owned { color: #ffffff; }
 #hud .wslot.current {
-  opacity: 1;
   border-color: var(--mc-gold, #ffc94a);
-  background: rgba(40, 18, 50, 0.75);
+  background: rgba(84, 46, 70, 0.92);
+  box-shadow: 0 0 8px rgba(255, 201, 74, 0.45);
 }
 #hud .wslot kbd {
   position: absolute;
   top: 1px;
   left: 4px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
   font-family: inherit;
   color: var(--mc-gold, #ffc94a);
 }
+#hud .wslot:not(.owned) kbd { color: #8f86a6; }
 #hud .wslot .wname { display: block; font-size: 11px; font-weight: 800; white-space: nowrap; overflow: hidden; }
-#hud .wslot .wammo { display: block; min-height: 13px; font-size: 11px; font-variant-numeric: tabular-nums; }
+#hud .wslot .wammo {
+  display: block; min-height: 13px; font-size: 11px; font-weight: 700; color: #9dffb5; font-variant-numeric: tabular-nums;
+}
 #hud .wslot.dry .wammo { color: #ff6b7a; }
 
 /* Small windows (the 768x480 cover): tighter type so the column clears the minimap. */

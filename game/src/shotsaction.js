@@ -116,6 +116,9 @@ export const ACTION_SHOTS = {
       arsenal.owned.pistol = { clip: 12, reserve: 36 };
       arsenal.owned.smg = { clip: 24, reserve: 96 };
       arsenal.current = 'smg';
+      // Four missions in: a Harbour Name with some respect toward Tide Caller, scraped but still in a vest.
+      Object.assign(game.player.state.vitals, { health: 72, armour: 58 });
+      game.missions.progress.respect = 128;
       game.player.state.vehicle.vz = -COVER.speed;
       game.player.state.autopilot = laneKeeper(game, COVER.laneX, Math.PI, 0.62);
       police.setStars(4);
