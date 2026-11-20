@@ -1,6 +1,7 @@
 // Gameplay smoke test: title, walk, mute, pause and settings, drive and stop, buy a pistol, fire, get a wanted star,
 // see police respond, take mission one from the phone (fail it, retry, pass it, get paid), save at the safe house,
-// reload and find the same cash; fails on any console error.
+// reload to a Continue card, continue with the same cash, then reload and start a new story; fails on any console
+// error.
 // PLAY_SHOTS=1 also saves the pause menu at 768x480 to tmp/play-pause.jpg.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { launchChrome, startServer, sleep } from './cdp.mjs';
@@ -292,10 +293,30 @@ try {
   await tap(page, 'Enter');
   await tap(page, 'Escape');
   const saved = await state(page);
+  const doneJobs = await page.evaluate('window.__meridian.game.missions.progress.done.join()');
+  const hasPistol = 'Boolean(window.__meridian.game.player.state.arsenal.owned.pistol)';
+  const cardText = 'document.querySelector("#title .save-card.active")?.textContent ?? ""';
   await boot(page, `${server.url}index.html?seed=1`);
+  const menu = await page.evaluate(
+    '[...document.querySelectorAll("#title .title-list li")].map((li) => li.textContent)');
+  const card = await page.evaluate(cardText);
+  check('a save puts Continue first with its card', menu[0] === 'Continue' && menu[1] === 'Start Story'
+    && card.includes('Mission') && card.includes(`$${saved.cash.toLocaleString('en-US')}`));
+  await tap(page, 'Enter');
+  await sleep(400);
   const reloaded = await state(page);
-  const pistol = await page.evaluate('Boolean(window.__meridian.game.player.state.arsenal.owned.pistol)');
-  check('reload restores the saved cash and pistol', reloaded.cash === saved.cash && pistol);
+  const pistol = await page.evaluate(hasPistol);
+  const doneAgain = await page.evaluate('window.__meridian.game.missions.progress.done.join()');
+  check('Continue restores the saved cash, pistol and jobs', !reloaded.title && reloaded.cash === saved.cash && pistol
+    && doneAgain === doneJobs);
+  await boot(page, `${server.url}index.html?seed=1`);
+  await tap(page, 'ArrowDown');
+  await tap(page, 'Enter');
+  await sleep(400);
+  const fresh = await state(page);
+  const freshJobs = await page.evaluate('window.__meridian.game.missions.progress.done.length');
+  check('Start Story under a save begins a new game', !fresh.title && fresh.cash === 2480
+    && !(await page.evaluate(hasPistol)) && freshJobs === 0);
 
   for (const [name, ok] of checks) console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}`);
   console.log(JSON.stringify({ driving: driving.speedKmh, stopped: stopped.speedKmh, cash: saved.cash,

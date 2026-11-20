@@ -3,6 +3,13 @@ import { ACTION_SHOTS } from './shotsaction.js';
 import { SHOP_SHOTS } from './shotsshop.js';
 import { HEIST_SHOTS } from './shotsheist.js';
 import { STORY_MISSIONS } from './missions/story/index.js';
+import { parseSave } from './save/savegame.js';
+
+/** The title scene's save, as stored text: six jobs done, Tide Tables next, saved on a fixed evening. */
+const TITLE_SAVE_TEXT = JSON.stringify({
+  version: 2, cash: 41230, health: 100, clock: 22340, savedAt: new Date(2026, 10, 20, 21, 14).getTime(),
+  missions: { done: STORY_MISSIONS.slice(0, 6).map((def) => def.id), respect: 128, fails: 3 },
+});
 
 const CLUTTER = ['bin', 'news', 'hydrant', 'bench', 'meter', 'bollard', 'shelter', 'planter', 'palm', 'palmTall',
   'tree', 'lamp', 'sign', 'signal'];
@@ -116,7 +123,7 @@ export const SHOTS = {
       game.cameraMode = 'manual';
       game.camera.position.set(452, 4.5, 30);
       game.camera.lookAt(300, 34, -110);
-      return {};
+      return { titleSave: parseSave(TITLE_SAVE_TEXT).save };
     },
   },
   aerial: {

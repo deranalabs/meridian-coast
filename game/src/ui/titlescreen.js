@@ -1,6 +1,8 @@
-// Title screen: the Meridian Coast logo, tagline and menu (story, free roam, settings, controls) over the live city.
+// Title screen: the Meridian Coast logo, tagline and menu (continue with its save card, story, free roam, settings,
+// controls) over the live city.
 import { GAME_TITLE, CITY_NAME } from '../palette.js';
 import { createMenuList } from './menulist.js';
+import { saveCardText } from './savecard.js';
 import { createSettingsPage } from './settingspage.js';
 import { controlsHtml, controlsLine } from './controlslist.js';
 
@@ -24,18 +26,50 @@ const STYLE = `
 #title .controls { position: absolute; bottom: 34px; left: 7vw; font-size: 15px; color: #e8dcf4; }
 #title kbd { display: inline-block; padding: 1px 8px; margin: 0 3px; border-radius: 5px; background: #fff;
   color: #2a1640; font-family: inherit; font-weight: 800; }
-#title.sub .tagline, #title.sub .title-list { display: none; }
+#title .title-menu { display: flex; align-items: flex-start; gap: 40px; }
+#title .save-card { margin-top: 2px; padding: 12px 22px 14px 20px; min-width: 330px; border-radius: 10px;
+  background: var(--mc-ui-deep, rgba(14, 8, 30, 0.8)); border-left: 6px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); }
+#title .save-card.active { border-left-color: var(--mc-gold, #ffc94a);
+  box-shadow: 0 0 0 1px rgba(255, 201, 74, 0.4), 0 0 26px rgba(255, 79, 160, 0.35); }
+#title .save-card .slot { font-size: 21px; letter-spacing: 3px; font-weight: 800; color: #ffd1e6;
+  text-transform: uppercase; }
+#title .save-card .chapter { font-size: 38px; font-weight: 900; line-height: 1.05; margin-top: 6px; }
+#title .save-card .mission { font-size: 31px; font-weight: 800; font-style: italic; color: #ffb48a; }
+#title .save-card .money { display: flex; align-items: baseline; gap: 18px; margin-top: 4px; }
+#title .save-card .cash { font-size: 36px; font-weight: 900; color: var(--mc-cash, #9dffb5); }
+#title .save-card .saved { font-size: 24px; font-weight: 700; color: #fff6e8; }
+#title.sub .tagline, #title.sub .title-menu { display: none; }
 #title .menu-page { max-width: 560px; }
 #title.hidden { display: none; }
 @media (max-height: 560px) { #title .logo { font-size: 64px; } #title .tagline { font-size: 15px;
-  margin-bottom: 14px; } #title .title-list li { font-size: 18px; margin: 4px 0; } }
+  margin-bottom: 14px; } #title .title-list li { font-size: 18px; margin: 4px 0; }
+  #title .save-card { padding: 8px 14px 9px 12px; min-width: 240px; } #title .save-card .slot { font-size: 13px; }
+  #title .save-card .chapter { font-size: 24px; } #title .save-card .mission { font-size: 19px; }
+  #title .save-card .cash { font-size: 22px; } #title .save-card .saved { font-size: 14px; } }
 `;
+
+/** The card beside Continue: slot and rank, the mission the story stands at, cash and when it was saved. */
+function createSaveCard(parent, save) {
+  const card = document.createElement('div');
+  card.className = 'save-card';
+  const text = saveCardText(save);
+  card.innerHTML = '<div class="slot"></div><div class="chapter"></div><div class="mission"></div>'
+    + '<div class="money"><span class="cash"></span><span class="saved"></span></div>';
+  for (const key of ['slot', 'chapter', 'mission', 'cash', 'saved']) {
+    card.querySelector(`.${key}`).textContent = text[key];
+  }
+  parent.appendChild(card);
+  return card;
+}
 
 /**
  * Show the title; update(input) runs its menu and returns true once a game mode is chosen.
  * `still` (shot scenes) hides the controls line; settings is the live settings store, onEvent plays menu sounds.
+ * `save` (a parsed save, or null) adds Continue first with its card; onStart(mode) runs when the title closes.
  */
-export function createTitleScreen(still, { settings = null, onEvent = () => {} } = {}) {
+export function createTitleScreen(still, { settings = null, onEvent = () => {}, save = null,
+  onStart = () => {} } = {}) {
   const style = document.createElement('style');
   style.textContent = STYLE;
   document.head.appendChild(style);
@@ -49,7 +83,14 @@ export function createTitleScreen(still, { settings = null, onEvent = () => {} }
   document.body.appendChild(root);
   const items = [{ id: 'story', label: 'Start Story' }, { id: 'free', label: 'Free Roam' },
     { id: 'settings', label: 'Settings' }, { id: 'controls', label: 'Controls' }];
-  const list = createMenuList(root, settings ? items : items.slice(0, 2), 'title-list');
+  const shown = settings ? items : items.slice(0, 2);
+  const menu = document.createElement('div');
+  menu.className = 'title-menu';
+  root.appendChild(menu);
+  const list = createMenuList(menu, save ? [{ id: 'continue', label: 'Continue' }, ...shown] : shown, 'title-list');
+  const card = save ? createSaveCard(menu, save) : null;
+  const markCard = () => card?.classList.toggle('active', list.items[list.index].id === 'continue');
+  markCard();
   const settingsPage = settings ? createSettingsPage(root, settings, onEvent) : null;
   const keys = document.createElement('div');
   keys.className = 'menu-page controls-page';
@@ -73,13 +114,14 @@ export function createTitleScreen(still, { settings = null, onEvent = () => {} }
 
   const screen = {
     isOpen: () => state.open,
-    /** 'story' or 'free' once chosen, else null. */
+    /** 'continue', 'story' or 'free' once chosen, else null. */
     mode: () => state.mode,
     close(mode = 'story') {
       state.open = false;
       state.mode = mode;
       root.classList.add('hidden');
       if (hud) hud.style.visibility = 'visible';
+      onStart(mode);
     },
     update(input) {
       if (!state.open) return false;
@@ -93,7 +135,10 @@ export function createTitleScreen(still, { settings = null, onEvent = () => {} }
       }
       const ask = list.handle(input);
       if (!ask || ask.action === 'back') return false;
-      if (ask.action === 'move') onEvent('move');
+      if (ask.action === 'move') {
+        onEvent('move');
+        markCard();
+      }
       if (ask.action !== 'choose') return false;
       if (ask.id === 'settings' || ask.id === 'controls') {
         onEvent('open');

@@ -34,7 +34,10 @@ const canvas = document.getElementById('game');
 const { renderer, stats, resize } = createRenderer(canvas);
 const focus = shot?.focus ? new THREE.Vector3(...shot.focus) : new THREE.Vector3(36, 0, -68);
 const game = createGame({ renderer, seed, timeOfDay, focus, showHud });
-if (resume) applySave(game, resume);
+// A stored save waits for Continue on the title; Start Story and Free Roam begin a new game.
+const startFrom = (mode) => {
+  if (mode === 'continue' && resume) applySave(game, resume);
+};
 const input = createInput(canvas);
 const dynamicResolution = createDynamicResolution(game.post);
 const fixedScale = params.has('scale');
@@ -226,7 +229,7 @@ if (shot) {
     game.step(STEP, scripted.input?.(index) ?? idleInput);
     scripted.afterStep?.(index);
   }
-  if (shot.title) createTitleScreen(true, { settings });
+  if (shot.title) createTitleScreen(true, { settings, save: scripted.titleSave ?? null });
   let frames = 0;
   const paint = () => {
     frame(STEP);
@@ -239,6 +242,6 @@ if (shot) {
   };
   requestAnimationFrame(paint);
 } else {
-  const title = createTitleScreen(false, { settings, onEvent: menuSound });
+  const title = createTitleScreen(false, { settings, onEvent: menuSound, save: resume, onStart: startFrom });
   runLoop(title);
 }
