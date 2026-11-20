@@ -245,13 +245,14 @@ names lift dark faction colours so police navy reads. Lit wanted stars are gold.
 
 **Shots** (`tests/shot-list.mjs`, 1280x800, all under 256 KiB): `1-mission.jpg` the cover, Gilded Tide stage 4 of 5
 at dusk: mission panel, PMPD dispatch rows, wanted stars, stowed weapon bar, Solis on the dialogue card, minimap,
-Air-1 with its searchlight, cruisers, traffic and a NEWS radio line; `2-map.jpg` the full map; `3-shop.jpg`;
+Air-1 with its searchlight, cruisers, traffic and a NEWS radio line; `2-map.jpg` the full map; `3-heist.jpg`
+(the shop menu until recording 6d);
 `4-combat.jpg`. `browser.mjs --shots` fails unless every cover panel is present, on screen, apart from the others
 and its smallest text at least 6 px at contact-sheet size (`hudLayout` in `look-metrics.mjs`, `panelBoxes` in
 `cdp.mjs`).
 
 **Look numbers (768x480, with HUD)**: 1-mission gradEnergy 7.95, flatBlocks 0.252, colors 192, brightShare 3.71 %,
-meanSat 0.421: every cover target met. 2-map 5.47 / 0.577 / 81 / 0.45 % / 0.518; 3-shop 4.76 / 0.524 / 82 / 2.61 % /
+meanSat 0.421: every cover target met. 2-map 5.47 / 0.577 / 81 / 0.45 % / 0.518; the old shop shot 4.76 / 0.524 / 82 / 2.61 % /
 0.519; 4-combat 6.87 / 0.365 / 110 / 0.84 % / 0.497.
 
 **Draw calls and FPS** (M1, 1440x900 at DPR 1.5, dynamic resolution): drive scene 70 draw calls, 58.9 FPS; live
@@ -320,3 +321,27 @@ above 230, and a sunny frame should still have them. The cover is 245 KiB at 128
 
 **Final numbers**: 140 unit tests pass; lint is clean (225 files); `tests/play.mjs` passes; `browser.mjs --perf`
 gives **70 draw calls, 58.7 FPS** (M1, 1440x900 at DPR 1.5); the hand-in output is identical twice (222 files).
+
+## Recording 6d: gameplay-first load order, the heist shot, a fuller cover, a daylight map
+
+**Load order** (import order only, no behaviour change): `main.js` imports `game.js` first, and `game.js` imports
+missions, systems, police, shops, combat, actors and vehicles before ui, render and world. Depth-first from
+`main.js`, 22 of the first 30 modules are gameplay; the first 20 are `main.js`, `game.js`, `missions/setup.js`,
+`data/places.js`, `world/placefinder.js`, `world/geometry2d.js`, `world/districts.js`, `palette.js`,
+`missions/director.js`, `machine.js`, `objectives.js`, `failures.js`, `progress.js`, `resolve.js`,
+`worldview.js`, `pillar.js`, `guide.js`, `police/navigate.js`, `world/roadgraph.js`, `missions/story/index.js`.
+
+**Third screenshot**: `3-heist.jpg` (`shotsheist.js`) replaces the shop menu. Gilded Tide stage 4 at the Aurelio
+vault door in golden light: Ilo on foot firing the SMG, the cut door, the orange van at the kerb, two cruisers
+slewed across the road with officers out, bystanders fleeing, cowering and filming, with the mission panel,
+PMPD dispatch, five stars, weapon bar and minimap. `?shot=shop` stays as a debug scene.
+
+**Cover**: `shotslife.js` adds eight oncoming and fleeing cars on Shoreline Parade and 22 people on the boardwalk,
+the sand and the hotel kerb. The camera and the van are where they were. **Full map**: `ui/mapsunny.js` draws a
+recoloured half-size copy of the city canvas (turquoise sea, lifted warm land) on a coral-to-plum backdrop, and
+the minimap keeps its own colours.
+
+**Numbers**: 140 unit tests, `play.mjs` and `playstory.mjs` pass; lint clean (228 files); 70 draw calls,
+**58.5 FPS** (49–54 FPS when the laptop is warm after back-to-back browser runs; the pre-6d commit measured
+56.4 FPS straight after it, in the same state); the hand-in is identical twice (225 files). Shots: 224, 124,
+230 and 223 KiB.
