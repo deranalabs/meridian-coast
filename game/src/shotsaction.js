@@ -1,6 +1,7 @@
-// Action screenshot scenes: the heist's dusk police chase with the helicopter (the cover) and a street firefight.
+// Action screenshot scenes: the heist's beach-road police chase with the helicopter (the cover) and a firefight.
 
 import { PART } from './palette.js';
+import { BEACH_ROAD_X } from './world/heightfield.js';
 import { STORY_MISSIONS } from './missions/story/index.js';
 
 const HEIST = 'gilded-tide';
@@ -19,6 +20,7 @@ function laneKeeper(game, laneX, heading, throttle) {
 
 function hideParkedNear(game, x, z0, z1, halfWidth) {
   for (const car of game.fleet.cars) {
+    if (car === game.player.state.car) continue;
     if (car.parked && Math.abs(car.position.x - x) < halfWidth && car.position.z > z0 && car.position.z < z1) {
       car.visible = false;
     }
@@ -26,6 +28,8 @@ function hideParkedNear(game, x, z0, z1, halfWidth) {
 }
 
 const CHASE = { laneX: 102, startZ: 30, speed: 21, steps: 110 };
+// The cover runs the northbound lane of Shoreline Parade, beside the boardwalk, clear of the causeway junction.
+const COVER = { laneX: BEACH_ROAD_X + 3, startZ: 30, speed: 21, steps: 110, paint: '#ff6f3c' };
 
 /** Scripted input: holds the given keys from step `from` onwards. */
 function holding(codes, from) {
@@ -92,34 +96,36 @@ export const ACTION_SHOTS = {
     },
   },
 
-  // The cover: Gilded Tide, stage 4 of 5. Ilo runs the dragnet up Neon Mile in the linen van at dusk, three
-  // cruisers and Air-1 behind, while Solis calls every unit on the radio.
+  // The cover: Gilded Tide, stage 4 of 5. Late afternoon on Shoreline Parade: Ilo runs the dragnet north in the
+  // linen van (sprayed sunset orange for the job) between the hotels and the beach, three cruisers on its tail
+  // and Air-1 low overhead with its lamp on the road, while Solis calls every unit on the radio.
   mission: {
-    time: 'dusk',
-    steps: CHASE.steps,
-    focus: [100, 0, -40],
+    time: 'golden',
+    steps: COVER.steps,
+    focus: [COVER.laneX, 0, COVER.startZ - 30],
     stage(game) {
       const { police } = game.action;
       game.missions.progress.done.push(...STORY_MISSIONS.map((def) => def.id).filter((id) => id !== HEIST));
       game.missions.jump(HEIST, ESCAPE_STAGE);
       const car = game.missions.state.props.cars['linen-van'].car;
-      car.position.set(CHASE.laneX, 0, CHASE.startZ);
+      car.position.set(COVER.laneX, 0, COVER.startZ);
       car.heading = Math.PI;
+      game.fleet.setColour(car, COVER.paint);
       game.player.enterNow(car);
       const arsenal = game.player.state.arsenal;
       arsenal.owned.pistol = { clip: 12, reserve: 36 };
       arsenal.owned.smg = { clip: 24, reserve: 96 };
       arsenal.current = 'smg';
-      game.player.state.vehicle.vz = -CHASE.speed;
-      game.player.state.autopilot = laneKeeper(game, CHASE.laneX, Math.PI, 0.62);
+      game.player.state.vehicle.vz = -COVER.speed;
+      game.player.state.autopilot = laneKeeper(game, COVER.laneX, Math.PI, 0.62);
       police.setStars(4);
-      const chasers = [[98.5, 13], [103, 24], [99, 37]];
+      const chasers = [[COVER.laneX - 0.5, 10], [COVER.laneX - 4.5, 17], [COVER.laneX + 0.5, 26]];
       for (const [x, dz] of chasers) {
         const cruiser = game.fleet.reuse('cruiser', '#16203a');
-        const unit = police.units.adopt(cruiser, x, CHASE.startZ + dz, Math.PI);
-        unit.vehicle.vz = -CHASE.speed * 1.05;
+        const unit = police.units.adopt(cruiser, x, COVER.startZ + dz, Math.PI);
+        unit.vehicle.vz = -COVER.speed * 1.05;
       }
-      hideParkedNear(game, 100, -80, 80, 14);
+      hideParkedNear(game, BEACH_ROAD_X, COVER.startZ - 90, COVER.startZ + 60, 9);
       game.cameraMode = 'manual';
       return {
         afterStep(index) {
@@ -129,15 +135,17 @@ export const ACTION_SHOTS = {
             Object.assign(police.helicopter.state, { x: p.x + 8, z: p.z + 30, y: 27 });
           }
           // Finish Solis's line a step early so the card shows it whole on the captured frame.
-          if (index === CHASE.steps - 2 && !game.dialogue.conversation.complete) game.dialogue.conversation.skip();
-          if (index !== CHASE.steps - 1) return;
+          if (index === COVER.steps - 2 && !game.dialogue.conversation.complete) game.dialogue.conversation.skip();
+          if (index !== COVER.steps - 1) return;
           const p = game.player.state.car.position;
-          // Air-1 hangs back and higher, so its lamp's glare stays a small spot above the street, not a bloom.
-          Object.assign(police.helicopter.state, { x: p.x + 4, z: p.z + 40, y: p.y + 18, heading: 2.9 });
-          police.helicopter.update(1 / 60, { x: p.x, y: p.y, z: p.z }, game.time);
-          game.camera.position.set(p.x + 1.6, p.y + 1.35, p.z - 7.5);
-          game.camera.lookAt(p.x - 0.4, p.y + 2.9, p.z + 14);
-          game.camera.fov = 60;
+          // Air-1 hangs low over the second cruiser, big against the blue, its lamp pooled on the road behind Ilo.
+          Object.assign(police.helicopter.state, { x: p.x - 3, z: p.z + 16, y: p.y + 9.5, heading: 2.6,
+            aim: { x: p.x - 0.5, z: p.z + 5 } });
+          police.helicopter.update(1 / 60, { x: p.x - 0.5, y: p.y, z: p.z + 5 }, game.time);
+          // Low and close at the van's front corner on the beach side: sea and palms left, hotels right.
+          game.camera.position.set(p.x + 2.4, p.y + 1.45, p.z - 6.6);
+          game.camera.lookAt(p.x - 0.2, p.y + 2.9, p.z + 14);
+          game.camera.fov = 64;
           game.camera.updateProjectionMatrix();
         },
       };

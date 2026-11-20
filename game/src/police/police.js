@@ -30,7 +30,7 @@ export function createPolice({ fleet, layout, ground, colliders, characters, eff
   const officers = createOfficers(characters, 10, seed);
   const roadblocks = createRoadblocks(fleet, officers, ground);
   const helicopter = createHelicopter(timeOfDay, noise);
-  const beacons = createBeacons();
+  const beacons = createBeacons(96, 16, timeOfDay.washLevel ?? 1);
   const gunfire = createPoliceGunfire({ effects, events, colliders, random });
   const group = new THREE.Group();
   group.name = 'police';

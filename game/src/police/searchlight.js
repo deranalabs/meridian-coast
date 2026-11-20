@@ -21,7 +21,8 @@ varying vec3 vView;
 void main() {
   float facing = abs(dot(normalize(vNormal), normalize(vView)));
   float soft = pow(facing, 1.6);
-  float along = mix(1.0, 0.35, vAlong) * smoothstep(0.0, 0.06, vAlong);
+  // Fade in over the first sixth below the lamp so the narrow apex does not stack into a white blob on the body.
+  float along = mix(1.0, 0.35, vAlong) * smoothstep(0.02, 0.17, vAlong);
   gl_FragColor = vec4(uColour * soft * along, 1.0);
 }`;
 

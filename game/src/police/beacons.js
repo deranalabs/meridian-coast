@@ -45,7 +45,7 @@ const BLUE = new THREE.Color('#2a5cff');
 const additive = { transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false };
 
 /** Up to `capacity` flares; begin() each frame, add flares and washes, then end(). */
-export function createBeacons(capacity = 96, washes = 16) {
+export function createBeacons(capacity = 96, washes = 16, washScale = 1) {
   const positions = new Float32Array(capacity * 3);
   const colours = new Float32Array(capacity * 3);
   const sizes = new Float32Array(capacity);
@@ -92,7 +92,7 @@ export function createBeacons(capacity = 96, washes = 16) {
       if (washCount >= washes) return;
       matrix.makeScale(radius * 2, 1, radius * 2).setPosition(x, y + 0.06, z);
       washMesh.setMatrixAt(washCount, matrix);
-      washMesh.setColorAt(washCount, tint.copy(colour).multiplyScalar(strength));
+      washMesh.setColorAt(washCount, tint.copy(colour).multiplyScalar(strength * washScale));
       washCount += 1;
     },
     end() {

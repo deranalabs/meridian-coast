@@ -78,6 +78,7 @@ const PRESETS = {
     // Only golden sets these; the other presets keep the values their modules chose by name.
     waterColor: '#0f7f96',
     wetness: 0.25,
+    washLevel: 0.3,
     bloomStrength: 0.45,
     saturation: 1.08,
     vignette: 0.18,
