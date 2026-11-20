@@ -252,8 +252,8 @@ and its smallest text at least 6 px at contact-sheet size (`hudLayout` in `look-
 `cdp.mjs`).
 
 **Look numbers (768x480, with HUD)**: 1-mission gradEnergy 7.95, flatBlocks 0.252, colors 192, brightShare 3.71 %,
-meanSat 0.421: every cover target met. 2-map 5.47 / 0.577 / 81 / 0.45 % / 0.518; the old shop shot 4.76 / 0.524 / 82 / 2.61 % /
-0.519; 4-combat 6.87 / 0.365 / 110 / 0.84 % / 0.497.
+meanSat 0.421: every cover target met. 2-map 5.47 / 0.577 / 81 / 0.45 % / 0.518; the old shop shot 4.76 /
+0.524 / 82 / 2.61 % / 0.519; 4-combat 6.87 / 0.365 / 110 / 0.84 % / 0.497.
 
 **Draw calls and FPS** (M1, 1440x900 at DPR 1.5, dynamic resolution): drive scene 70 draw calls, 58.9 FPS; live
 heist chase (`--perf --scene=mission`: four stars, three cruisers, helicopter) 75 draw calls, 59.7 FPS. A stale
