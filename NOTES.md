@@ -345,3 +345,44 @@ the minimap keeps its own colours.
 **58.5 FPS** (49–54 FPS when the laptop is warm after back-to-back browser runs; the pre-6d commit measured
 56.4 FPS straight after it, in the same state); the hand-in is identical twice (225 files). Shots: 224, 124,
 230 and 223 KiB.
+
+## Recording 6e: a Continue card on the title, and the title in the contact sheet
+
+**Continue** (`ui/titlescreen.js`, new `ui/savecard.js`): when a save is stored, the title's first item is
+**Continue**, with a card beside it: `SLOT 1 · <rank>`, `Mission n of 8` (the first story job not done, or
+"All 8 missions done"), the job's title, the cash in the HUD's cash green and `Saved Fri 20 Nov, 21:14` from the
+save's `savedAt`. The card uses the title's fonts and existing colours (`--mc-ui-deep` backing, `--mc-gold` edge
+while Continue is highlighted). With no save the menu is exactly as before. `savecard.js` reads the save as
+`save/savegame.js` `parseSave` leaves it; `savecard.test.js` checks the card's lines for a sample save text, a
+finished story and a save with no stamp.
+
+**Behaviour change** (`main.js`): the stored save no longer loads at boot. It waits for Continue, which applies
+it through `applySave`. Start Story and Free Roam begin a new game ($2,480, fists, no jobs done) and leave the save
+in storage until the player saves over it. The world is still built in the save's time of day (dusk or night)
+before the menu, so a new story under a night save starts at night.
+
+**Shots** (`tests/shot-list.mjs`): `1-mission.jpg` (cover, unchanged and re-rendered byte-identical),
+`2-map.jpg` (unchanged), **`3-title.jpg`** (the title scene with a seeded save from `shots.js`: Tide Tables next,
+$41,230, Harbour Name, Continue highlighted), **`4-heist.jpg`** (the former `3-heist.jpg`, same scene).
+`4-combat.jpg` left the list and was deleted; `?shot=combat` stays as a scene. All four were read at 1024x640 and
+on a mock contact sheet: in the 256 px cell, "Mission 7 of 8", "Tide Tables" and "$41,230" read, and nothing
+overlaps. Sizes 224, 124, 233 and 230 KiB.
+
+**Look numbers** (768x480, with HUD; before → after): 1-mission 9.38 / 0.231 / 178 / 10.21 % / 0.271 (unchanged);
+2-map 3.99 / 0.588 / 77 / 3.01 % / 0.404 (unchanged); the third slot was 3-heist 9.35 / 0.163 / 204 / 1.11 % /
+0.379 and is now 3-title **5.38 / 0.476 / 133 / 1.03 % / 0.386** (gradEnergy / flatBlocks / colors /
+brightShare / meanSat); the heist keeps its numbers as 4-heist; 4-combat (8.50 / 0.116 / 178 / 3.24 % / 0.432)
+left the set. The title is calmer by the numbers than the combat frame it replaced. It is there to show the
+start screen and the save, which the sheet did not show before.
+
+**Tests**: unit tests 140 → **143**, all pass; lint clean (230 files); `tests/play.mjs` 38 → **40 checks**, all pass
+with no console errors (after saving at the safe house it reloads to Continue with the card, continues with the
+same cash, pistol and jobs, then reloads and picks Start Story for a new game). The hand-in is identical twice
+(227 files); `game/` is 222 files, 1.9 MB.
+
+**Pre-existing failure, not fixed**: `tests/playstory.mjs` fails at Gilded Tide stage 4 (evade does not clear: the
+stars reach 0 with two units still out, Ilo on foot at 30 health). It fails the same way on 997ebbe, the commit
+before this recording, so it is not caused by these changes. The notes for 6d record it passing, so something
+between recordings 4 and 6d (or this machine's timing) changed it. It is left alone because this pass may not
+touch missions or police. Also seen and left: on the full map a police-car square sits over part of the
+"Rask Cabs" label.
