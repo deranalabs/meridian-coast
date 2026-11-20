@@ -65,7 +65,8 @@ const PRESETS = {
     sunGlow: '#ffe2b0',
     hemiSky: '#9cc8ff',
     hemiGround: '#8a7458',
-    hemiIntensity: 1.25,
+    // A strong sky fill: with the sun this low most streets lie in building shade.
+    hemiIntensity: 1.55,
     haze: '#f2d2b4',
     hazeDensity: 0.0006,
     hazeFalloff: 0.035,

@@ -1,4 +1,4 @@
-// Shop screenshot scene: Ilo outside Saltwater Threads at dusk with $2,480 and the clothes menu open.
+// Shop screenshot scene: Ilo outside Saltwater Threads in late golden light with $2,480 and the clothes menu open.
 import { PLACES } from './data/places.js';
 
 const CLOTHES = PLACES.find((place) => place.id === 'clothes');
@@ -24,7 +24,7 @@ function frameShopper(game) {
 
 export const SHOP_SHOTS = {
   shop: {
-    time: 'dusk',
+    time: 'golden',
     steps: STEPS,
     focus: [CLOTHES.near[0], 0, CLOTHES.near[1]],
     stage(game) {

@@ -46,35 +46,47 @@ const FIGHT = { x: 97, z: -34, steps: 64 };
 
 export const ACTION_SHOTS = {
   combat: {
-    time: 'dusk',
+    // Golden light from the north-east behind the camera: Ilo, the cruiser, both officers and the people running
+    // along the pavements all face the sun, so they read in colour at thumbnail size.
+    time: 'golden',
     steps: FIGHT.steps,
-    focus: [100, 0, -50],
+    focus: [100, 0, -20],
     stage(game) {
       const { police } = game.action;
       const arsenal = game.player.state.arsenal;
       arsenal.owned.smg = { clip: 30, reserve: 90 };
       arsenal.current = 'smg';
-      game.player.placeOnFoot(FIGHT.x, FIGHT.z, Math.PI);
+      game.player.placeOnFoot(FIGHT.x, FIGHT.z, 0);
       police.setStars(2);
       const cruiser = game.fleet.reuse('cruiser', '#16203a');
-      const unit = police.units.adopt(cruiser, 102.5, FIGHT.z - 16, 2.3);
+      const unit = police.units.adopt(cruiser, 102.5, FIGHT.z + 16, Math.PI - 2.3);
       unit.vehicle.vx = 0;
       unit.vehicle.vz = 0;
       unit.officersOut = true;
-      for (const [x, dz, weapon] of [[95.5, -10.5, 'pistol'], [104.5, -11.5, 'shotgun']]) {
-        const officer = police.officers.deploy(x, FIGHT.z + dz, 0, weapon);
+      for (const [x, dz, weapon] of [[96, 10.5, 'pistol'], [104, 11.5, 'shotgun']]) {
+        const officer = police.officers.deploy(x, FIGHT.z + dz, Math.PI, weapon);
         officer.cooldown = 0.2;
       }
-      hideParkedNear(game, 100, FIGHT.z - 30, FIGHT.z + 6, 14);
+      // Parked cars and passing traffic both leave the block, so nothing stands between the camera and the fight.
+      const clearStreet = () => {
+        for (const car of game.fleet.cars) {
+          const { x, z } = car.position;
+          if (!car.police && Math.abs(x - 100) < 14 && z > FIGHT.z - 8 && z < FIGHT.z + 30) car.visible = false;
+        }
+      };
+      clearStreet();
+      // Bystanders: three running down the west pavement toward the camera, one on the east pavement, one
+      // cowering by the shops, two filming beyond the officers.
       const extras = [
-        [90.5, -4, 'flee', -0.9], [91.5, -7, 'flee', -1.3], [92.5, -2.5, 'flee', -1.0], [107.5, -6, 'cower', 0],
-        [109, -16, 'film', 0], [89.5, -18, 'film', 0], [93, 2, 'flee', -2.6],
+        [92, 17, 'flee', Math.PI + 0.3], [91, 19.5, 'flee', Math.PI + 0.5], [92.5, 15, 'flee', Math.PI + 0.2],
+        [108, 16, 'flee', Math.PI - 0.3], [107.5, 6, 'cower', 0], [108.5, 19, 'film', Math.PI],
+        [90.5, 20, 'film', Math.PI],
       ];
       extras.forEach(([x, dz, kind, angle], index) => {
         const ped = game.pedestrians.peds[index];
         ped.character.position.set(x, game.ground.surfaceAt(x, FIGHT.z + dz).height, FIGHT.z + dz);
         ped.react = { state: kind, timer: 9, dirX: Math.sin(angle), dirZ: Math.cos(angle), fromX: FIGHT.x,
-          fromZ: FIGHT.z - 8 };
+          fromZ: FIGHT.z + 16 };
         ped.character.held = kind === 'film' ? 'phone' : null;
       });
       game.cameraMode = 'manual';
@@ -82,15 +94,16 @@ export const ACTION_SHOTS = {
       return {
         input,
         afterStep(index) {
+          if (index === FIGHT.steps - 2) clearStreet();
           if (index !== FIGHT.steps - 1) return;
           const p = game.ilo.position;
           const hand = game.ilo.joints[PART.handR].elements;
           const aim = { x: Math.sin(game.ilo.heading), y: 0.02, z: Math.cos(game.ilo.heading) };
           const tip = { x: hand[12] + aim.x * 0.45, y: hand[13] + 0.05, z: hand[14] + aim.z * 0.45 };
           game.action.effects.muzzle(tip, aim);
-          game.camera.position.set(p.x + 1.5, p.y + 1.8, p.z + 3.4);
-          game.camera.lookAt(p.x - 0.6, p.y + 1.15, p.z - 12);
-          game.camera.fov = 56;
+          game.camera.position.set(p.x - 1.4, p.y + 1.75, p.z - 3.1);
+          game.camera.lookAt(p.x + 0.7, p.y + 1.1, p.z + 12);
+          game.camera.fov = 54;
           game.camera.updateProjectionMatrix();
         },
       };
