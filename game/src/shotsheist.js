@@ -51,17 +51,18 @@ export const HEIST_SHOTS = {
       Object.assign(game.player.state.vitals, { health: 84, armour: 46 });
       game.missions.progress.respect = 172;
       const ilo = at(1.5, -1);
-      const threat = at(4.5, -9);
+      const threat = at(6, -6);
       game.player.placeOnFoot(ilo.x, ilo.z, facing(ilo, threat));
       police.setStars(4);
-      for (const [u, t, turn] of [[6, -10, 0.9], [3.5, -13, 0.4]]) {
+      // One cruiser big in the right foreground, the second slewed behind it toward the kerb.
+      for (const [u, t, turn] of [[9.5, -7, 0.9], [5, -11, 0.4]]) {
         const spot = at(u, t);
         const unit = police.units.adopt(game.fleet.reuse('cruiser', '#16203a'), spot.x, spot.z,
           facing(spot, ilo) + turn);
         Object.assign(unit.vehicle, { vx: 0, vz: 0 });
         unit.officersOut = true;
       }
-      for (const [u, t, weapon] of [[4, -6, 'pistol'], [2.5, -8.5, 'shotgun']]) {
+      for (const [u, t, weapon] of [[6.5, -4.5, 'pistol'], [3.5, -7.5, 'shotgun']]) {
         const spot = at(u, t);
         police.officers.deploy(spot.x, spot.z, facing(spot, ilo), weapon).cooldown = 0.2;
       }
@@ -77,14 +78,15 @@ export const HEIST_SHOTS = {
         }
       };
       clearLane();
-      // Bystanders: four running up the pavement away from the cruisers, one cowering by the van, two filming.
-      const extras = [[0.2, -3, 'flee'], [-0.3, 1.5, 'flee'], [0.6, 4, 'flee'], [1.2, 6.5, 'flee'],
-        [3, 5.5, 'cower'], [-0.4, 9, 'film'], [9.5, 3, 'film']];
-      const run = facing(at(0, 0), at(0, 10));
+      // Bystanders on the pavement between Ilo and the cruisers: runners scattering both ways along the shopfronts,
+      // one cowering, three filming from further down.
+      const extras = [[0.3, -4.5, 'flee'], [-0.4, -6, 'cower'], [0.8, -8.5, 'flee'], [-0.3, -11, 'film'],
+        [1, -13, 'film'], [-0.5, 4, 'flee'], [2.5, -15, 'film']];
       extras.forEach(([u, t, kind], index) => {
         const ped = game.pedestrians.peds[index];
         const spot = at(u, t);
         ped.character.position.set(spot.x, game.ground.surfaceAt(spot.x, spot.z).height, spot.z);
+        const run = facing(at(0, 0), at(0, t < -3 ? -10 : 10));
         const angle = kind === 'film' ? facing(spot, ilo) : run;
         ped.react = { state: kind, timer: 9, dirX: Math.sin(angle), dirZ: Math.cos(angle), fromX: threat.x,
           fromZ: threat.z };
@@ -106,10 +108,10 @@ export const HEIST_SHOTS = {
             aim);
           // Across the road, looking back at the wall: door and Ilo left of centre, the cruisers to the right.
           const eye = at(14, -3.5);
-          const look = at(0, -4.5);
-          game.camera.position.set(eye.x, 2.7, eye.z);
-          game.camera.lookAt(look.x, 2.1, look.z);
-          game.camera.fov = 50;
+          const look = at(1, -6);
+          game.camera.position.set(eye.x, 2.4, eye.z);
+          game.camera.lookAt(look.x, 1.7, look.z);
+          game.camera.fov = 58;
           game.camera.updateProjectionMatrix();
         },
       };

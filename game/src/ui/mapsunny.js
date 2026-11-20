@@ -2,7 +2,7 @@
 const SIZE = 1024;
 // Sea pixels are pulled toward this turquoise; everything else is lifted toward white, red most, blue least.
 const SEA = [52, 176, 222];
-const LIFT = [0.44, 0.38, 0.27];
+const LIFT = [0.54, 0.45, 0.3];
 
 /** The city canvas (dark minimap colours) repainted for the full-map screen; the original is left untouched. */
 export function sunnyCanvas(base) {

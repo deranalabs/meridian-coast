@@ -17,6 +17,8 @@ const CROWD = [
   [17, -10, 'film'], [12, -22, 'flee'], [19, -19, 'film'], [14, -28, 'film'], [10, -32, 'flee'],
   [21, -26, 'film'], [16.5, -37, 'flee'], [11, -42, 'film'], [-8, -16, 'film'], [-8.5, -24, 'flee'],
   [-7.5, -31, 'film'], [-9, -40, 'flee'], [-8, -50, 'film'],
+  // Close to the camera on the boardwalk, right of the cruiser at the van's right rear quarter.
+  [10.5, 2, 'film'], [13, 4, 'flee'], [15.5, 0, 'film'], [12.5, -2, 'cower'],
 ];
 
 /** Adds the traffic and the crowd around where the van will be at the capture, (vanX, endZ). */
