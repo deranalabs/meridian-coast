@@ -138,7 +138,8 @@
 #hud .wslot:not(.owned) kbd { color: #8f86a6; }
 #hud .wslot .wname { display: block; font-size: 11px; font-weight: 800; white-space: nowrap; overflow: hidden; }
 #hud .wslot .wammo {
-  display: block; min-height: 13px; font-size: 11px; font-weight: 700; color: #9dffb5; font-variant-numeric: tabular-nums;
+  display: block; min-height: 13px; font-size: 11px; font-weight: 700; color: #9dffb5;
+  font-variant-numeric: tabular-nums;
 }
 #hud .wslot.dry .wammo { color: #ff6b7a; }
 

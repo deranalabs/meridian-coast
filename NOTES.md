@@ -292,3 +292,31 @@ pass with no console errors; `browser.mjs --perf` drive scene **70 draw calls, 5
 **Still untested**: what the audio sounds like on real speakers (headless runs only check that it starts cleanly);
 map drag and wheel, and pointer-lock mouse aiming, by hand only; traffic over long sessions; any GPU other than the
 M1 and any browser other than desktop Chrome.
+
+## Recordings 6 and 6b: a golden cover and a fuller HUD
+
+**Golden preset** (`render/timeofday.js`, cover only; the game still opens at dusk): sun at 24 degrees, blue to
+peach sky, light haze, exposure 1.18, dim windows, lamps and neon. Post bloom, saturation, vignette, shadow tint,
+water colour and street wetness read optional preset fields, so dusk and night are unchanged.
+
+**The cover** (`?shot=mission&seed=1`, `screenshots/1-mission.jpg`): Gilded Tide stage 4 on Shoreline Parade in
+golden light. The linen van, sprayed sunset orange, sits big in the centre from a low close camera, with three
+cruisers on its tail and Air-1 low overhead with its lamp on the road. The boardwalk, palms, beach and sea are on one
+side and pastel hotels with shops on the other. HUD: mission panel, PMPD dispatch, radio line, WANTED banner, cash,
+health, armour, rank bar, stars, weapon tray, Solis's dialogue card with portrait, minimap headed Palmetto Beach,
+speedometer.
+
+**HUD changes**: dispatch rows show short job words (`brief` in `police/report.js`: Flank L, Lamp on, 2 cars,
+seven letters at most, tested). The full words stay in the row's tooltip, and no row is cut with an ellipsis.
+`ui/rankbar.js` adds the rank name in gold, the points to the next rank and a gold bar (`rankProgress` in
+`missions/respect.js`, unit-tested). Health, armour and the rank bar share one 232 px width. The weapon bar sits on
+one dark tray below the stars, with gold slot numbers, white names, green ammo and a side "Stowed" tag in a car.
+The cover sets health 72, armour 58 and 128 respect. `tests/browser.mjs --shots` now also requires the rank and
+armour bars on the cover.
+
+**Look numbers** (cover with HUD, 768x480): gradEnergy 8.46, flatBlocks 0.263, colors 216, meanSat 0.399, all met.
+brightShare is 1.25 % against the 1.5–4 % target, the only miss. The target is unchanged: it counts highlights
+above 230, and a sunny frame should still have them. The cover is 245 KiB at 1280x800, and there are still 4 images.
+
+**Final numbers**: 140 unit tests pass; lint is clean (225 files); `tests/play.mjs` passes; `browser.mjs --perf`
+gives **70 draw calls, 58.7 FPS** (M1, 1440x900 at DPR 1.5); the hand-in output is identical twice (222 files).
