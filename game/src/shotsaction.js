@@ -3,6 +3,7 @@
 import { PART } from './palette.js';
 import { BEACH_ROAD_X } from './world/heightfield.js';
 import { STORY_MISSIONS } from './missions/story/index.js';
+import { fillShoreline } from './shotslife.js';
 
 const HEIST = 'gilded-tide';
 const ESCAPE_STAGE = 3;
@@ -145,6 +146,8 @@ export const ACTION_SHOTS = {
         return unit;
       });
       hideParkedNear(game, BEACH_ROAD_X, COVER.startZ - 90, COVER.startZ + 60, 9);
+      // About 43 m north of the start is where the van is when the frame is taken.
+      fillShoreline(game, COVER.laneX - 0.5, COVER.startZ - 43);
       game.cameraMode = 'manual';
       // One step before the capture the van kicks its tail out (nose toward the sea, still running north) with a
       // cruiser at each rear quarter and the third further back; the autopilot holds the wheel straight.

@@ -2,6 +2,7 @@
 import { createProjection } from './mapprojection.js';
 import { paintMap } from './mapdraw.js';
 import { cityCanvas } from './minimap.js';
+import { sunnyCanvas } from './mapsunny.js';
 import { WORLD_BOUNDS } from '../world/heightfield.js';
 import { DISTRICT_LIST, districtAt } from '../world/districts.js';
 import { CITY_NAME } from '../palette.js';
@@ -43,7 +44,7 @@ export function createMapScreen(game) {
   const where = root.querySelector('.map-where');
   const ctx = canvas.getContext('2d');
   const projection = createProjection(WORLD_BOUNDS, 960, 600);
-  const base = cityCanvas(game.city.layout);
+  const base = sunnyCanvas(cityCanvas(game.city.layout));
   const state = { open: false, drag: null, summary: '' };
   const emit = (kind) => game.action.events.emit('ui', { kind });
 

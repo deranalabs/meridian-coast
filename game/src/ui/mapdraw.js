@@ -152,7 +152,7 @@ function player(ctx, projection, x, z, heading, time) {
 /** Paint the whole map into ctx: view = {x, z, heading, blips, route}; base is the shared city canvas. */
 export function paintMap(ctx, projection, base, view, time) {
   const { width, height } = projection.view;
-  ctx.fillStyle = '#163a50';
+  ctx.fillStyle = '#2fa2d0';
   ctx.fillRect(0, 0, width, height);
   projection.toScreen(WORLD_BOUNDS.x0, WORLD_BOUNDS.z0, a);
   projection.toScreen(WORLD_BOUNDS.x1, WORLD_BOUNDS.z1, b);
