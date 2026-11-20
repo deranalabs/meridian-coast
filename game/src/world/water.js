@@ -33,7 +33,7 @@ export function createWater(timeOfDay) {
   const normalMap = waveNormals(41);
   normalMap.repeat.set(90, 90);
   const material = new THREE.MeshStandardMaterial({
-    color: timeOfDay.name === 'night' ? '#08141c' : '#123848',
+    color: timeOfDay.waterColor ?? (timeOfDay.name === 'night' ? '#08141c' : '#123848'),
     roughness: 0.06,
     metalness: 0.1,
     normalMap,

@@ -52,6 +52,37 @@ const PRESETS = {
     cloudLight: '#4b3c7a',
     envIntensity: 0.65,
   },
+  // Late afternoon for the cover: a warm sun well up, a clear blue sky fading to peach, dry streets, a turquoise
+  // sea, and shop light, lamps and neon turned well down because it is daylight.
+  golden: {
+    sunDir: direction(24, -118),
+    sunColor: '#ffd49a',
+    sunIntensity: 4.4,
+    skyZenith: '#2f7fe0',
+    skyMid: '#6fb4f2',
+    skyHorizon: '#ffcf9e',
+    sunGlow: '#ffe2b0',
+    hemiSky: '#9cc8ff',
+    hemiGround: '#8a7458',
+    hemiIntensity: 1.25,
+    haze: '#f2d2b4',
+    hazeDensity: 0.0006,
+    hazeFalloff: 0.035,
+    exposure: 1.18,
+    windowsLit: 0.1,
+    lampLevel: 0.3,
+    neonLevel: 0.45,
+    stars: 0,
+    cloudLight: '#fff1dc',
+    envIntensity: 1.1,
+    // Only golden sets these; the other presets keep the values their modules chose by name.
+    waterColor: '#0f7f96',
+    wetness: 0.25,
+    bloomStrength: 0.45,
+    saturation: 1.08,
+    vignette: 0.18,
+    shadowTint: '#04070b',
+  },
 };
 
 /** The named preset (dusk when unknown) with colours turned into THREE.Color in linear space. */

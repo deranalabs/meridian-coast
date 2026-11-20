@@ -137,7 +137,7 @@ export function createSidewalks(layout, textures, timeOfDay) {
   const uniforms = {
     uPavers: { value: textures.pavers },
     uGroundData: { value: textures.data },
-    uWetness: { value: timeOfDay.name === 'night' ? 0.8 : 0.6 },
+    uWetness: { value: timeOfDay.wetness ?? (timeOfDay.name === 'night' ? 0.8 : 0.6) },
   };
   material.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniforms);

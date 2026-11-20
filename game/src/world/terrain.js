@@ -111,7 +111,7 @@ export function createTerrain(textures, timeOfDay) {
     uGrass: { value: textures.grass },
     uSand: { value: textures.sand },
     uGroundData: { value: textures.data },
-    uWetness: { value: timeOfDay.name === 'night' ? 1.0 : 0.85 },
+    uWetness: { value: timeOfDay.wetness ?? (timeOfDay.name === 'night' ? 1.0 : 0.85) },
   };
   material.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniforms);

@@ -194,18 +194,21 @@ export function createPost(renderer, timeOfDay) {
     depthWrite: false,
   });
   const night = timeOfDay.name === 'night';
+  const tint = timeOfDay.shadowTint;
+  const shadowTint = tint ? new THREE.Vector3(tint.r, tint.g, tint.b)
+    : night ? new THREE.Vector3(0.02, 0.008, 0.04) : new THREE.Vector3(0.022, 0.006, 0.032);
   const compositeMaterial = new THREE.ShaderMaterial({
     uniforms: {
       tScene: { value: null },
       tBloom: { value: null },
-      uBloomStrength: { value: night ? 0.95 : 0.75 },
+      uBloomStrength: { value: timeOfDay.bloomStrength ?? (night ? 0.95 : 0.75) },
       uExposure: { value: timeOfDay.exposure },
-      uShadowTint: { value: night ? new THREE.Vector3(0.02, 0.008, 0.04) : new THREE.Vector3(0.022, 0.006, 0.032) },
+      uShadowTint: { value: shadowTint },
       uHighlightTint: { value: new THREE.Vector3(1.04, 0.96, 0.94) },
-      uSaturation: { value: 0.9 },
+      uSaturation: { value: timeOfDay.saturation ?? 0.9 },
       uContrast: { value: 0.35 },
       uSharpen: { value: 1.0 },
-      uVignette: { value: 0.3 },
+      uVignette: { value: timeOfDay.vignette ?? 0.3 },
       uGrain: { value: 0.05 },
       uTime: { value: 0 },
       uResolution: { value: new THREE.Vector2(1, 1) },
