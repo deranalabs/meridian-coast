@@ -1,7 +1,7 @@
 // Unit tests for the dispatch report: sorting, call signs, roadblock and helicopter rows, officer count.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { policeReport, callSign } from './report.js';
+import { policeReport, callSign, ROLE_BRIEF } from './report.js';
 
 const unit = (index, x, z, role, mode, officersOut = false) => ({
   car: { index }, vehicle: { x, z, speed: 10 }, driver: { role }, mode, officersOut,
@@ -48,6 +48,13 @@ test('a roadblock row counts its cars and standing officers', () => {
   const block = policeReport(fakePolice(), 0, 0).rows.find((row) => row.kind === 'block');
   assert.equal(block.call, 'Roadblock');
   assert.equal(block.detail, '2 cars, 1 out');
+  assert.equal(block.brief, '2 cars');
+});
+
+test('every brief job word fits a HUD row whole: seven letters at most, never cut with an ellipsis', () => {
+  const rows = [...policeReport(fakePolice(), 0, 0).rows, ...policeReport(fakePolice({ heli: true }), 0, 0).rows];
+  for (const row of rows) assert.ok(row.brief && row.brief.length <= 7 && !row.brief.includes('…'), row.brief);
+  for (const brief of Object.values(ROLE_BRIEF)) assert.ok(brief.length <= 7, brief);
 });
 
 test('the helicopter shows only while active, as Air-1 Gull', () => {

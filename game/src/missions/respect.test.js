@@ -3,7 +3,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { RANKS, rankFor, createProgress, payReward, isAvailable } from './progress.js';
-import { RANK_UNLOCKS, lockReason, nextUnlock, unlockedItems, unlockLabel, rankNeeded } from './respect.js';
+import { RANK_UNLOCKS, lockReason, nextUnlock, unlockedItems, unlockLabel, rankNeeded, rankProgress }
+  from './respect.js';
 import { itemsFor } from '../shops/catalog.js';
 import { ACTIVITIES } from './activities/index.js';
 import { tipFor, FARES } from './activities/taxi.js';
@@ -76,4 +77,20 @@ test('activities resolve, repeat, pay every time and sort after the story', () =
   assert.equal(progress.respect, 12);
   assert.equal(tipFor(30), 120);
   assert.equal(tipFor(-5), 0);
+});
+
+test('rank progress gives the fraction of the way to the next rank and is full at the top', () => {
+  assert.deepEqual(rankProgress(0), { name: 'Nobody', next: 'Runner', fraction: 0, gained: 0, span: 10 });
+  assert.deepEqual(rankProgress(45), { name: 'Known Face', next: 'Earner', fraction: 0.5, gained: 15, span: 30 });
+  assert.equal(rankProgress(59.9).name, 'Known Face');
+  assert.equal(rankProgress(60).fraction, 0);
+  assert.equal(rankProgress(-8).fraction, 0, 'negative respect clamps to zero');
+  assert.equal(rankProgress(undefined).name, 'Nobody');
+  const top = rankProgress(RANKS.at(-1).respect + 50);
+  assert.equal(top.next, null);
+  assert.equal(top.fraction, 1);
+  for (let points = 0; points < 200; points += 7) {
+    const { fraction } = rankProgress(points);
+    assert.ok(fraction >= 0 && fraction <= 1, `fraction at ${points}`);
+  }
 });

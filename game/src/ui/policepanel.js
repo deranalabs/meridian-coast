@@ -66,7 +66,8 @@ export function createPolicePanel(parent) {
       if (!row) continue;
       slot.li.className = `dispatch-row ${row.kind}`;
       slot.call.textContent = row.call;
-      slot.detail.textContent = row.detail;
+      slot.detail.textContent = row.brief ?? row.detail;
+      slot.detail.title = row.detail;
       slot.metres.textContent = formatMetres(row.metres);
       slot.state.textContent = row.state;
     }

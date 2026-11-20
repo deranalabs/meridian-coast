@@ -5,6 +5,8 @@ export const CALL_NAMES = Object.freeze(['Cobalt', 'Marlin', 'Palmetto', 'Lanter
 
 /** What each pursuit role does, in dispatch words. */
 export const ROLE_DETAIL = Object.freeze({ ram: 'Ram', left: 'Flank left', right: 'Flank right', block: 'Cut off' });
+/** The same jobs in at most seven letters, so a HUD row never has to cut them short. */
+export const ROLE_BRIEF = Object.freeze({ ram: 'Ram', left: 'Flank L', right: 'Flank R', block: 'Cut off' });
 
 /** Unit mode to the state word on the panel. */
 export const MODE_STATE = Object.freeze({ pursue: 'Pursuit', search: 'Search', leave: 'Return' });
@@ -28,6 +30,7 @@ export function policeReport(police, x, z) {
       call: callSign(unit.car?.index ?? rows.length),
       kind: 'car',
       detail: onFoot ? 'Officers out' : ROLE_DETAIL[unit.driver?.role] ?? 'Patrol',
+      brief: onFoot ? 'On foot' : ROLE_BRIEF[unit.driver?.role] ?? 'Patrol',
       metres: metresTo(unit.vehicle.x, unit.vehicle.z),
       state: MODE_STATE[unit.mode] ?? 'Pursuit',
     });
@@ -38,6 +41,7 @@ export function policeReport(police, x, z) {
       call: 'Air-1 Gull',
       kind: 'air',
       detail: air.spot ? 'Searchlight' : 'Overhead',
+      brief: air.spot ? 'Lamp on' : 'Above',
       metres: metresTo(air.x, air.z),
       state: air.spot ? 'Eyes on' : 'Search',
     });
@@ -48,6 +52,7 @@ export function policeReport(police, x, z) {
       call: 'Roadblock',
       kind: 'block',
       detail: `${block.cars.length} cars, ${standing} out`,
+      brief: `${block.cars.length} ${block.cars.length === 1 ? 'car' : 'cars'}`,
       metres: metresTo(block.x, block.z),
       state: 'Holding',
     });

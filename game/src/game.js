@@ -194,6 +194,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
       cash: player.state.wallet.cash,
       health: player.state.vitals.health,
       armour: player.state.vitals.armour,
+      respect: game.missions.progress?.respect ?? 0,
       stars: game.action.police.wanted.stars,
       searching: isSearching(game.action.police.wanted),
       weapon: ammoView(player.state.arsenal),

@@ -52,7 +52,7 @@
 #hud .dispatch-rows { list-style: none; margin: 0; padding: 0; }
 #hud .dispatch-row {
   display: grid;
-  grid-template-columns: 9px 104px 1fr 52px 58px;
+  grid-template-columns: 9px 112px 1fr 44px 60px;
   align-items: center;
   column-gap: 5px;
   padding: 1px 0;
@@ -68,8 +68,9 @@
 }
 #hud .dispatch-row.air::before { background: var(--mc-gold, #ffc94a); border-radius: 1px; }
 #hud .dispatch-row.block::before { background: var(--mc-police-red, #ff2a4a); border-radius: 1px; }
-#hud .dispatch-row .call { font-weight: 800; overflow: hidden; text-overflow: ellipsis; }
-#hud .dispatch-row .detail { opacity: 0.78; overflow: hidden; text-overflow: ellipsis; }
+/* Short call signs and seven-letter jobs fit the columns whole, so nothing is cut off with an ellipsis. */
+#hud .dispatch-row .call { font-weight: 800; }
+#hud .dispatch-row .detail { opacity: 0.86; }
 #hud .dispatch-row .metres { text-align: right; font-variant-numeric: tabular-nums; }
 #hud .dispatch-row .state { text-align: right; font-size: 11px; font-weight: 800; letter-spacing: 1px; }
 #hud .dispatch-count {
@@ -132,7 +133,7 @@
   #hud .leftcol { top: 14px; left: 14px; width: 292px; gap: 6px; }
   #hud .dispatch { padding: 5px 9px 6px; font-size: 11px; line-height: 1.2; }
   #hud .dispatch-state { font-size: 12px; margin-bottom: 3px; }
-  #hud .dispatch-row { grid-template-columns: 7px 92px 1fr 44px 50px; column-gap: 4px; }
+  #hud .dispatch-row { grid-template-columns: 7px 96px 1fr 40px 52px; column-gap: 4px; }
   #hud .dispatch-row .state { font-size: 9px; }
   #hud .dispatch-stars b { font-size: 13px; }
   #hud .wslot { width: 54px; padding: 10px 2px 2px; }

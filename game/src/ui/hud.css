@@ -1,4 +1,4 @@
-/* HUD styles: minimap, speedometer, cash, health and radio line over the game canvas. */
+/* HUD styles: minimap, speedometer, cash, health, rank bar and radio line over the game canvas. */
 #hud {
   position: fixed;
   inset: 0;
@@ -24,11 +24,11 @@
 #hud .health {
   margin-top: 8px;
   margin-left: auto;
-  width: 190px;
-  height: 9px;
+  width: 232px;
+  height: 10px;
   border-radius: 5px;
-  background: rgba(20, 10, 30, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(20, 10, 30, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   overflow: hidden;
 }
 #hud .health > div {
@@ -36,6 +36,25 @@
   background: linear-gradient(90deg, #ff4d6d, #ff9a6a);
   box-shadow: 0 0 10px #ff4d6d;
 }
+/* Rank: the name in gold, points to the next rank beside it, a thin gold bar under both, on a dark pill. */
+#hud .rankbar {
+  margin: 7px 0 0 auto;
+  width: 232px;
+  box-sizing: border-box;
+  padding: 4px 8px 5px;
+  border-radius: 5px;
+  background: rgba(16, 8, 30, 0.7);
+  text-align: left;
+}
+#hud .rank-line { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; white-space: nowrap; }
+#hud .rank-name {
+  font-size: 13px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--mc-gold, #ffc94a);
+}
+#hud .rank-next { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
+#hud .rank-track {
+  margin-top: 3px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.18); overflow: hidden;
+}
+#hud .rank-fill { height: 100%; background: linear-gradient(90deg, #ffb347, #ffe08a); box-shadow: 0 0 6px #ffb347; }
 #hud .minimap {
   position: absolute;
   left: 26px;

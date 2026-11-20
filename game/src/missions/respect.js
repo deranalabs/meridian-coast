@@ -35,6 +35,20 @@ export function nextUnlock(respect) {
     opens: RANK_UNLOCKS[next.name] ?? [] };
 }
 
+/**
+ * Where `respect` sits between its rank and the next, for the HUD rank bar: { name, next, fraction 0..1, gained,
+ * span }. At the top rank next is null and the bar is full.
+ */
+export function rankProgress(respect) {
+  const points = Math.max(0, respect || 0);
+  const rank = rankFor(points);
+  const next = RANKS.find((entry) => entry.respect > points) ?? null;
+  if (!next) return { name: rank.name, next: null, fraction: 1, gained: points - rank.respect, span: 0 };
+  const span = next.respect - rank.respect;
+  const gained = points - rank.respect;
+  return { name: rank.name, next: next.name, fraction: gained / span, gained, span };
+}
+
 /** A shop item id as the menus name it ('weapon:smg' becomes 'Ratchet SMG'). */
 export function unlockLabel(id) {
   const [type, key] = id.split(':');

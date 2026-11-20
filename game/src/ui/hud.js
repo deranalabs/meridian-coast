@@ -2,7 +2,8 @@
 import { createMinimap } from './minimap.js';
 import { createMissionPanel } from './missionpanel.js';
 import { districtAt, PARK } from '../world/districts.js';
-import { BOARDWALK } from '../world/heightfield.js';
+import { BEACH_ROAD_X } from '../world/heightfield.js';
+import { createRankBar } from './rankbar.js';
 import { createWantedStars } from './wantedstars.js';
 import { createWeaponPanel } from './weaponpanel.js';
 import { createMessages } from './messages.js';
@@ -68,8 +69,9 @@ function placeName(x, z) {
   if (district) return district.name;
   const park = PARK.rect;
   if (x >= park.x0 && x <= park.x1 && z >= park.z0 && z <= park.z1) return PARK.name;
-  if (x > BOARDWALK.x0) return 'Palmetto Beach';
+  // East of the district box: the seaside lane of Shoreline Parade and the sand are the beach, the island beyond.
   if (x > 480) return 'Gull Key';
+  if (x >= BEACH_ROAD_X) return 'Palmetto Beach';
   return 'Port Meridian';
 }
 
@@ -86,6 +88,7 @@ export function createHud(layout, visible = true) {
   const cash = element(status, 'cash');
   const healthBar = element(element(status, 'health'), '');
   const armourBar = element(element(status, 'armour'), '');
+  const rankBar = createRankBar(status);
   const wanted = createWantedStars(status);
   const weapon = createWeaponPanel(status);
   const weaponBar = createWeaponBar(status);
@@ -117,6 +120,7 @@ export function createHud(layout, visible = true) {
       healthBar.style.width = `${Math.max(0, Math.min(100, view.health))}%`;
       armourBar.style.width = `${Math.max(0, Math.min(100, view.armour ?? 0))}%`;
       armourBar.parentElement.style.display = view.armour > 0 ? 'block' : 'none';
+      rankBar.update(view.respect ?? 0);
       wanted.update(view.stars ?? 0, Boolean(view.searching));
       if (view.weapon) weapon.update(view.weapon);
       weapon.root.style.display = view.driving ? 'none' : 'flex';
