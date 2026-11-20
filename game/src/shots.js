@@ -1,6 +1,7 @@
 // Deterministic screenshot scenes behind ?shot=<name>&seed=N: each sets time of day, actors and camera.
 import { ACTION_SHOTS } from './shotsaction.js';
 import { SHOP_SHOTS } from './shotsshop.js';
+import { HEIST_SHOTS } from './shotsheist.js';
 import { STORY_MISSIONS } from './missions/story/index.js';
 
 const CLUTTER = ['bin', 'news', 'hydrant', 'bench', 'meter', 'bollard', 'shelter', 'planter', 'palm', 'palmTall',
@@ -183,5 +184,5 @@ const MAP_SHOT = {
 
 export function getShot(name) {
   if (name === 'map') return MAP_SHOT;
-  return SHOTS[name] ?? ACTION_SHOTS[name] ?? SHOP_SHOTS[name] ?? null;
+  return SHOTS[name] ?? ACTION_SHOTS[name] ?? HEIST_SHOTS[name] ?? SHOP_SHOTS[name] ?? null;
 }
