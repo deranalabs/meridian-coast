@@ -4,6 +4,6 @@
 export const SHOT_LIST = Object.freeze([
   { name: 'mission', file: '1-mission.jpg' },
   { name: 'map', file: '2-map.jpg' },
-  { name: 'heist', file: '3-heist.jpg' },
-  { name: 'combat', file: '4-combat.jpg' },
+  { name: 'title', file: '3-title.jpg' },
+  { name: 'heist', file: '4-heist.jpg' },
 ].map(Object.freeze));
