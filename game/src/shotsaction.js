@@ -29,7 +29,8 @@ function hideParkedNear(game, x, z0, z1, halfWidth) {
 
 const CHASE = { laneX: 102, startZ: 30, speed: 21, steps: 110 };
 // The cover runs the northbound lane of Shoreline Parade, beside the boardwalk, clear of the causeway junction.
-const COVER = { laneX: BEACH_ROAD_X + 3, startZ: 30, speed: 21, steps: 110, paint: '#ff6f3c' };
+// yaw: the van's slide off the road axis (about 15 degrees); roll: the camera's tilt about its view axis.
+const COVER = { laneX: BEACH_ROAD_X + 3, startZ: 30, speed: 21, steps: 110, paint: '#ff6f3c', yaw: 0.26, roll: -0.06 };
 
 /** Scripted input: holds the given keys from step `from` onwards. */
 function holding(codes, from) {
@@ -97,8 +98,9 @@ export const ACTION_SHOTS = {
   },
 
   // The cover: Gilded Tide, stage 4 of 5. Late afternoon on Shoreline Parade: Ilo runs the dragnet north in the
-  // linen van (sprayed sunset orange for the job) between the hotels and the beach, three cruisers on its tail
-  // and Air-1 low overhead with its lamp on the road, while Solis calls every unit on the radio.
+  // linen van (sprayed sunset orange for the job) sliding between the hotels and the beach, a cruiser at each rear
+  // quarter, a third behind, Air-1 ahead with its lamp on the road and the low sun over the sea, while Solis calls
+  // every unit on the radio.
   mission: {
     time: 'golden',
     steps: COVER.steps,
@@ -123,13 +125,27 @@ export const ACTION_SHOTS = {
       game.player.state.autopilot = laneKeeper(game, COVER.laneX, Math.PI, 0.62);
       police.setStars(4);
       const chasers = [[COVER.laneX - 0.5, 10], [COVER.laneX - 4.5, 17], [COVER.laneX + 0.5, 26]];
-      for (const [x, dz] of chasers) {
+      const units = chasers.map(([x, dz]) => {
         const cruiser = game.fleet.reuse('cruiser', '#16203a');
         const unit = police.units.adopt(cruiser, x, COVER.startZ + dz, Math.PI);
         unit.vehicle.vz = -COVER.speed * 1.05;
-      }
+        return unit;
+      });
       hideParkedNear(game, BEACH_ROAD_X, COVER.startZ - 90, COVER.startZ + 60, 9);
       game.cameraMode = 'manual';
+      // One step before the capture the van kicks its tail out (nose toward the sea, still running north) with a
+      // cruiser at each rear quarter and the third further back; the autopilot holds the wheel straight.
+      const slide = () => {
+        const v = game.player.state.vehicle;
+        Object.assign(v, { x: COVER.laneX - 0.5, heading: Math.PI - COVER.yaw, vx: 0, vz: -COVER.speed, yawRate: 0 });
+        game.player.state.autopilot = () => ({ throttle: 0.62, steer: 0, handbrake: false });
+        const spots = [[-3.1, 2.9, 0.06], [3.0, 2.5, -0.07], [-0.4, 15, 0]];
+        units.forEach((unit, i) => {
+          const [dx, dz, turn] = spots[i];
+          Object.assign(unit.vehicle, { x: v.x + dx, z: v.z + dz, heading: Math.PI + turn, vx: 0,
+            vz: -COVER.speed, yawRate: 0 });
+        });
+      };
       return {
         afterStep(index) {
           if (index === 0) {
@@ -137,19 +153,27 @@ export const ACTION_SHOTS = {
             police.helicopter.arrive({ x: p.x, y: 0, z: p.z }, 0);
             Object.assign(police.helicopter.state, { x: p.x + 8, z: p.z + 30, y: 27 });
           }
-          // Finish Solis's line a step early so the card shows it whole on the captured frame.
-          if (index === COVER.steps - 2 && !game.dialogue.conversation.complete) game.dialogue.conversation.skip();
+          if (index === COVER.steps - 2) {
+            // Finish Solis's line a step early so the card shows it whole on the captured frame.
+            if (!game.dialogue.conversation.complete) game.dialogue.conversation.skip();
+            slide();
+          }
           if (index !== COVER.steps - 1) return;
           const p = game.player.state.car.position;
-          // Air-1 hangs low over the second cruiser, big against the blue, its lamp pooled on the road behind Ilo.
-          Object.assign(police.helicopter.state, { x: p.x - 3, z: p.z + 16, y: p.y + 9.5, heading: 2.6,
-            aim: { x: p.x - 0.5, z: p.z + 5 } });
-          police.helicopter.update(1 / 60, { x: p.x - 0.5, y: p.y, z: p.z + 5 }, game.time);
-          // Low and close at the van's front corner on the beach side: sea and palms left, hotels right.
-          game.camera.position.set(p.x + 2.4, p.y + 1.45, p.z - 6.6);
-          game.camera.lookAt(p.x - 0.2, p.y + 2.9, p.z + 14);
-          game.camera.fov = 64;
-          game.camera.updateProjectionMatrix();
+          // Air-1 high at top centre, its lamp on the road ahead of the van.
+          const spot = { x: p.x + 1.4, y: p.y, z: p.z - 9 };
+          Object.assign(police.helicopter.state, { x: p.x + 2, z: p.z - 19, y: p.y + 13.2, heading: 0.6,
+            aim: { x: spot.x, z: spot.z } });
+          police.helicopter.update(1 / 60, spot, game.time);
+          // A chase camera up and behind, pitched about 8 degrees down (horizon near 40 % from the top) and aimed a
+          // little right of the van, so it sits left of centre; a slight roll and a wide lens sell the speed.
+          const cam = game.camera;
+          cam.position.set(p.x + 1, p.y + 5, p.z + 13);
+          cam.up.set(0, 1, 0);
+          cam.lookAt(p.x + 4.2, p.y - 0.9, p.z - 29);
+          cam.rotateZ(COVER.roll);
+          cam.fov = 70;
+          cam.updateProjectionMatrix();
         },
       };
     },
