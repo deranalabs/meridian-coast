@@ -120,6 +120,43 @@ function line(builder, kind, start, dir, from, to, offset, width, cell, dash = 0
   }
 }
 
+/**
+ * A dashed line along a whole polyline with one steady rhythm: a dash that reaches a joint carries on into the
+ * next segment. The hill road is 73 short edges, so painting it per edge restarted the rhythm every 3 to 7 m.
+ */
+export function dashAlong(builder, kind, points, dash, gap, width, cell = MARK.yellow,
+  trimStart = 0, trimEnd = trimStart) {
+  const lengths = [];
+  for (let index = 0; index + 1 < points.length; index += 1) {
+    lengths.push(Math.hypot(points[index + 1].x - points[index].x, points[index + 1].z - points[index].z));
+  }
+  const total = lengths.reduce((sum, length) => sum + length, 0);
+  let phase = 0;
+  let travelled = 0;
+  for (let index = 0; index + 1 < points.length; index += 1) {
+    const a = points[index];
+    const b = points[index + 1];
+    const length = lengths[index];
+    if (length < 1e-6) continue;
+    const dir = { x: (b.x - a.x) / length, z: (b.z - a.z) / length };
+    for (let t = 0; t < length - 1e-9;) {
+      const inDash = phase < dash;
+      const step = Math.min((inDash ? dash : dash + gap) - phase, length - t);
+      // Clip the piece to the painted stretch, leaving the trims bare at each end (junctions, crosswalks).
+      const t0 = Math.max(t, trimStart - travelled);
+      const t1 = Math.min(t + step, total - trimEnd - travelled);
+      if (inDash && t1 - t0 > 0.05) {
+        const mid = (t0 + t1) / 2;
+        decal(builder, kind, a.x + dir.x * mid, a.z + dir.z * mid, dir, t1 - t0, width, cell);
+      }
+      t += step;
+      phase += step;
+      if (phase >= dash + gap - 1e-9) phase = 0;
+    }
+    travelled += length;
+  }
+}
+
 function paintEdge(builder, graph, edge, random) {
   const a = graph.nodes[edge.from];
   const b = graph.nodes[edge.to];
@@ -140,7 +177,8 @@ function paintEdge(builder, graph, edge, random) {
     line(builder, kind, a, dir, from, to, -half / 2, 0.14, MARK.white, 3, 6);
   } else if (edge.width >= 11) {
     line(builder, kind, a, dir, from, to, 0, 0.15, MARK.white, 3, 5);
-  } else {
+  } else if (kind !== 'winding') {
+    // The hill road's centre line is painted once along its whole length (dashAlong in createRoads).
     line(builder, kind, a, dir, from, to, 0, 0.12, MARK.yellow, 2.5, 4);
   }
   if (edge.width >= 14) {
@@ -237,6 +275,13 @@ export function createRoads(layout, terrainMaterial, seed) {
   const random = createRandom(seed * 37 + 5);
   const builder = new MeshBuilder({ position: 3, normal: 3, uv: 2 });
   for (const edge of layout.graph.edges) paintEdge(builder, layout.graph, edge, random);
+  // Leave the same bare stretch as edge paint where the hill road meets a junction (radius + 4.6 m).
+  const endTrim = (point) => {
+    const node = layout.graph.nodes.find((n) => Math.hypot(n.x - point.x, n.z - point.z) < 0.01);
+    return node && node.edges.length >= 3 ? node.radius + 4.6 : 0;
+  };
+  const hill = layout.winding;
+  dashAlong(builder, 'winding', hill, 2.5, 4, 0.12, MARK.yellow, endTrim(hill[0]), endTrim(hill[hill.length - 1]));
   const material = new THREE.MeshStandardMaterial({
     map: markingAtlas(seed),
     transparent: true,
