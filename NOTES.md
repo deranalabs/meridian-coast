@@ -264,6 +264,31 @@ zooms to Ilo and closes it; takes Headline after mission three, clears the yard 
 with no heat left; drives a whole Rask Cabs fare (cab, pick-up, drop, $250 plus a tip). `MAKEFUN_OUTPUT_DIR=out node
 main.ts` gives identical bytes twice.
 
-**Untested**: Hill Favour, Tarp Run, Tide Tables and the race end to end in the walk-through (played by hand and
-by scratch scripts in 3c); the heist's later stages only through the cover scene; map drag and wheel by hand only;
-nothing on GPUs other than the M1.
+**Untested** (as of 3d; recording 4 closed the mission gap, see below): map drag and wheel by hand only; nothing on
+GPUs other than the M1.
+
+## Recordings 4 and 4b: the story played end to end, fixes, README
+
+**Story test**: `tests/playstory.mjs` plays missions one to six, both heist parts and the Causeway Sprint in story
+order: each met at its gold pillar with E, failed once where cheap (7 fails), retried from its checkpoint and passed
+with the reward paid; it ends with every job done (cash $78,640, respect 216) and fails on any console error.
+
+**Fixed in recording 4**: a retry takes Ilo out of the car he wrecked and clears it, so the respawned mission car is
+the one he gets into; no gold pillars, pins or route while a job is briefed, failed or wrapping up; at 768x480 the
+objective and passed banners wrap between the mission panel and the cash on a dark backing; the hill road ground
+test checks the road's box first; loft slices blend centre offsets and flatten; gable roof normals follow the real
+pitch; Air-1 climbs over the downtown towers (buildings report each lot's real top, `ground.roofAt`); the facade
+grain repeats per tile, so it no longer steps at bay and storey seams. New tests for geometry2d, driving, loft,
+buildingkit, buildings, ground and facades.
+
+**Recording 4b**: the Calder Switchback centre line is one steady dash rhythm along the whole 73-edge polyline
+(`dashAlong` in `world/roads.js`, `world/roads.test.js`), trimmed like edge paint at its junction end; `README.md`.
+
+**Final numbers**: 134 unit tests pass; lint clean (223 files); `tests/play.mjs` 38 checks and `tests/playstory.mjs`
+pass with no console errors; `browser.mjs --perf` drive scene **70 draw calls, 58.5 FPS** (M1, 1440x900 at DPR
+1.5, render scale 0.8–0.9); `MAKEFUN_OUTPUT_DIR=out node main.ts` gives identical bytes twice (220 files);
+`game/` is 215 files, 1.9 MB.
+
+**Still untested**: what the audio sounds like on real speakers (headless runs only check that it starts cleanly);
+map drag and wheel, and pointer-lock mouse aiming, by hand only; traffic over long sessions; any GPU other than the
+M1 and any browser other than desktop Chrome.
