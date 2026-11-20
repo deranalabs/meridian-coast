@@ -52,8 +52,8 @@ const PRESETS = {
     cloudLight: '#4b3c7a',
     envIntensity: 0.65,
   },
-  // Late afternoon for the cover and the small shots: a warm sun low over the sea, a clear blue sky fading to peach, dry streets, a turquoise
-  // sea, and shop light, lamps and neon turned well down because it is daylight.
+  // Late afternoon for the cover and the small shots: a warm sun low over the sea, a clear blue sky fading to
+  // peach, dry streets, a turquoise sea, and shop light, lamps and neon turned well down because it is daylight.
   golden: {
     // Low over the sea ahead of a camera looking north up Shoreline Parade, so the cover gets its glare.
     sunDir: direction(12.5, 162),
