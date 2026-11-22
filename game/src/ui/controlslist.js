@@ -4,6 +4,7 @@ export const CONTROLS = Object.freeze([
   ['On foot', [
     [['W', 'A', 'S', 'D'], 'Move'],
     [['Shift'], 'Run'],
+    [['Space'], 'Jump'],
     [['C'], 'Crouch'],
     [['E'], 'Take a car, use a shop or door'],
     [['Mouse'], 'Look (click to lock the pointer)'],
@@ -51,7 +52,7 @@ export function controlsHtml() {
 export const TITLE_KEYS = Object.freeze([
   [['W A S D', 'or arrows'], 'move, drive'],
   [['Shift'], 'run'],
-  [['Space'], 'handbrake in a car'],
+  [['Space'], 'jump, handbrake in a car'],
   [['E'], 'enter a car, talk, shop'],
   [['Mouse'], 'look and aim'],
   [['Click'], 'fire or punch'],

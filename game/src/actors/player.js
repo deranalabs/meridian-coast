@@ -4,6 +4,7 @@ import { createWallet } from '../economy/wallet.js';
 import { createVitals } from '../combat/vitals.js';
 import { createArsenal } from '../combat/arsenal.js';
 import { edgeBand, footPush, keepInside } from '../world/boundary.js';
+import { createJump, startJump, stepJump, clearOfCars } from './jump.js';
 
 const WALK = 1.7;
 const RUN = 5.6;
@@ -39,6 +40,7 @@ export function createPlayer(character, { fleet, colliders, ground, smoke, traff
     actionTimer: 0,
     down: false,
     frozen: false,
+    jump: createJump(),
   };
 
   function groundY(x, z) {
@@ -72,6 +74,27 @@ export function createPlayer(character, { fleet, colliders, ground, smoke, traff
     takeCar(car);
     state.mode = 'driving';
     character.visible = false;
+  }
+
+  /** Ilo's height: on the ground, or on a jump's arc, which keeps out of cars and lands on whatever is below. */
+  function settleHeight(dt) {
+    const at = character.position;
+    if (!state.jump.active) {
+      at.y = groundY(at.x, at.z);
+      return;
+    }
+    const y = stepJump(state.jump, dt, groundY(at.x, at.z));
+    // A wall and a car side by side can each push Ilo into the other, so the two take turns until both are clear.
+    for (let pass = 0; pass < 4; pass += 1) {
+      const clear = clearOfCars(fleet.cars, at.x, at.z, y, RADIUS);
+      if (clear.x === at.x && clear.z === at.z) break;
+      const free = colliders.resolveCircle(clear.x, clear.z, RADIUS);
+      if (ground.surfaceAt(free.x, free.z).kind === 'water') break;
+      at.x = free.x;
+      at.z = free.z;
+    }
+    const floor = groundY(at.x, at.z);
+    at.y = state.jump.active ? Math.max(y, floor) : floor;
   }
 
   function updateFoot(dt, input, cameraYaw) {
@@ -117,15 +140,20 @@ export function createPlayer(character, { fleet, colliders, ground, smoke, traff
       character.position.z = eased.z;
       keepInside(character.position);
     }
-    character.position.y = groundY(character.position.x, character.position.z);
+    if (input.pressed('Space') && !state.down && startJump(state.jump, character.position.y)) {
+      state.crouch = false;
+      character.replay('jump');
+    }
+    settleHeight(dt);
     character.speed = speed;
     state.actionTimer = Math.max(0, state.actionTimer - dt);
     state.shootTimer = Math.max(0, (state.shootTimer ?? 0) - dt);
     const raised = aiming || state.shootTimer > 0;
     if (state.actionTimer > 0) character.speed = 0;
+    else if (state.jump.active) character.play(raised ? 'aim' : 'jump');
     else if (state.crouch) character.play(raised ? 'aim' : 'crouch');
     else character.play(raised ? 'aim' : speed > 3 ? 'run' : speed > 0 ? 'walk' : 'idle');
-    if (input.pressed('KeyE')) {
+    if (input.pressed('KeyE') && !state.jump.active) {
       const car = nearestCar();
       if (car) {
         takeCar(car);
@@ -220,6 +248,7 @@ export function createPlayer(character, { fleet, colliders, ground, smoke, traff
       state.vehicle = null;
       state.autopilot = null;
       state.crouch = false;
+      state.jump.active = false;
       character.visible = true;
       character.position.set(x, groundY(x, z), z);
       character.heading = heading;
@@ -244,7 +273,12 @@ export function createPlayer(character, { fleet, colliders, ground, smoke, traff
       if (state.mode === 'foot' && !state.down) character.play('idle');
     },
     update(dt, input, cameraYaw) {
-      if (state.down || state.frozen) return null;
+      if (state.down || state.frozen) {
+        // A hit or a cutscene mid-jump: the fall ends the jump (a ragdoll takes over a body that is down).
+        if (state.down) state.jump.active = false;
+        else if (state.jump.active) settleHeight(dt);
+        return null;
+      }
       if (state.mode === 'foot') updateFoot(dt, input, cameraYaw);
       else if (state.mode === 'entering') return updateEntering(dt);
       else if (state.mode === 'driving') updateDriving(dt, input);

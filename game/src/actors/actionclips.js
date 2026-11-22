@@ -109,7 +109,26 @@ export const ACTION_CLIPS = {
     set(pose, PART.thighR, 0.35 * reel);
     set(pose, PART.shinR, 0.3 * reel);
   },
+  /** Arms up and legs tucked under, deepest at the top of the arc, straightening to meet the ground. */
+  jump(pose, phase, time) {
+    standing(pose);
+    const tuck = Math.sqrt(Math.sin(Math.min(1, phase) * Math.PI));
+    set(pose, PART.abdomen, 0.12 * tuck, 0, 0);
+    set(pose, PART.torso, 0.08 * tuck, 0, 0);
+    set(pose, PART.neck, -0.12 * tuck, 0, 0);
+    set(pose, PART.upperArmL, -2.6 * tuck, 0, 0.38);
+    set(pose, PART.upperArmR, -2.6 * tuck, 0, -0.38);
+    set(pose, PART.forearmL, -0.35, 0, 0);
+    set(pose, PART.forearmR, -0.35, 0, 0);
+    set(pose, PART.thighL, -1.5 * tuck, 0.06, 0.08);
+    set(pose, PART.thighR, -1.3 * tuck, -0.06, -0.08);
+    set(pose, PART.shinL, 1.9 * tuck);
+    set(pose, PART.shinR, 1.75 * tuck);
+    set(pose, PART.shoeL, 0.25 * tuck);
+    set(pose, PART.shoeR, 0.25 * tuck);
+  },
 };
 
 /** Clips whose phase is a one-shot 0..1 progress instead of the gait cycle, with their length in seconds. */
-export const ONE_SHOT_CLIPS = new Map([['enter', 0.9], ['exit', 0.9], ['punch', 0.4], ['stagger', 0.55]]);
+export const ONE_SHOT_CLIPS = new Map([['enter', 0.9], ['exit', 0.9], ['punch', 0.4], ['stagger', 0.55],
+  ['jump', 0.67]]);
