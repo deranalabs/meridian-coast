@@ -611,3 +611,57 @@ pedestrian on the camera's ray and a witness beside them.
 - The map, Progress and fight cells' small type does not read at 253x158; their shapes and big figures do.
 
 **For the recording gate**: one message held two calls, both read-only shell commands; neither wrote a file.
+
+## Recording 8a: the edge, the car's feel, the keys, the small window, three cameras and a jump
+
+Six commits on b88ad20. 8a ran out of turns before its notes, so this section was written at the start of 8b from
+the diffs and from a run of the tests on 41e043e.
+
+**1. A soft wall at the world edge** (a82cd4b, `world/boundary.js`, tested). The last 40 m inside `WORLD_BOUNDS`
+turn a car's nose and momentum inward and bleed its speed, more the deeper it is. A car may head outward at
+1.2 m/s for each metre it has left and no centre gets within 3 m of the edge. Walkers are pushed back at 1 to
+8 m/s. Police cars and officers obey it too, and the HUD says "Leaving Port Meridian: turn back".
+
+**2. Car feel** (6398055). No job's time limit needed a change.
+
+| Number | Before | After |
+|---|---|---|
+| maxSpeed, coupe / sedan / pickup / cruiser (m/s) | 58 / 48 / 44 / 52 | 42 / 36 / 33 / 40 |
+| accel, coupe / sedan / pickup / cruiser (m/s²) | 13 / 10 / 9 / 12.5 | 9.1 / 7 / 6.3 / 8.75 |
+| `MAX_STEER` (rad) | 0.6 | 0.45 |
+| Steering lost at top speed | 62 % | 78 % |
+| Wheel follow rate (per second) | 7 | 4 |
+
+The cover's staged run-up pins the old handling (`stageHandling` in `shotsaction.js`), so its frame did not move.
+Grip, brakes and drag are unchanged.
+
+**3. The keys on the title screen** (f8ebd1f). A 13-row legend at the top right (move, run, jump, E, mouse, fire,
+aim, weapons, reload and radio, camera, phone, map, pause) replaces the one line at the foot. It narrows under
+900 px and hides on sub-pages. Until the first job is done the free-roam hint teaches E as well as the pillar.
+
+**4. A 768x480 window and larger sheet type** (502ac09). Under 900 px wide or 560 px tall the HUD keeps to three
+columns that never meet: mission and dispatch over a 150 px minimap, the radio over the banner, the player's
+standing over a 144 px dial, with the dialogue card in the gap. "Ratchet SMG" fits whole. `tests/browser.mjs`
+fails if any two of 13 panels touch at that size. The full map's labels are placed apart (`ui/maplabels.js`,
+tested) and scale with the window. The Progress figures went from 86 to 106 design px, their names from 30 to
+41 and the side column up by about a fifth, in a condensed system face. These overlaps were listed as open in 7c.
+
+**5. V cycles the camera in a car** (eb35339). Chase, driver's seat (dash, wheel and pillars in
+`vehicles/cockpit.js`) and bonnet. The two inner views have a speed lens, a small sway on game time and a short
+mouse look that drifts back to the road. A staged scene shows the cockpit; it is not on the sheet.
+
+**6. Space jumps on foot** (41e043e). A 0.9 m arc under 16 m/s² (0.67 s), with its own pose. It lands on the
+ground under it and is moved out of any car by the nearest side. Space is still the handbrake in a car.
+
+**Measured on 41e043e**: unit tests 177 → 208, all pass; lint 243 → 254 files, 0 problems; game/ 245 files,
+2,112 KiB. Look numbers (768x480 with HUD; gradEnergy / flatBlocks / colors / brightShare / meanSat):
+
+| File | 8a |
+|---|---|
+| 1-mission | 9.68 / 0.226 / 178 / 10.29 % / 0.278 (same bytes as 7c) |
+| 2-map | 5.79 / 0.542 / 89 / 3.24 % / 0.420 |
+| 3-progress | 9.34 / 0.440 / 82 / 5.09 % / 0.588 |
+| 4-fight | 7.16 / 0.298 / 167 / 4.22 % / 0.384 |
+
+**Skipped in 8a**: rain and the hidden packages (no code was started for either), and this section. The play and
+story browser runs were not repeated when this section was written; 8b's section reports them.
