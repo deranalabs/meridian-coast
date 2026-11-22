@@ -32,6 +32,23 @@ const CHASE = { laneX: 102, startZ: 30, speed: 21, steps: 110 };
 // The cover runs the northbound lane of Shoreline Parade, beside the boardwalk, clear of the causeway junction.
 // yaw: the van's slide off the road axis (about 15 degrees); roll: the camera's tilt about its view axis.
 const COVER = { laneX: BEACH_ROAD_X + 3, startZ: 30, speed: 21, steps: 110, paint: '#ff6f3c', yaw: 0.26, roll: -0.06 };
+// The cover's run-up was staged on this handling. It keeps it, so play's handling never moves the staged frame.
+const COVER_STEERING = { maxSteer: 0.6, steerFade: 0.62, steerFollow: 7 };
+const COVER_ENGINES = { pickup: { maxSpeed: 44, accel: 9 }, cruiser: { maxSpeed: 52, accel: 12.5 } };
+
+function stageHandling(game) {
+  const pin = (car) => {
+    if (car && COVER_ENGINES[car.type]) car.spec = { ...car.spec, ...COVER_STEERING, ...COVER_ENGINES[car.type] };
+    return car;
+  };
+  const { fleet, player } = game;
+  fleet.cars.forEach(pin);
+  // A cruiser dispatched during the run-up gets it before its first step.
+  const reuse = fleet.reuse.bind(fleet);
+  fleet.reuse = (type, colour) => pin(reuse(type, colour));
+  player.state.vehicle.spec = player.state.car.spec;
+  for (const unit of game.action.police.units.units) unit.vehicle.spec = unit.car.spec;
+}
 
 /** Scripted input: holds the given keys from step `from` onwards. */
 function holding(codes, from) {
@@ -198,6 +215,7 @@ export const ACTION_SHOTS = {
         unit.vehicle.vz = -COVER.speed * 1.05;
         return unit;
       });
+      stageHandling(game);
       hideParkedNear(game, BEACH_ROAD_X, COVER.startZ - 90, COVER.startZ + 60, 9);
       // About 43 m north of the start is where the van is when the frame is taken.
       fillShoreline(game, COVER.laneX - 0.5, COVER.startZ - 43);

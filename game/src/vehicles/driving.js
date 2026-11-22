@@ -1,11 +1,21 @@
 // Arcade driving model: throttle, brakes, speed-sensitive steering, grip, handbrake drift, walls and the edge.
 import { easeCarBack, keepInside } from '../world/boundary.js';
 
-const MAX_STEER = 0.6;
+const MAX_STEER = 0.45;
+/** The share of the wheel's angle that is gone at top speed. */
+const STEER_FADE = 0.78;
+/** How fast the wheel follows the hand, per second: low enough that a tap is a nudge. */
+const STEER_FOLLOW = 4;
 const REVERSE_MAX = 9;
 const BRAKE = 26;
 const ROLLING_DRAG = 0.12;
 const AIR_DRAG = 0.0016;
+
+/** The wheel angle a car wants at `forward` m/s for an input of -1..1 (a spec may carry its own steering). */
+export function steerAngle(spec, forward, input) {
+  const ratio = Math.min(1, Math.abs(forward) / spec.maxSpeed);
+  return input * (spec.maxSteer ?? MAX_STEER) * (1 - ratio * (spec.steerFade ?? STEER_FADE));
+}
 
 /** A fresh vehicle state at (x, z) facing `heading` (radians, 0 = +z). */
 export function createVehicleState(spec, x = 0, z = 0, heading = 0) {
@@ -40,8 +50,8 @@ export function stepVehicle(state, input, dt, collide = null, blocked = null) {
   let lateral = state.vx * rx + state.vz * rz;
 
   const speedRatio = Math.min(1, Math.abs(forward) / spec.maxSpeed);
-  const steerTarget = input.steer * MAX_STEER * (1 - speedRatio * 0.62);
-  state.steer += (steerTarget - state.steer) * Math.min(1, dt * 7);
+  const steerTarget = steerAngle(spec, forward, input.steer);
+  state.steer += (steerTarget - state.steer) * Math.min(1, dt * (spec.steerFollow ?? STEER_FOLLOW));
 
   if (input.throttle > 0) {
     if (forward < -0.5) forward += BRAKE * input.throttle * dt;

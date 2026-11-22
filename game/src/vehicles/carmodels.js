@@ -8,22 +8,22 @@ export const CAR_TYPES = {
   coupe: {
     name: 'Juno Kestrel GT', length: 4.42, width: 1.88, wheelRadius: 0.34, frontAxle: 1.32, rearAxle: -1.26,
     track: 0.8, belt: 0.86, roof: 1.27, hood: 0.78, deck: 0.84, glassFront: 0.62, roofFront: 0.05, roofRear: -0.98,
-    glassRear: -1.62, maxSpeed: 58, accel: 13, grip: 7.5,
+    glassRear: -1.62, maxSpeed: 42, accel: 9.1, grip: 7.5,
   },
   sedan: {
     name: 'Calloway Meridia', length: 4.82, width: 1.86, wheelRadius: 0.33, frontAxle: 1.42, rearAxle: -1.4,
     track: 0.79, belt: 0.95, roof: 1.46, hood: 0.88, deck: 0.94, glassFront: 0.9, roofFront: 0.32, roofRear: -0.98,
-    glassRear: -1.6, maxSpeed: 48, accel: 10, grip: 6.8,
+    glassRear: -1.6, maxSpeed: 36, accel: 7, grip: 6.8,
   },
   pickup: {
     name: 'Brava Tradesman', length: 5.3, width: 1.98, wheelRadius: 0.4, frontAxle: 1.68, rearAxle: -1.56,
     track: 0.85, belt: 1.12, roof: 1.84, hood: 1.08, deck: 1.1, glassFront: 1.0, roofFront: 0.62, roofRear: -0.3,
-    glassRear: -0.42, bed: true, maxSpeed: 44, accel: 9, grip: 6.0,
+    glassRear: -0.42, bed: true, maxSpeed: 33, accel: 6.3, grip: 6.0,
   },
   cruiser: {
     name: 'Calloway Interceptor', length: 4.9, width: 1.9, wheelRadius: 0.34, frontAxle: 1.44, rearAxle: -1.42,
     track: 0.8, belt: 0.95, roof: 1.46, hood: 0.88, deck: 0.94, glassFront: 0.9, roofFront: 0.32, roofRear: -0.98,
-    glassRear: -1.6, police: true, maxSpeed: 52, accel: 12.5, grip: 7.4,
+    glassRear: -1.6, police: true, maxSpeed: 40, accel: 8.75, grip: 7.4,
   },
 };
 
