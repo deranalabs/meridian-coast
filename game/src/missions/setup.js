@@ -1,10 +1,10 @@
 // Story assembly: resolves the story places, builds the mission director and connects it to the HUD and saves.
-import { MISSION_PLACES } from '../data/places.js';
-import { findPlaces } from '../world/placefinder.js';
-import { createMissions } from './director.js';
-import { STORY_MISSIONS } from './story/index.js';
 import { ACTIVITIES } from './activities/index.js';
 import { createRespect } from './respect.js';
+import { STORY_MISSIONS } from './story/index.js';
+import { createMissions } from './director.js';
+import { MISSION_PLACES } from '../data/places.js';
+import { findPlaces } from '../world/placefinder.js';
 import { createDialogue } from './dialogue.js';
 import { createMissionKit } from './kit.js';
 import { castMember } from '../data/cast.js';

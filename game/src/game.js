@@ -1,13 +1,13 @@
 // Game assembly: builds the world, actors, vehicles, cameras and HUD, and runs one fixed step and one draw.
 import * as THREE from '../vendor/three.module.min.js';
-import { createStory } from './missions/setup.js';
-import { createAction } from './systems/action.js';
 import { isSearching } from './police/wanted.js';
 import { policeReport } from './police/report.js';
+import { createPlayer } from './actors/player.js';
+import { createStory } from './missions/setup.js';
+import { createAction } from './systems/action.js';
 import { createServices } from './systems/services.js';
 import { baseOutfit } from './shops/outfit.js';
 import { ammoView } from './combat/arsenal.js';
-import { createPlayer } from './actors/player.js';
 import { createFleet } from './vehicles/fleet.js';
 import { createTraffic } from './vehicles/traffic.js';
 import { createSmoke } from './vehicles/smoke.js';
