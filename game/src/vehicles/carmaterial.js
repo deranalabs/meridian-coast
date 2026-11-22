@@ -33,6 +33,8 @@ export function createCarMaterial(noiseTexture, lampLevel) {
     clearcoatRoughness: 0.06,
   });
   const uniforms = { uNoise: { value: noiseTexture }, uLampLevel: { value: lampLevel } };
+  // render/atmosphere.js turns the lamps up and down with the day.
+  material.userData.uniforms = uniforms;
   material.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniforms);
     shader.vertexShader = shader.vertexShader

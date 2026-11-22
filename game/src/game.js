@@ -60,9 +60,9 @@ function addParkedCars(fleet, parking, focus, random) {
 }
 
 /** Build everything for `seed` and `timeOfDay`; focus is where ambient life spawns first. */
-export function createGame({ renderer, seed, timeOfDay, focus, showHud, weather, staged = false }) {
+export function createGame({ renderer, seed, timeOfDay, focus, showHud, weather, clock, staged = false }) {
   const scene = new THREE.Scene();
-  scene.fog = installFog(timeOfDay);
+  scene.fog = installFog(timeOfDay, clock.cycles);
   scene.environment = createEnvironment(renderer, timeOfDay);
   scene.environmentIntensity = timeOfDay.envIntensity;
   const sky = createSky(timeOfDay);
@@ -123,7 +123,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud, weather,
   // The radio hears the city: jobs passed and failed, chases, the helicopter, arrests become news flashes.
   radio.listen(game.action.events);
   game.prompt = null;
-  game.climate = createClimate(game, weather);
+  game.climate = createClimate(game, weather, clock);
   game.packages = createPackages(game, { staged });
   let heldInput = null;
 

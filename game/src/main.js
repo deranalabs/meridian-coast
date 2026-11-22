@@ -18,6 +18,7 @@ import { MAP_KEY } from './ui/mapscreen.js';
 import { unlockLabel } from './missions/respect.js';
 import { createProgressPage } from './ui/progresspage.js';
 import { startingWeather } from './systems/weather.js';
+import { startingClock } from './systems/dayclock.js';
 
 const STEP = 1 / 60;
 /** A shot scene's own stand-in for the stored save (scenes never read or write storage). */
@@ -31,14 +32,16 @@ const seedParam = Number.parseInt(params.get('seed') ?? '1', 10);
 const seed = Number.isInteger(seedParam) ? seedParam : 1;
 const stored = shot || params.get('fresh') === '1' ? null : loadSave();
 const resume = stored?.status === 'ok' ? stored.save : null;
-const timeOfDay = getTimeOfDay(shot?.time ?? params.get('time') ?? resume?.time ?? 'dusk');
+// A scene or ?time= pins a time. Free roam is built at dusk and cycles; Continue brings the saved hour.
+const clock = startingClock(shot, params.get('time'));
+const timeOfDay = getTimeOfDay(clock.time);
 const showHud = params.get('hud') !== '0' && (shot ? shot.hud !== false : true);
 
 const canvas = document.getElementById('game');
 const { renderer, stats, resize } = createRenderer(canvas);
 const focus = shot?.focus ? new THREE.Vector3(...shot.focus) : new THREE.Vector3(36, 0, -68);
 const weather = startingWeather(shot, params.get('weather'));
-const game = createGame({ renderer, seed, timeOfDay, focus, showHud, weather, staged: Boolean(shot) });
+const game = createGame({ renderer, seed, timeOfDay, focus, showHud, weather, clock, staged: Boolean(shot) });
 // A stored save waits for Continue on the title; Start Story and Free Roam begin a new game.
 const startFrom = (mode) => {
   if (mode === 'continue' && resume) applySave(game, resume);
@@ -146,7 +149,8 @@ function saveFromMenu() {
 
 const pause = createPauseMenu({
   settings,
-  place: () => game.hud.root.querySelector('.district')?.textContent ?? '',
+  place: () => [game.hud.root.querySelector('.district')?.textContent, game.climate.text()].filter(Boolean)
+    .join(' · '),
   standing: () => {
     const { rank, next } = game.respect;
     const respect = game.missions.progress.respect;

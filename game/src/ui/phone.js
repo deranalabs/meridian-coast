@@ -86,13 +86,13 @@ export function createPhone(game, defs = [...STORY_MISSIONS, ...ACTIVITIES]) {
   function render() {
     const progress = missions.progress;
     const next = nextRank(progress.respect);
-    const minutes = (20 * 60 + Math.floor(game.time / 4)) % 1440;
     const opens = nextUnlock(progress.respect)?.opens.map(unlockLabel).join(', ') ?? '';
     view.render({ rank: rankFor(progress.respect).name, respect: progress.respect, nextRank: next?.name ?? null,
       nextRespect: next?.respect ?? null, opens, done: new Set(progress.done),
       open: new Set(missions.available().map((def) => def.id)), selected: state.selected,
       note: state.note || (missions.active ? 'On a job. Finish it, or fail it, to take another.' : ''),
-      time: `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}` });
+      // The climate is built after the phone, so a phone with no game round it shows the hour a new game starts at.
+      time: game.climate?.text() ?? '19:12' });
   }
 
   return {

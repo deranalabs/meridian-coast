@@ -37,6 +37,7 @@ export function createLighting(scene, timeOfDay) {
     sun,
     hemi,
     key,
+    rim,
     /** Keep a soft key light between the camera and the character it frames. */
     lightSubject(subject, camera) {
       const dx = camera.position.x - subject.x;

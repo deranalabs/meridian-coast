@@ -22,6 +22,7 @@ export function snapshot(game) {
     cars: game.ownedCars,
     position: { x: at.x, z: at.z, heading: game.ilo.heading },
     time: game.timeOfDay.name,
+    hour: game.climate?.clock.hour,
     clock: game.time,
     savedAt: Date.now(),
     packages: game.packages?.list() ?? [],
@@ -42,6 +43,7 @@ export function loadSave() {
 /** Put a parsed save into a freshly built game. */
 export function applySave(game, save) {
   game.packages?.restore(save.packages);
+  game.climate?.setHour(save.hour);
   const p = game.player.state;
   p.wallet.cash = save.cash;
   p.vitals.health = save.health;

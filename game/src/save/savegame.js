@@ -26,6 +26,7 @@ export function defaultSave() {
     cars: [],
     position: null,
     time: 'dusk',
+    hour: 19.2,
     clock: 0,
     savedAt: 0,
     packages: [],
@@ -93,6 +94,8 @@ export function normalise(input) {
     cars: cleanCars(raw.cars),
     position: cleanPosition(raw.position),
     time: TIMES.includes(raw.time) ? raw.time : 'dusk',
+    // A save from before the day cycle has only the name of its time.
+    hour: number(raw.hour, raw.time === 'night' ? 22.5 : base.hour, 0, 24),
     clock: number(raw.clock, 0, 0, 1e7),
     savedAt: number(raw.savedAt, 0, 0, 1e15),
     packages: cleanFound(raw.packages),

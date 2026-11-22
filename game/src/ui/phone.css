@@ -30,6 +30,11 @@
   color: var(--mc-ui-tint, #9fb7c9);
   margin-bottom: 10px;
 }
+#phone .phone-top .clock { font-size: 22px; line-height: 22px; color: #fff6f0; }
+/* With every contact and job the handset is about 980 px tall, so a shorter window shows all of it smaller. */
+@media (max-height: 1000px) { #phone .handset { zoom: 0.78; } }
+@media (max-height: 775px) { #phone .handset { zoom: 0.63; } }
+@media (max-height: 630px) { #phone .handset { zoom: 0.47; } }
 #phone .phone-rank b {
   display: block;
   font-size: 30px;
