@@ -46,7 +46,8 @@ export const HEIST_SHOTS = {
       van.heading = facing(vanSpot, at(4.8, 8));
       game.fleet.setColour(van, VAN_PAINT);
       const arsenal = game.player.state.arsenal;
-      Object.assign(arsenal.owned.smg, { clip: 30, reserve: 120 });
+      // A clip spent on the guards and the next one loaded from the gun shop's starting reserve.
+      arsenal.owned.smg.reserve -= arsenal.owned.smg.clip;
       arsenal.current = 'smg';
       Object.assign(game.player.state.vitals, { health: 84, armour: 46 });
       const ilo = at(1.5, -1);

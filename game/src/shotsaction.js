@@ -129,7 +129,8 @@ export const ACTION_SHOTS = {
       game.fleet.setColour(car, COVER.paint);
       game.player.enterNow(car);
       const arsenal = game.player.state.arsenal;
-      Object.assign(arsenal.owned.smg, { clip: 24, reserve: 96 });
+      // Six rounds out of the first clip of the SMG as the gun shop sells it.
+      arsenal.owned.smg.clip -= 6;
       arsenal.current = 'smg';
       // Seven jobs in, on the last one: scraped but still in a vest.
       Object.assign(game.player.state.vitals, { health: 72, armour: 58 });
