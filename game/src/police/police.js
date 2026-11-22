@@ -12,6 +12,7 @@ import { createBeacons } from './beacons.js';
 import { drawLightBars } from './lightbar.js';
 import { createPoliceGunfire } from './gunfire.js';
 import { createRandom } from '../core/random.js';
+import { createLampLight } from './lamplight.js';
 
 const NAVY = '#16203a';
 const SIGHT = { car: 75, officer: 50, patrol: 60 };
@@ -35,6 +36,8 @@ export function createPolice({ fleet, layout, ground, colliders, characters, eff
   const group = new THREE.Group();
   group.name = 'police';
   group.add(helicopter.group, beacons.group);
+  const lampLight = createLampLight(timeOfDay);
+  if (lampLight.light) group.add(lampLight.light);
   const groundAt = (x, z) => ground.surfaceAt(x, z).height;
   const push = (x, z, r) => colliders.resolveCircle(x, z, r);
   const clear = (ax, az, bx, bz) => colliders.segmentHit(ax, az, bx, bz, 2.5) >= 1;
@@ -195,6 +198,7 @@ export function createPolice({ fleet, layout, ground, colliders, characters, eff
     if (!plan.helicopter && helicopter.state.active) helicopter.leave();
     helicopter.update(dt, target, time, ground.roofAt ?? undefined);
     checkBust(dt, target, player);
+    lampLight.update(units.units, target, time);
     state.siren = Infinity;
     for (const unit of units.units) {
       if (unit.car.lightsOn) state.siren = Math.min(state.siren, Math.hypot(unit.vehicle.x - target.x,

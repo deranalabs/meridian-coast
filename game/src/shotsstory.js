@@ -32,6 +32,8 @@ const LAST_JOB = {
 export const STORY_POINTS = Object.freeze({
   /** Headline is next. */
   fourthJob: Object.freeze({ jobs: 3, weapons: Object.freeze(['pistol']) }),
+  /** Headline under way, with the SMG that Known Face (reached at job three) lets Ilo buy. */
+  headlineFight: Object.freeze({ jobs: 3, weapons: Object.freeze(['pistol', 'smg']) }),
   /** Tide Tables is next: the title's save. */
   sixDone: Object.freeze({ jobs: 6, weapons: Object.freeze(['pistol', 'smg']) }),
   /** Gilded Tide is next. */
