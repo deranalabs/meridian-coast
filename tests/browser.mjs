@@ -1,6 +1,6 @@
 // Browser runs: --shots renders each ?shot scene to screenshots/, --nohud also saves HUD-less copies to
 // tmp/look/, --perf measures FPS and draw calls of the live drive scene at 1440x900 on the real GPU.
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { launchChrome, startServer, panelBoxes, ROOT, sleep } from './cdp.mjs';
 import { hudLayout } from './look-metrics.mjs';
@@ -119,7 +119,9 @@ async function runShots(server, nohud) {
         await openScene(page, `${server.url}index.html?shot=${shot.name}&seed=1${extra}`, errors);
         if (errors.length) throw new Error(`console errors in ${shot.name}:\n${errors.join('\n')}`);
         const { bytes, quality } = await capture(page);
-        writeFileSync(join(ROOT, folder, shot.file), bytes);
+        const target = join(ROOT, folder, shot.file);
+        // An unchanged shot is left alone, so a render only touches the files whose picture changed.
+        if (!existsSync(target) || !bytes.equals(readFileSync(target))) writeFileSync(target, bytes);
         if (shot === SHOT_LIST[0] && !extra) await checkCover(page);
         const state = await page.evaluate('JSON.stringify(window.__meridian.getState())');
         const seconds = ((Date.now() - started) / 1000).toFixed(1);

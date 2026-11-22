@@ -164,8 +164,8 @@ export const SHOTS = {
 };
 
 /**
- * The full map (N): three jobs done so the next story jobs and both activities pin the map, Ilo on foot by the
- * cab rank with two stars and two cruisers closing in, the whole city at zoom 1.
+ * The full map (N) at the cover's story point: seven jobs done, so the last job and both activities pin the map,
+ * Ilo on foot by the cab rank with two stars and two cruisers closing in, the whole city in view.
  */
 const MAP_SHOT = {
   time: 'dusk',
@@ -173,7 +173,7 @@ const MAP_SHOT = {
   focus: [40, 0, 90],
   stage(game) {
     const { police } = game.action;
-    seedStory(game, STORY_POINTS.fourthJob);
+    seedStory(game, STORY_POINTS.lastJob);
     game.player.placeOnFoot(44, 92, Math.PI * 0.75);
     police.setStars(2);
     for (const [x, z] of [[102, 40], [-20, 150]]) police.units.adopt(game.fleet.reuse('cruiser', '#16203a'), x, z, 0);
