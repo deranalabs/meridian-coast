@@ -1,5 +1,5 @@
 // Mission director: offers jobs at their start pillars, runs one at a time, retries from checkpoints, pays out.
-import { createRun, stepRun, restartRun, failRun, currentStage, stageLabel, stageTexts } from './machine.js';
+import { createRun, stepRun, restartRun, failRun, currentStage, jobLabel, stageLabel, stageTexts } from './machine.js';
 import { createProgress, cleanProgress, availableMissions, payReward } from './progress.js';
 import { failText } from './failures.js';
 import { resolveMission } from './resolve.js';
@@ -217,8 +217,9 @@ export function createMissions(game, defs, places, hooks = {}) {
       const run = state.run;
       if (!run) return null;
       const texts = stageTexts(run);
-      return { title: run.def.title, giver: giverName(run.def), colour: run.def.colour, stage: stageLabel(run),
-        objective: texts.objective, next: texts.next, progress: state.phase === 'active' ? guide.progress(run) : null,
+      return { title: run.def.title, job: jobLabel(run.def, resolved), giver: giverName(run.def),
+        colour: run.def.colour, stage: stageLabel(run), objective: texts.objective, next: texts.next,
+        progress: state.phase === 'active' ? guide.progress(run) : null,
         failed: state.phase === 'failed' ? { text: failText(run.reason), keys: FAIL_KEYS } : null };
     },
     get blips() {

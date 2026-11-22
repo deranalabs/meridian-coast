@@ -1,7 +1,9 @@
 // Unit tests for the mission machine: stages advance, every failure type, checkpoint restarts, rewards and saves.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRun, stepRun, restartRun, stageLabel, stageTexts } from './machine.js';
+import { createRun, stepRun, restartRun, jobLabel, stageLabel, stageTexts } from './machine.js';
+import { STORY_MISSIONS } from './story/index.js';
+import { ACTIVITIES } from './activities/index.js';
 import { createProgress, payReward, cleanProgress, availableMissions, rankFor } from './progress.js';
 import { normalise, serialise, parseSave } from '../save/savegame.js';
 
@@ -17,6 +19,14 @@ const DEF = {
     { type: 'deliver', car: 'mark', at: { x: 50, z: 0 }, radius: 5, wait: 1, text: 'Park it' },
   ],
 };
+
+test('the job label places a story job among the story jobs and names a side job an activity', () => {
+  const race = ACTIVITIES[0];
+  const defs = [...STORY_MISSIONS, ...ACTIVITIES];
+  assert.equal(jobLabel(STORY_MISSIONS[0], defs), 'Job 1 of 8');
+  assert.equal(jobLabel(STORY_MISSIONS.at(-1), defs), 'Job 8 of 8', 'activities do not lengthen the story');
+  assert.equal(jobLabel(race, defs), 'Activity');
+});
 
 test('stages advance in order and the run passes on the last one', () => {
   const run = createRun(DEF);

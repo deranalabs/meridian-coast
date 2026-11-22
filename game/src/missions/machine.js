@@ -20,6 +20,12 @@ export function timeLeft(run) {
 /** m:ss for a clock. */
 export const clock = (seconds) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
 
+/** "Job n of m" for a story job, counted among the story jobs of `defs` only; a side activity reads "Activity". */
+export function jobLabel(def, defs) {
+  if (def.activity) return 'Activity';
+  return `Job ${def.number} of ${defs.filter((entry) => !entry.activity).length}`;
+}
+
 /** "Stage n of m" for the HUD, with the clock on a timed stage. */
 export function stageLabel(run) {
   const left = timeLeft(run);
