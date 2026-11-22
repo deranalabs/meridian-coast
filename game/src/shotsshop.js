@@ -5,6 +5,8 @@ import { STORY_POINTS, seedStory } from './shotsstory.js';
 const GUN_SHOP = PLACES.find((place) => place.id === 'gun');
 const STEPS = 45;
 const CLEAR_RADIUS = 14;
+/** Where Ilo stands, metres out from the door and along the front: clear of the palm, 2.15 m from the door. */
+const STAND = { out: 1.62, along: 1.41 };
 const SHOPFRONT_LIGHT = '#ffb468';
 const SHOPFRONT_LEVEL = 22;
 const GOLDEN_FILL = '#ffc98c';
@@ -48,11 +50,11 @@ export const SHOP_SHOTS = {
       const place = shops.places.find((entry) => entry.id === GUN_SHOP.id);
       // The fourth-job point shows all three states: the pistol owned, the SMG for sale, the shotgun rank locked.
       seedStory(game, STORY_POINTS.fourthJob);
-      // A step from the door at the kerb, clear of the palm, half turned down the street: the lit shopfront runs
-      // away behind him to the sunlit towers, and its warm light falls on him (the game's own key light, up).
+      // A step from the door, inside the 2.2 m from which E opens the menu, half turned down the street: the lit
+      // shopfront runs away behind him to the sunlit towers, and its warm light falls on him (the key light, up).
       const along = { x: place.outZ, z: -place.outX };
-      game.player.placeOnFoot(place.x + place.outX * 2 + along.x * 2.2, place.z + place.outZ * 2 + along.z * 2.2,
-        place.heading - 0.95);
+      game.player.placeOnFoot(place.x + place.outX * STAND.out + along.x * STAND.along,
+        place.z + place.outZ * STAND.out + along.z * STAND.along, place.heading - 0.95);
       game.lighting.key.color.set(SHOPFRONT_LIGHT);
       game.lighting.key.intensity = SHOPFRONT_LEVEL;
       // The street lies in the towers' shade at this hour: the sky fill carries the gold the sun lays on them.
