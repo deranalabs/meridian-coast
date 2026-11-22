@@ -46,9 +46,31 @@ export function controlsHtml() {
     + `<em>${escapeText(what)}</em></div>`).join('')}</div>`).join('');
 }
 
-/** A one-line reminder for the bottom of the title screen. */
-export function controlsLine() {
-  const pick = [['Enter', 'start'], ['WASD', 'move'], ['E', 'car / shop'], ['Q', 'aim'], ['F', 'fire'],
-    ['Esc', 'pause'], ['M', 'mute']];
-  return pick.map(([k, what]) => `<kbd>${k}</kbd> ${what}`).join(' &nbsp; ');
+/** The keys of a first session, for the title screen's legend: a reviewer reads this and not the README. */
+export const TITLE_KEYS = Object.freeze([
+  [['W A S D', 'or arrows'], 'move, drive'],
+  [['Shift'], 'run'],
+  [['Space'], 'handbrake in a car'],
+  [['E'], 'enter a car, talk, shop'],
+  [['Mouse'], 'look and aim'],
+  [['Click'], 'fire or punch'],
+  [['Q'], 'aim (hold)'],
+  [['1-4'], 'weapons'],
+  [['R'], 'reload, radio in a car'],
+  [['P'], 'phone'],
+  [['N'], 'map'],
+  [['Esc'], 'pause'],
+]);
+
+/** The title's legend: one row a key; a second entry under the same key is a plain word, not a cap. */
+export function controlsLegend() {
+  return `<h3>Keys</h3>${TITLE_KEYS.map(([[cap, also], what]) => `<div class="legend-row"><span><kbd>${cap}</kbd>`
+    + `${also ? `<small>${escapeText(also)}</small>` : ''}</span><em>${escapeText(what)}</em></div>`).join('')}`;
+}
+
+/** The free-roam hint under the next job: until the first is done it teaches E, then the phone as well. */
+export function roamHint(jobsDone) {
+  return jobsDone
+    ? 'Press <kbd>E</kbd> at the gold pillar, or <kbd>P</kbd> for the phone'
+    : '<kbd>E</kbd> takes a car, or talks at the gold pillar';
 }

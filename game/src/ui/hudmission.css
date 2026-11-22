@@ -89,6 +89,12 @@
   border-radius: 3px;
   font: 700 11px "Avenir Next", Arial, sans-serif;
 }
+/* The free-roam hint's keys are caps, so the first E a player is told about stands out. */
+#hud .objective small kbd {
+  display: inline-block; padding: 0 5px; margin-right: 2px; border-radius: 3px;
+  background: #fff6f0; color: #2a1640; font: inherit; font-weight: 800; text-shadow: none;
+}
+#hud .objective small { color: #fff6f0; }
 #hud .message.objective-line { color: var(--mc-gold); }
 #hud .message.passed-line {
   font-size: 30px;

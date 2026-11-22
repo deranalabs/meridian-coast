@@ -4,7 +4,7 @@ import { GAME_TITLE, CITY_NAME } from '../palette.js';
 import { createMenuList } from './menulist.js';
 import { saveCardText } from './savecard.js';
 import { createSettingsPage } from './settingspage.js';
-import { controlsHtml, controlsLine } from './controlslist.js';
+import { controlsHtml, controlsLegend } from './controlslist.js';
 
 const STYLE = `
 #title { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: center;
@@ -23,7 +23,16 @@ const STYLE = `
 #title .title-list li.active { color: #fff; text-shadow: 0 0 16px #ff4fa0; }
 #title .title-list li.active::before { content: "\\25B6"; color: var(--mc-gold, #3fe0d0); margin-right: 14px;
   font-size: 18px; vertical-align: middle; }
-#title .controls { position: absolute; bottom: 34px; left: 7vw; font-size: 15px; color: #e8dcf4; }
+#title .legend { position: absolute; top: 24px; right: 24px; box-sizing: border-box; width: 344px;
+  padding: 10px 16px 12px; border-radius: 10px; background: rgba(14, 8, 30, 0.82); color: #fff6e8; }
+#title .legend h3 { margin: 0 0 6px; font-size: 15px; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--mc-gold, #ffc94a); }
+#title .legend:empty { display: none; }
+#title .legend-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  margin-top: 4px; font-size: 15px; line-height: 22px; white-space: nowrap; }
+#title .legend-row small { font-size: inherit; margin-left: 2px; }
+#title .legend-row em { font-style: normal; font-weight: 700; }
+#title.sub .legend { display: none; }
 #title kbd { display: inline-block; padding: 1px 8px; margin: 0 3px; border-radius: 5px; background: #fff;
   color: #2a1640; font-family: inherit; font-weight: 800; }
 #title .title-menu { display: flex; align-items: flex-start; gap: 40px; }
@@ -47,6 +56,16 @@ const STYLE = `
   #title .save-card { padding: 8px 14px 9px 12px; min-width: 240px; } #title .save-card .slot { font-size: 13px; }
   #title .save-card .chapter { font-size: 24px; } #title .save-card .mission { font-size: 19px; }
   #title .save-card .cash { font-size: 22px; } #title .save-card .saved { font-size: 14px; } }
+/* In a small window the legend keeps the right edge and the menu, with any save card, stays left of it. */
+@media (max-width: 900px) { #title { padding-left: 26px; } #title .legend { top: 14px; right: 14px; width: 262px;
+    padding: 8px 10px 9px; }
+  #title .legend h3 { font-size: 13px; margin-bottom: 3px; }
+  #title .legend-row { font-size: 13px; line-height: 19px; margin-top: 3px; }
+  #title .legend-row kbd { padding: 1px 5px; margin: 0 1px; }
+  #title .tagline { max-width: 420px; } #title .kicker { font-size: 13px; letter-spacing: 4px; }
+  #title .title-menu { gap: 18px; } #title .save-card { min-width: 0; }
+  #title .save-card .chapter { font-size: 20px; } #title .save-card .mission { font-size: 16px; }
+  #title .save-card .money { flex-wrap: wrap; row-gap: 0; column-gap: 12px; } }
 `;
 
 /** The card beside Continue: slot and rank, the mission the story stands at, cash and when it was saved. */
@@ -96,10 +115,10 @@ export function createTitleScreen(still, { settings = null, onEvent = () => {}, 
   keys.className = 'menu-page controls-page';
   keys.innerHTML = `<h2>Controls</h2><div class="keys">${controlsHtml()}</div><div class="menu-note">Esc back</div>`;
   root.appendChild(keys);
-  const line = document.createElement('div');
-  line.className = 'controls';
-  line.innerHTML = still ? '' : controlsLine();
-  root.appendChild(line);
+  const legend = document.createElement('div');
+  legend.className = 'legend';
+  legend.innerHTML = still ? '' : controlsLegend();
+  root.appendChild(legend);
 
   const hud = document.getElementById('hud');
   if (hud) hud.style.visibility = 'hidden';

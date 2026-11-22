@@ -30,6 +30,7 @@ import { createLandmarks } from './world/landmarks.js';
 import { createGround } from './world/ground.js';
 import { createColliders } from './world/colliders.js';
 import { edgeBand, EDGE_LINE } from './world/boundary.js';
+import { roamHint } from './ui/controlslist.js';
 
 /** The same keyboard with this step's presses hidden (the phone has them); held keys still steer a car. */
 const pressFree = (input) => ({ mouse: input.mouse, down: (...codes) => input.down(...codes),
@@ -181,7 +182,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
       // Name the next story job when there is one; repeatable activities only fill in after the story.
       const next = open.find((def) => !def.activity) ?? open[0];
       return { label: 'NO MISSION', text: next ? `Free roam: <b>${next.title}</b> waits at the gold pin`
-        + '<small>Press <kbd>E</kbd> at the gold pillar, or <kbd>P</kbd> for the phone</small>'
+        + `<small>${roamHint(game.missions.progress.done.length)}</small>`
         : 'Free roam: no calls right now<small>Coloured markers on the map are shops</small>' };
     }
     return isSearching(wanted)
