@@ -100,13 +100,46 @@ function badRows(page, scale) {
   })()`);
 }
 
+/** What is wrong with the car line: empty, cut, small, off the window, on the dialogue card or on the dial's ink. */
+function carLineProblems(page, scale) {
+  return page.evaluate(`(() => {
+    const line = document.querySelector('#hud .speedo .car-line');
+    const box = line?.getBoundingClientRect();
+    if (!box?.width) return ['no car line'];
+    const out = [];
+    for (const part of line.children) {
+      if (!part.textContent) out.push('empty ' + part.className);
+      if (part.scrollWidth > part.clientWidth + 1) out.push('cut ' + part.className);
+      const tall = part.getBoundingClientRect().height * ${scale};
+      if (tall < ${MIN_LABEL_HEIGHT}) out.push('small ' + part.className);
+    }
+    if (box.left < 0 || box.right > innerWidth || box.bottom > innerHeight) out.push('car line off the window');
+    const card = document.querySelector('#hud .dialogue-card.show')?.getBoundingClientRect();
+    if (card && box.left < card.right && box.right > card.left && box.top < card.bottom && box.bottom > card.top) {
+      out.push('car line on the dialogue card');
+    }
+    const dial = document.querySelector('#hud .speedo canvas');
+    const at = dial.getBoundingClientRect();
+    const k = dial.width / at.width;
+    const pixels = dial.getContext('2d').getImageData(0, 0, dial.width, dial.height).data;
+    for (let y = Math.max(0, Math.floor((box.top - at.top) * k)); y < dial.height; y += 1) {
+      if (y >= (box.bottom - at.top) * k) break;
+      for (let x = 0; x < dial.width; x += 1) {
+        const inLine = x >= (box.left - at.left) * k && x < (box.right - at.left) * k;
+        if (inLine && pixels[(y * dial.width + x) * 4 + 3] > 64) return [...out, 'car line on the dial'];
+      }
+    }
+    return out;
+  })()`);
+}
+
 /** The same cover laid out in a true 768x480 window: every row and label still whole. */
 async function checkSmallWindow(page, viewport) {
   const size = (box) => page.send('Emulation.setDeviceMetricsOverride',
     { ...box, deviceScaleFactor: 1, mobile: false });
   await size({ width: 768, height: 480 });
   await sleep(300);
-  const problems = [...await spilledLabels(page), ...await badRows(page, 1)];
+  const problems = [...await spilledLabels(page), ...await badRows(page, 1), ...await carLineProblems(page, 1)];
   await size(viewport);
   await sleep(300);
   if (problems.length) throw new Error(`cover HUD in a 768x480 window: ${problems.join(', ')}`);
@@ -118,6 +151,8 @@ async function checkCover(page) {
   const scale = 768 / viewport.width;
   const rows = await badRows(page, scale);
   if (rows.length) throw new Error(`cover dispatch rows: ${rows.join(', ')}`);
+  const car = await carLineProblems(page, scale);
+  if (car.length) throw new Error(`cover car line: ${car.join(', ')}`);
   await checkSmallWindow(page, viewport);
   const boxes = await panelBoxes(page, COVER_PANELS);
   const result = hudLayout(boxes, viewport);

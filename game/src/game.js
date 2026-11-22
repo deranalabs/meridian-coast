@@ -206,6 +206,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
       route: game.missions.route,
       speed: driving ? player.state.vehicle.speed : 0,
       driving,
+      car: driving ? player.state.car : null,
       x: subject.x,
       z: subject.z,
       heading,

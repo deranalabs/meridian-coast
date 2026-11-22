@@ -9,6 +9,7 @@ import { createWeaponPanel } from './weaponpanel.js';
 import { createMessages } from './messages.js';
 import { createWeaponBar } from './weaponbar.js';
 import { createPolicePanel } from './policepanel.js';
+import { carLine } from './carline.js';
 
 function element(parent, className, tag = 'div') {
   const node = document.createElement(tag);
@@ -107,6 +108,10 @@ export function createHud(layout, visible = true) {
   speedo.height = 380;
   speedoBox.appendChild(speedo);
   const speedoCtx = speedo.getContext('2d');
+  const carBox = element(speedoBox, 'car-line');
+  const carName = element(carBox, 'car-name', 'span');
+  const carStanding = element(carBox, 'car-standing', 'span');
+  let lastCar = '';
   const hint = element(root, 'hint');
   let lastHint = null;
 
@@ -148,6 +153,14 @@ export function createHud(layout, visible = true) {
       minimap.update(view.x, view.z, view.heading, view.blips, view.route);
       speedoBox.style.display = view.driving ? 'block' : 'none';
       if (view.driving) drawSpeedo(speedoCtx, speedo.width, Math.abs(view.speed) * 3.6);
+      const driven = carLine(view.car);
+      const carKey = driven ? `${driven.name}|${driven.standing}` : '';
+      if (carKey !== lastCar) {
+        lastCar = carKey;
+        carName.textContent = driven?.name ?? '';
+        carStanding.textContent = driven?.standing ?? '';
+        carStanding.dataset.standing = driven?.standing.toLowerCase().replaceAll(' ', '-') ?? '';
+      }
       if (view.hint !== lastHint) {
         hint.innerHTML = view.hint ?? '';
         lastHint = view.hint;
