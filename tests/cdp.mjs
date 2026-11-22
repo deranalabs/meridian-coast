@@ -66,7 +66,8 @@ export async function launchChrome({ width = 1280, height = 800, gpu = true, por
       page.close();
       child.kill('SIGTERM');
       await sleep(400);
-      rmSync(profile, { recursive: true, force: true });
+      // Chrome can still be writing into its profile as it exits, so the removal waits for it to finish.
+      rmSync(profile, { recursive: true, force: true, maxRetries: 10, retryDelay: 200 });
     },
   };
 }
