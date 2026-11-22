@@ -19,7 +19,8 @@ export const SHOP_TITLES = {
   garage: 'Your cars, kept safe',
 };
 
-const MAX_CARS = 6;
+/** How many cars the lock-up holds. */
+export const MAX_CARS = 6;
 
 /** Job gear this shop sells right now: only the `gear:<id>` items a running mission asks for (ctx.gear). */
 function gearItems(kind, ctx, item) {

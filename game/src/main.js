@@ -16,8 +16,11 @@ import { createSettings } from './ui/settings.js';
 import { createPauseMenu } from './ui/pausemenu.js';
 import { MAP_KEY } from './ui/mapscreen.js';
 import { unlockLabel } from './missions/respect.js';
+import { createProgressPage } from './ui/progresspage.js';
 
 const STEP = 1 / 60;
+/** A shot scene's own stand-in for the stored save (scenes never read or write storage). */
+let shotSave = null;
 const MAX_FRAME = 0.1;
 
 const params = new URLSearchParams(window.location.search);
@@ -149,6 +152,7 @@ const pause = createPauseMenu({
       .join(', ')}` : ''}` : 'Top rank';
     return `<b>${rank.name}</b>${respect} respect &middot; <i>${ahead}</i>`;
   },
+  progressPage: (parent) => createProgressPage(parent, game, () => (shot ? shotSave : loadSave())),
   onSave: saveFromMenu,
   onQuit: () => window.location.reload(),
   onEvent: menuSound,
@@ -230,6 +234,8 @@ if (shot) {
     scripted.afterStep?.(index);
   }
   if (shot.title) createTitleScreen(true, { settings, save: scripted.titleSave ?? null });
+  shotSave = scripted.storedSave ?? null;
+  if (scripted.pausePage) pause.open(scripted.pausePage);
   let frames = 0;
   const paint = () => {
     frame(STEP);

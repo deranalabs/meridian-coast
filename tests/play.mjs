@@ -188,6 +188,22 @@ try {
   const paused = await state(page);
   await sleep(400);
   check('Esc pauses the game', paused.paused && (await state(page)).time === paused.time);
+  // Progress is second in the menu: it shows Ilo's own numbers and Esc goes back to the menu, still paused.
+  await tap(page, 'ArrowDown');
+  await tap(page, 'Enter');
+  const progressPage = JSON.parse(await page.evaluate(`JSON.stringify((() => {
+    const root = document.querySelector('.progress-page.open');
+    return { figures: root?.querySelectorAll('.pg-figure').length ?? 0,
+      guns: root?.querySelector('[data-figure=weapons] b')?.textContent,
+      respect: root?.querySelector('[data-figure=respect] b')?.textContent,
+      want: String(window.__meridian.game.missions.progress.respect),
+      saved: root?.querySelector('.pg-saved')?.textContent, map: root?.querySelector('canvas')?.width ?? 0 }; })())`));
+  check('Progress opens with the player\'s own figures, the map and the last save', progressPage.figures === 8
+    && progressPage.guns === '1/3' && progressPage.respect === progressPage.want
+    && progressPage.saved === 'Not saved yet' && progressPage.map > 300);
+  await tap(page, 'Escape');
+  check('Esc leaves Progress for the menu, still paused', (await state(page)).paused
+    && await page.evaluate("!document.querySelector('.progress-page.open')"));
   await tap(page, 'ArrowDown');
   await tap(page, 'Enter');
   await tap(page, 'ArrowLeft');
