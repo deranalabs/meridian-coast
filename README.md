@@ -33,7 +33,7 @@ the game loads.
 | 1–4, Tab, R | pick a weapon, next weapon, reload | R changes the radio station |
 | P | phone: jobs, activities, the next rank | |
 | N | full city map (drag or WASD to pan, wheel or +/− to zoom, Space finds you) | |
-| M, Esc | mute; pause, settings, save | |
+| M, Esc | mute; pause, progress, settings, save | |
 | Enter, Backspace | skip a line or retry a failed job; call a failed job off | |
 
 ## The story

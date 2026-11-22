@@ -454,3 +454,100 @@ baseline was taken in this recording, so the cause of the lower scale is unknown
 **For the recording gate**: the brief asked for one tool call per message. Four messages in this recording held two
 calls. Three held only shell commands (commits and reads). One held two edits to `ui/policepanel.js`, which was
 edited again in two later single-call messages. Check that file at the gate.
+
+## Recording 7b: exact numbers, the stage 4 fault, the Progress page and a new sheet
+
+All eight items are done. The cover's scene, camera and light are untouched.
+
+**What changed**
+1. **Exact staged numbers** (`shotsstory.js`, tested): a point names jobs, side jobs and buys. `storyTotals` adds
+   the new game's cash and the rewards, then takes off the prices, including the $1,060 of job gear Tide Tables
+   makes the player buy.
+
+   | Point | Used by | Cash | Respect |
+   |---|---|---|---|
+   | `fourthJob`: three jobs, pistol | shop, map scene | $8,430 | 45 |
+   | `headlineFight`: three jobs, pistol, SMG | night fight | $6,630 | 45 |
+   | `sixDone`: six jobs, both guns | title scene's save | $17,330 | 120 |
+   | `lastJob`: seven jobs, one sprint, both guns, vest | cover, heist scene | $20,970 | 156 |
+   | `garage`: `lastJob` and two cars | Progress | $4,670 | 156 |
+
+   The cover's and heist's SMG ammo (24 + 96, 30 + 120) was more than a new gun holds. It is 24 + 90 and 30 + 60.
+2. **The stage 4 fault** (`missions/director.js`, `director.test.js`): see below.
+3. **Progress page** (`ui/progressdata.js` pure and tested, `ui/progresspage.js`, `ui/progresspage.css`): second in
+   the pause menu. Esc, Enter or Backspace goes back. It scales with the window.
+4. **Night fight** (`2-fight.jpg`, scene `combat`): Headline stage 4 of 5 on a cross street of Neon Mile, at night.
+   It did not need dusk. `police/lamplight.js` is new: in a night city the nearest lit cruiser casts one real light,
+   in play as well as in the shot.
+5. **Shop** (`4-shop.jpg`): Halcyon Arms with owned, for sale and "Rank: Earner". Shops with five rows or fewer get
+   large type in windows of 1100x720 and up, and hide the HUD's right column under the menu. An owned row reads
+   "Owned" where its price was.
+6. **Rank label**: `RANK 5/6`, 24 px heavy digits. An 8 rendered in its place at 768x480 is clearly a different digit.
+7. **Sheet**: `1-mission`, `2-fight`, `3-progress`, `4-shop`. `map`, `title` and `heist` stay as debug scenes.
+
+**The Progress page's figures**
+
+| Figure | In the shot | Where it comes from |
+|---|---|---|
+| Jobs done | 7/8 | story ids in `progress.done`, of `STORY_MISSIONS` |
+| Rank, with its name | 5/6 | `rankProgress` in `missions/respect.js`, of `RANKS` |
+| Respect earned | 156 | `progress.respect` |
+| Side jobs open | 2 | `availableMissions` over `ACTIVITIES` |
+| Guns owned | 2/3 | the arsenal, of `WEAPON_PRICES` (labelled "Guns" to fit at 30 px) |
+| Cars in garage | 2/6 | `game.ownedCars`, of `MAX_CARS` in `shops/catalog.js` |
+| Shops in the city | 7 | usable `PLACES` less the flat and the lock-up (three are food carts) |
+| Radio stations | 4 | `STATIONS` in `ui/radiocontent.js` |
+
+The next job is the first story job not done, with its giver from the cast. The next rank is `nextUnlock`. Each
+district's holder is the faction whose `turf` it is in `FACTION_INFO`. The three things on sale are `itemsFor` for
+the gun shop, the dealer and the clothes shop, with the rank from `lockReason`. The last save is the stored save
+through `saveCardText`, or "Not saved yet". The map is `paintMap` over the sunny canvas with job pins and Ilo's
+arrow; shop tiles are left off because they covered the district names at that size.
+
+**The stage 4 fault.** An evade with an `alert` clears only after it has seen stars. The director raised the alarm
+after that step's check, so the evade first saw the stars one step later. If they were cleared in between it never
+armed, and waited with 0 stars for ever. `playstory.mjs` hit this when cruisers were already out: its first poll
+found stars and units and stood the police down at once. The director now arms the evade as it raises the alarm
+(`markAlarm`), on a first try and on a retry. The failure is timing-dependent: the one reproduction run on the old
+code passed, so the cause was found by reading and pinned by a unit test that failed on the old code (two of its
+three cases). The same sequence forced in live Chrome now moves to stage 5. `playstory.mjs` passed to the end in
+each of its three full runs after the fix.
+
+**Look numbers** (768x480 with HUD; gradEnergy / flatBlocks / colors / brightShare / meanSat)
+
+| Slot | Before | After |
+|---|---|---|
+| 1 | mission 9.50 / 0.228 / 178 / 10.21 % / 0.275 | mission 9.52 / 0.228 / 178 / 10.18 % / 0.275 |
+| 2 | map 3.99 / 0.588 / 77 / 3.01 % / 0.404 | fight 6.67 / 0.305 / 173 / 4.19 % / 0.376 |
+| 3 | title 5.38 / 0.476 / 133 / 1.03 % / 0.386 | progress 8.06 / 0.500 / 69 / 3.82 % / 0.595 |
+| 4 | heist 9.43 / 0.164 / 204 / 1.12 % / 0.382 | shop 8.27 / 0.266 / 150 / 4.18 % / 0.420 |
+
+The cover still misses brightShare and meanSat, as before.
+
+**Tests** (before → after): unit 152 → 165, all pass; lint 233 → 240 files, 0 problems; `play.mjs` 40 → 42 checks,
+all pass; `playstory.mjs` 40 → 40 checks, all pass (it was a known intermittent failure before).
+
+**Performance** (M1, 1440x900 at DPR 1.5): drive 70 draw calls, 58.3 FPS, and 49.5 FPS on a warm laptop straight
+after the browser tests (7a: 58.4). Night fight live: 72 draw calls, 50.5 FPS. Toggling the lamp light in that scene
+cost 0.3 and 4.0 FPS in two passes.
+
+**What is staged in the shots, beyond the seeded story point**
+- Fight: the crowd, both officers' marks, the cruiser and Air-1 are placed. Ilo holds his aim, and the burst
+  (four rounds off the clip, tracer, flashes) is struck on the last steps, because held fire hits an officer
+  through aim assist and adds a fifth star. Health is set to 64.
+- Shop: the golden preset is for staged scenes only (play is dusk or night). That street is in shade at that hour,
+  so the scene also warms and raises the sky fill and the key light.
+- Cover: health 72 and armour 58 are set, as before.
+
+**Skipped and left**
+- The kit's judge view was not rebuilt and the judge was not asked, so the effect on the verdict is untested. The
+  sheet was checked on a mock at the judge's sizes.
+- The cover's NEWS tag blinks on wall-clock time, so a re-render can catch it dimmed and differ in bytes. The
+  committed cover has it lit.
+- In a fight cell the panels' small type does not read; the night, the figures, the cruiser and the stars do. The
+  officers' muzzle flashes are faint.
+- A respect total of four digits drops to 62 px type on the Progress page, under the 60 px glyph height.
+- `lamplight.js` has no unit test; it was checked in the live night scene.
+
+**For the recording gate**: two messages held two calls each. The first held two reads. The second wrote
+`shotsstory.js` and then ran its test. That file was edited again afterwards in three single-call messages.
