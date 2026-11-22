@@ -11,6 +11,9 @@ export const ROLE_BRIEF = Object.freeze({ ram: 'Ram', left: 'Flank L', right: 'F
 /** Unit mode to the state word on the panel. */
 export const MODE_STATE = Object.freeze({ pursue: 'Pursuit', search: 'Search', leave: 'Return' });
 
+/** A state word as the key of its chip on the panel: 'Eyes on' becomes 'eyes-on'. */
+export const stateKey = (state) => state.toLowerCase().replaceAll(' ', '-');
+
 /** "2-Cobalt-31": district division, radio name and unit number, all from the car's slot. */
 export function callSign(index) {
   const i = Math.max(0, index | 0);
@@ -59,5 +62,7 @@ export function policeReport(police, x, z) {
   }
   rows.sort((a, b) => a.metres - b.metres);
   const officers = police.officers.pool.filter((o) => o.active && !o.down).length;
-  return { rows, cars: police.units.units.length, officers, nearest: rows.length ? rows[0].metres : null };
+  // Responding: every row still on the call (car, helicopter, roadblock) plus each officer on foot.
+  const responding = rows.filter((row) => row.state !== MODE_STATE.leave).length + officers;
+  return { rows, cars: police.units.units.length, officers, responding, nearest: rows.length ? rows[0].metres : null };
 }

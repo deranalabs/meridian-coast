@@ -1,4 +1,5 @@
-// Police dispatch panel: star row, Pursuit / Searching / Clear state, up to six unit rows and a head count.
+// Police dispatch panel: units and stars in the head, the chase state, up to six unit rows with state chips, totals.
+import { stateKey } from '../police/report.js';
 
 const MAX_ROWS = 6;
 const CLEAR_SECONDS = 4;
@@ -24,6 +25,7 @@ export function createPolicePanel(parent) {
   const root = make(parent, 'dispatch');
   const head = make(root, 'dispatch-head');
   make(head, 'dispatch-tag', 'span').textContent = 'PMPD DISPATCH';
+  const units = make(head, 'dispatch-units', 'span');
   const stars = make(head, 'dispatch-stars', 'span');
   const status = make(root, 'dispatch-state');
   const list = make(root, 'dispatch-rows', 'ol');
@@ -55,6 +57,8 @@ export function createPolicePanel(parent) {
     status.textContent = word === 'Pursuit' ? 'Pursuit · units closing'
       : word === 'Searching' ? 'Searching · out of sight' : 'Clear · units returning';
     root.dataset.state = word.toLowerCase();
+    const responding = report?.responding ?? 0;
+    units.textContent = responding ? `${responding} ${responding === 1 ? 'UNIT' : 'UNITS'}` : '';
     const items = report?.rows ?? [];
     for (let i = 0; i < MAX_ROWS; i += 1) {
       const slot = rows[i];
@@ -70,6 +74,7 @@ export function createPolicePanel(parent) {
       slot.detail.title = row.detail;
       slot.metres.textContent = formatMetres(row.metres);
       slot.state.textContent = row.state;
+      slot.state.dataset.chip = stateKey(row.state);
     }
     const extra = items.length > MAX_ROWS ? ` · +${items.length - MAX_ROWS} more` : '';
     count.textContent = report

@@ -1,7 +1,7 @@
 // Unit tests for the dispatch report: sorting, call signs, roadblock and helicopter rows, officer count.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { policeReport, callSign, ROLE_BRIEF } from './report.js';
+import { policeReport, callSign, stateKey, MODE_STATE, ROLE_BRIEF } from './report.js';
 
 const unit = (index, x, z, role, mode, officersOut = false) => ({
   car: { index }, vehicle: { x, z, speed: 10 }, driver: { role }, mode, officersOut,
@@ -65,8 +65,19 @@ test('the helicopter shows only while active, as Air-1 Gull', () => {
   assert.equal(air.state, 'Eyes on');
 });
 
+test('units count responding cars, officers on foot, the helicopter and roadblocks, not cars on the way back', () => {
+  // Two cars still on it (the third returns), two officers standing and one roadblock.
+  assert.equal(policeReport(fakePolice(), 0, 0).responding, 5);
+  assert.equal(policeReport(fakePolice({ heli: true }), 0, 0).responding, 6);
+});
+
+test('every state the report gives has a chip key of its own', () => {
+  const states = [...Object.values(MODE_STATE), 'Eyes on', 'Holding'];
+  assert.deepEqual(states.map(stateKey), ['pursuit', 'search', 'return', 'eyes-on', 'holding']);
+});
+
 test('officers count only the active ones still standing; an empty force reports nothing', () => {
   assert.equal(policeReport(fakePolice(), 0, 0).officers, 2);
   const empty = policeReport({ units: { units: [] }, officers: { pool: [] } }, 0, 0);
-  assert.deepEqual(empty, { rows: [], cars: 0, officers: 0, nearest: null });
+  assert.deepEqual(empty, { rows: [], cars: 0, officers: 0, responding: 0, nearest: null });
 });
