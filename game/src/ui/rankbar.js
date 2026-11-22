@@ -1,18 +1,24 @@
-// HUD rank bar: Ilo's rank name, respect earned toward the next rank as a thin gold bar, and that rank's name.
+// HUD rank bar: the rung on the rank ladder and its name, the respect total and what is left to the next, a gold bar.
 import { rankProgress } from '../missions/respect.js';
 
-/** The line beside the rank name: points toward the next rank, or a flat word at the top. */
+/** The rung before the rank name. */
+export const rankStep = (progress) => `Rank ${progress.step} of ${progress.steps}`;
+
+/** The line under the rank name: the respect total and the points left to the next rank, or a word at the top. */
 export function rankLine(progress) {
-  return progress.next ? `${Math.floor(progress.gained)}/${progress.span} to ${progress.next}` : 'Top rank';
+  const total = Math.floor(progress.respect);
+  const left = progress.next ? `${Math.ceil(progress.span - progress.gained)} to ${progress.next}` : 'Top rank';
+  return `${total} respect · ${left}`;
 }
 
 /** createRankBar(parent) → { root, update(respect) }; update touches the DOM only when the whole points change. */
 export function createRankBar(parent) {
   const root = document.createElement('div');
   root.className = 'rankbar';
-  root.innerHTML = '<div class="rank-line"><b class="rank-name"></b><span class="rank-next"></span></div>'
-    + '<div class="rank-track"><div class="rank-fill"></div></div>';
+  root.innerHTML = '<div class="rank-line"><span class="rank-step"></span><b class="rank-name"></b></div>'
+    + '<div class="rank-next"></div><div class="rank-track"><div class="rank-fill"></div></div>';
   parent.appendChild(root);
+  const step = root.querySelector('.rank-step');
   const name = root.querySelector('.rank-name');
   const next = root.querySelector('.rank-next');
   const fill = root.querySelector('.rank-fill');
@@ -25,6 +31,7 @@ export function createRankBar(parent) {
       if (points === last) return;
       last = points;
       const progress = rankProgress(points);
+      step.textContent = rankStep(progress);
       name.textContent = progress.name;
       next.textContent = rankLine(progress);
       fill.style.width = `${Math.round(progress.fraction * 100)}%`;

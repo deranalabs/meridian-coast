@@ -80,8 +80,10 @@ test('activities resolve, repeat, pay every time and sort after the story', () =
 });
 
 test('rank progress gives the fraction of the way to the next rank and is full at the top', () => {
-  assert.deepEqual(rankProgress(0), { name: 'Nobody', next: 'Runner', fraction: 0, gained: 0, span: 10 });
-  assert.deepEqual(rankProgress(45), { name: 'Known Face', next: 'Earner', fraction: 0.5, gained: 15, span: 30 });
+  assert.deepEqual(rankProgress(0),
+    { step: 1, steps: 6, name: 'Nobody', next: 'Runner', respect: 0, fraction: 0, gained: 0, span: 10 });
+  assert.deepEqual(rankProgress(45),
+    { step: 3, steps: 6, name: 'Known Face', next: 'Earner', respect: 45, fraction: 0.5, gained: 15, span: 30 });
   assert.equal(rankProgress(59.9).name, 'Known Face');
   assert.equal(rankProgress(60).fraction, 0);
   assert.equal(rankProgress(-8).fraction, 0, 'negative respect clamps to zero');
