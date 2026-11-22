@@ -32,6 +32,7 @@ import { createColliders } from './world/colliders.js';
 import { edgeBand, EDGE_LINE } from './world/boundary.js';
 import { roamHint } from './ui/controlslist.js';
 import { createInCarCamera } from './vehicles/incarcamera.js';
+import { createClimate } from './systems/climate.js';
 
 const CAR_VIEW_NAMES = { chase: 'Chase', driver: "Driver's seat", bonnet: 'Bonnet' };
 /** The same keyboard with this step's presses hidden (the phone has them); held keys still steer a car. */
@@ -58,7 +59,7 @@ function addParkedCars(fleet, parking, focus, random) {
 }
 
 /** Build everything for `seed` and `timeOfDay`; focus is where ambient life spawns first. */
-export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
+export function createGame({ renderer, seed, timeOfDay, focus, showHud, weather }) {
   const scene = new THREE.Scene();
   scene.fog = installFog(timeOfDay);
   scene.environment = createEnvironment(renderer, timeOfDay);
@@ -121,12 +122,14 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
   // The radio hears the city: jobs passed and failed, chases, the helicopter, arrests become news flashes.
   radio.listen(game.action.events);
   game.prompt = null;
+  game.climate = createClimate(game, weather);
   let heldInput = null;
 
   game.step = (dt, rawInput) => {
     game.time += dt;
     const phoneKeys = !game.services.shops.openPlace && game.phone.update(rawInput);
     const input = phoneKeys ? (heldInput ??= pressFree(rawInput)) : rawInput;
+    game.climate.update(dt, input);
     game.prompt = game.services.update(dt, input);
     const missionPrompt = game.services.respawn.active ? null : game.missions.update(dt, input);
     game.prompt ??= missionPrompt;
@@ -184,6 +187,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
     lighting.lightSubject(ilo.position, camera);
     sky.update(camera, time);
     game.action.draw(time);
+    game.climate.draw(time);
     post.render(scene, camera, time);
   };
 

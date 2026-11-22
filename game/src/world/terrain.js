@@ -35,6 +35,9 @@ uniform sampler2D uGrass;
 uniform sampler2D uSand;
 uniform sampler2D uGroundData;
 uniform float uWetness;
+#ifdef WET_RAIN
+uniform float uRain;
+#endif
 varying vec3 vSurface;
 varying vec3 vGroundPos;
 `;
@@ -52,6 +55,11 @@ const MAP_FRAGMENT = /* glsl */ `
   vec3 weights = vSurface / max(vSurface.x + vSurface.y + vSurface.z, 0.001);
   float puddle = smoothstep(0.57, 0.62, groundData.r) * weights.x * uWetness;
   float damp = smoothstep(0.4, 0.6, groundData.r) * weights.x * uWetness;
+#ifdef WET_RAIN
+  // Rain darkens and glosses all of the asphalt and spreads the puddles. Compiled in only once it has rained.
+  puddle = max(puddle, smoothstep(0.49, 0.56, groundData.r) * weights.x * uRain);
+  damp = max(damp, weights.x * uRain * 0.92);
+#endif
   float wetSand = smoothstep(0.6, -0.3, vGroundPos.y) * weights.z;
   sandColour *= 1.0 - wetSand * 0.45;
   vec3 groundColour = asphaltColour * weights.x + grassColour * weights.y + sandColour * weights.z;
@@ -112,7 +120,10 @@ export function createTerrain(textures, timeOfDay) {
     uSand: { value: textures.sand },
     uGroundData: { value: textures.data },
     uWetness: { value: timeOfDay.wetness ?? (timeOfDay.name === 'night' ? 1.0 : 0.85) },
+    uRain: { value: 0 },
   };
+  // render/atmosphere.js sets WET_RAIN and drives uRain, so a dry scene compiles exactly the dry program.
+  material.userData.uniforms = uniforms;
   material.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniforms);
     shader.vertexShader = shader.vertexShader

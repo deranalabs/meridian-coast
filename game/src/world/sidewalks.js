@@ -103,6 +103,9 @@ const FRAGMENT_PARS = /* glsl */ `
 uniform sampler2D uPavers;
 uniform sampler2D uGroundData;
 uniform float uWetness;
+#ifdef WET_RAIN
+uniform float uRain;
+#endif
 varying vec2 vPaverUv;
 varying vec2 vCell;
 varying vec3 vPaverWorld;
@@ -116,6 +119,9 @@ const MAP_FRAGMENT = /* glsl */ `
   vec3 paverColour = textureGrad(uPavers, paverUv, paverGx, paverGy).rgb;
   vec4 paverData = texture2D(uGroundData, vPaverWorld.xz / 30.0);
   float paverWet = smoothstep(0.45, 0.62, paverData.r) * uWetness;
+#ifdef WET_RAIN
+  paverWet = max(paverWet, uRain * (0.75 + 0.25 * smoothstep(0.4, 0.55, paverData.r)));
+#endif
   paverColour *= (0.82 + paverData.b * 0.36) * (1.0 - paverWet * 0.3);
   diffuseColor.rgb *= paverColour;
 `;
@@ -138,7 +144,9 @@ export function createSidewalks(layout, textures, timeOfDay) {
     uPavers: { value: textures.pavers },
     uGroundData: { value: textures.data },
     uWetness: { value: timeOfDay.wetness ?? (timeOfDay.name === 'night' ? 0.8 : 0.6) },
+    uRain: { value: 0 },
   };
+  material.userData.uniforms = uniforms;
   material.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, uniforms);
     shader.vertexShader = shader.vertexShader

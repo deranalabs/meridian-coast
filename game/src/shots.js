@@ -96,6 +96,16 @@ export const SHOTS = {
       return {};
     },
   },
+  // The drive in the rain at dusk, behind the car. Not on the sheet: every scene that names no weather stays dry.
+  rain: {
+    time: 'dusk',
+    weather: 'rain',
+    steps: 40,
+    focus: [100, 0, DRIVE.endZ - 25],
+    stage(game) {
+      return SHOTS.drive.stage(game);
+    },
+  },
   // The drive again from the driver's seat (V). Not on the sheet.
   cockpit: {
     time: 'dusk',

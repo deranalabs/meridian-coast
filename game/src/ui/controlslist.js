@@ -30,6 +30,7 @@ export const CONTROLS = Object.freeze([
     [['←', '→'], 'Change a setting'],
     [['M'], 'Mute sound'],
     [['N'], 'Full map (WASD pan, +/− or wheel zoom, Space finds you)'],
+    [['T'], 'Rain on or off'],
   ]],
   ['Story', [
     [['P'], 'Phone: contacts, jobs, rank'],
@@ -60,6 +61,7 @@ export const TITLE_KEYS = Object.freeze([
   [['1-4'], 'weapons'],
   [['R'], 'reload, radio in a car'],
   [['V'], 'camera in a car'],
+  [['T'], 'rain on or off'],
   [['P'], 'phone'],
   [['N'], 'map'],
   [['Esc'], 'pause'],

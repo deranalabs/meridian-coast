@@ -17,6 +17,7 @@ import { createPauseMenu } from './ui/pausemenu.js';
 import { MAP_KEY } from './ui/mapscreen.js';
 import { unlockLabel } from './missions/respect.js';
 import { createProgressPage } from './ui/progresspage.js';
+import { startingWeather } from './systems/weather.js';
 
 const STEP = 1 / 60;
 /** A shot scene's own stand-in for the stored save (scenes never read or write storage). */
@@ -36,7 +37,8 @@ const showHud = params.get('hud') !== '0' && (shot ? shot.hud !== false : true);
 const canvas = document.getElementById('game');
 const { renderer, stats, resize } = createRenderer(canvas);
 const focus = shot?.focus ? new THREE.Vector3(...shot.focus) : new THREE.Vector3(36, 0, -68);
-const game = createGame({ renderer, seed, timeOfDay, focus, showHud });
+const weather = startingWeather(shot, params.get('weather'));
+const game = createGame({ renderer, seed, timeOfDay, focus, showHud, weather });
 // A stored save waits for Continue on the title; Start Story and Free Roam begin a new game.
 const startFrom = (mode) => {
   if (mode === 'continue' && resume) applySave(game, resume);
