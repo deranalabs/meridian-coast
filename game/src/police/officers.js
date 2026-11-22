@@ -3,6 +3,7 @@ import { officerAppearance } from './officerlook.js';
 import { knockDown, stepRagdoll, standUp } from '../actors/ragdoll.js';
 import { createRandom } from '../core/random.js';
 import { createVitals, applyDamage } from '../combat/vitals.js';
+import { keepInside } from '../world/boundary.js';
 
 const RUN = 4.6;
 const SHOOT_RANGE = 22;
@@ -107,6 +108,7 @@ export function createOfficers(characters, count, seed) {
       sideways) * dt, 0.35);
     c.position.x = pushed.x;
     c.position.z = pushed.z;
+    keepInside(c.position);
     c.position.y = ctx.groundAt(c.position.x, c.position.z);
     c.speed = speed || Math.abs(sideways);
     c.play(shooting ? 'aim' : speed > 3 ? 'run' : c.speed > 0 ? 'walk' : 'idle');

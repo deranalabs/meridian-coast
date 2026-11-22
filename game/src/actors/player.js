@@ -3,6 +3,7 @@ import { createVehicleState, stepVehicle } from '../vehicles/driving.js';
 import { createWallet } from '../economy/wallet.js';
 import { createVitals } from '../combat/vitals.js';
 import { createArsenal } from '../combat/arsenal.js';
+import { edgeBand, footPush, keepInside } from '../world/boundary.js';
 
 const WALK = 1.7;
 const RUN = 5.6;
@@ -107,6 +108,15 @@ export function createPlayer(character, { fleet, colliders, ground, smoke, traff
       }
     }
     if (aiming) character.heading = cameraYaw;
+    const band = edgeBand(character.position.x, character.position.z);
+    if (band) {
+      const back = footPush(band) * dt;
+      const eased = colliders.resolveCircle(character.position.x + band.inX * back,
+        character.position.z + band.inZ * back, RADIUS);
+      character.position.x = eased.x;
+      character.position.z = eased.z;
+      keepInside(character.position);
+    }
     character.position.y = groundY(character.position.x, character.position.z);
     character.speed = speed;
     state.actionTimer = Math.max(0, state.actionTimer - dt);

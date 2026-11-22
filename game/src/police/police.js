@@ -13,6 +13,7 @@ import { drawLightBars } from './lightbar.js';
 import { createPoliceGunfire } from './gunfire.js';
 import { createRandom } from '../core/random.js';
 import { createLampLight } from './lamplight.js';
+import { keepInside } from '../world/boundary.js';
 
 const NAVY = '#16203a';
 const SIGHT = { car: 75, officer: 50, patrol: 60 };
@@ -115,6 +116,7 @@ export function createPolice({ fleet, layout, ground, colliders, characters, eff
       events.emit('crash', { speed, x: body.vehicle.x, z: body.vehicle.z, player: Boolean(involvesPlayer) });
     });
     for (const body of bodies) {
+      keepInside(body.vehicle);
       body.car.position.x = body.vehicle.x;
       body.car.position.z = body.vehicle.z;
     }

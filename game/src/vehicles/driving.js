@@ -1,4 +1,5 @@
-// Arcade driving model: throttle, brakes, speed-sensitive steering, grip, handbrake drift and wall hits.
+// Arcade driving model: throttle, brakes, speed-sensitive steering, grip, handbrake drift, walls and the edge.
+import { easeCarBack, keepInside } from '../world/boundary.js';
 
 const MAX_STEER = 0.6;
 const REVERSE_MAX = 9;
@@ -75,6 +76,7 @@ export function stepVehicle(state, input, dt, collide = null, blocked = null) {
   state.vx = nfx * forward + nrx * lateral;
   state.vz = nfz * forward + nrz * lateral;
 
+  easeCarBack(state, dt, input.throttle);
   let nx = state.x + state.vx * dt;
   let nz = state.z + state.vz * dt;
   if (blocked && blocked(nx, nz)) {
@@ -108,6 +110,7 @@ export function stepVehicle(state, input, dt, collide = null, blocked = null) {
   }
   state.x = nx;
   state.z = nz;
+  keepInside(state);
   state.speed = state.vx * nfx + state.vz * nfz;
   state.lateral = state.vx * nrx + state.vz * nrz;
   state.slip = Math.abs(state.lateral);

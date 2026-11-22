@@ -29,6 +29,7 @@ import { createCity } from './world/city.js';
 import { createLandmarks } from './world/landmarks.js';
 import { createGround } from './world/ground.js';
 import { createColliders } from './world/colliders.js';
+import { edgeBand, EDGE_LINE } from './world/boundary.js';
 
 /** The same keyboard with this step's presses hidden (the phone has them); held keys still steer a car. */
 const pressFree = (input) => ({ mouse: input.mouse, down: (...codes) => input.down(...codes),
@@ -152,6 +153,8 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
   };
 
   game.nearCarHint = () => {
+    const at = player.state.car?.position ?? ilo.position;
+    if (edgeBand(at.x, at.z)) return EDGE_LINE;
     if (game.prompt) return game.prompt;
     if (player.state.mode !== 'foot' || player.state.down || player.state.frozen) return null;
     for (const car of fleet.cars) {
