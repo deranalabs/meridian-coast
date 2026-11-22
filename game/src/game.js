@@ -31,7 +31,9 @@ import { createGround } from './world/ground.js';
 import { createColliders } from './world/colliders.js';
 import { edgeBand, EDGE_LINE } from './world/boundary.js';
 import { roamHint } from './ui/controlslist.js';
+import { createInCarCamera } from './vehicles/incarcamera.js';
 
+const CAR_VIEW_NAMES = { chase: 'Chase', driver: "Driver's seat", bonnet: 'Bonnet' };
 /** The same keyboard with this step's presses hidden (the phone has them); held keys still steer a car. */
 const pressFree = (input) => ({ mouse: input.mouse, down: (...codes) => input.down(...codes),
   axis: (negative, positive) => input.axis(negative, positive), pressed: () => false, consume() {}, endFrame() {} });
@@ -96,7 +98,9 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
   const camera = new THREE.PerspectiveCamera(58, 16 / 10, 0.1, 2600);
   const chase = createChaseCamera(camera);
   const footCamera = createFootCamera(camera);
-  const post = createPost(renderer, timeOfDay);
+  const inCar = createInCarCamera(camera);
+  scene.add(inCar.group);
+  const post =createPost(renderer, timeOfDay);
   const hud = createHud(city.layout, showHud);
   const radio = createRadio(0);
   const focusPoint = new THREE.Vector3();
@@ -105,7 +109,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
   const game = {
     scene, camera, city, landmarks, ground, colliders, fleet, traffic, smoke, characters, ilo, pedestrians, player,
     chase, footCamera, post, hud, radio, lighting, sky, timeOfDay, seed, time: 0, cameraMode: 'auto',
-    chaseOptions: undefined, playerHooks,
+    chaseOptions: undefined, playerHooks, inCar,
   };
   game.action = createAction(game);
   game.baseLook = ilo.appearance;
@@ -137,6 +141,13 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
     pedestrians.update(dt, focusPoint);
     smoke.update(dt);
     characters.update(dt, game.time);
+    const driven = player.state.mode === 'driving' ? player.state.car : null;
+    if (driven && input.pressed('KeyV')) {
+      inCar.cycle();
+      chase.snap();
+      hud.say(`${CAR_VIEW_NAMES[inCar.state.view]} camera`, 1.4);
+    }
+    inCar.sync(game.cameraMode === 'auto' ? driven : null);
     fleet.update();
     radio.update(dt);
     city.update(game.time);
@@ -146,7 +157,9 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud }) {
 
   game.updateCamera = (dt, mouse = { dx: 0, dy: 0 }) => {
     if (player.state.mode === 'driving') {
-      chase.update(player.state.car, player.state.vehicle.speed, dt, game.chaseOptions);
+      const { car, vehicle } = player.state;
+      if (inCar.active()) inCar.update(car, vehicle.speed, game.time, dt, mouse);
+      else chase.update(car, vehicle.speed, dt, game.chaseOptions);
       footCamera.setYaw(player.state.car.heading);
     } else {
       footCamera.update(ilo.position, mouse, dt, (x, z) => ground.surfaceAt(x, z).height);

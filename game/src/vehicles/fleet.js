@@ -88,7 +88,8 @@ export function createFleet(capacityPerType, noiseTexture, timeOfDay) {
     update() {
       cars.forEach((car, carIndex) => {
         const mesh = meshes[car.type];
-        if (!car.visible) {
+        // bodyHidden: the camera sits inside this one, and the cockpit stands in for it.
+        if (!car.visible || car.bodyHidden) {
           mesh.setMatrixAt(car.index, hidden);
           for (let w = 0; w < 4; w += 1) wheels.setMatrixAt(carIndex * 4 + w, hidden);
           return;

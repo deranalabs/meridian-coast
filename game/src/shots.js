@@ -96,6 +96,17 @@ export const SHOTS = {
       return {};
     },
   },
+  // The drive again from the driver's seat (V). Not on the sheet.
+  cockpit: {
+    time: 'dusk',
+    steps: 40,
+    focus: [100, 0, DRIVE.endZ - 25],
+    stage(game) {
+      const scripted = SHOTS.drive.stage(game);
+      game.inCar.cycle();
+      return scripted;
+    },
+  },
   foot: {
     time: 'night',
     steps: 90,
