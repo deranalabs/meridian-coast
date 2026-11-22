@@ -2,7 +2,7 @@
 
 import { PART } from './palette.js';
 import { BEACH_ROAD_X } from './world/heightfield.js';
-import { STORY_MISSIONS } from './missions/story/index.js';
+import { STORY_POINTS, seedStory } from './shotsstory.js';
 import { fillShoreline } from './shotslife.js';
 
 const HEIST = 'gilded-tide';
@@ -121,7 +121,7 @@ export const ACTION_SHOTS = {
     focus: [COVER.laneX, 0, COVER.startZ - 30],
     stage(game) {
       const { police } = game.action;
-      game.missions.progress.done.push(...STORY_MISSIONS.map((def) => def.id).filter((id) => id !== HEIST));
+      seedStory(game, STORY_POINTS.lastJob);
       game.missions.jump(HEIST, ESCAPE_STAGE);
       const car = game.missions.state.props.cars['linen-van'].car;
       car.position.set(COVER.laneX, 0, COVER.startZ);
@@ -129,12 +129,10 @@ export const ACTION_SHOTS = {
       game.fleet.setColour(car, COVER.paint);
       game.player.enterNow(car);
       const arsenal = game.player.state.arsenal;
-      arsenal.owned.pistol = { clip: 12, reserve: 36 };
-      arsenal.owned.smg = { clip: 24, reserve: 96 };
+      Object.assign(arsenal.owned.smg, { clip: 24, reserve: 96 });
       arsenal.current = 'smg';
-      // Four missions in: a Harbour Name with some respect toward Tide Caller, scraped but still in a vest.
+      // Seven jobs in, on the last one: scraped but still in a vest.
       Object.assign(game.player.state.vitals, { health: 72, armour: 58 });
-      game.missions.progress.respect = 128;
       game.player.state.vehicle.vz = -COVER.speed;
       game.player.state.autopilot = laneKeeper(game, COVER.laneX, Math.PI, 0.62);
       police.setStars(4);

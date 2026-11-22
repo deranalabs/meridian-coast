@@ -1,6 +1,6 @@
 // Heist screenshot scene: Gilded Tide at the Aurelio vault door, the lance still glowing, as the police box the lane.
 import { PART } from './palette.js';
-import { STORY_MISSIONS } from './missions/story/index.js';
+import { STORY_POINTS, seedStory } from './shotsstory.js';
 
 const HEIST = 'gilded-tide';
 const ESCAPE_STAGE = 3;
@@ -35,7 +35,8 @@ export const HEIST_SHOTS = {
     focus: [336, 0, -74],
     stage(game) {
       const { police } = game.action;
-      game.missions.progress.done.push(...STORY_MISSIONS.map((def) => def.id).filter((id) => id !== HEIST));
+      // The same point in the story as the cover, a few minutes earlier.
+      seedStory(game, STORY_POINTS.lastJob);
       game.missions.jump(HEIST, ESCAPE_STAGE);
       const lane = laneFrame(game.missions.places.get('aurelio-lane'));
       const { at, facing } = lane;
@@ -45,11 +46,9 @@ export const HEIST_SHOTS = {
       van.heading = facing(vanSpot, at(4.8, 8));
       game.fleet.setColour(van, VAN_PAINT);
       const arsenal = game.player.state.arsenal;
-      arsenal.owned.pistol = { clip: 12, reserve: 36 };
-      arsenal.owned.smg = { clip: 30, reserve: 120 };
+      Object.assign(arsenal.owned.smg, { clip: 30, reserve: 120 });
       arsenal.current = 'smg';
       Object.assign(game.player.state.vitals, { health: 84, armour: 46 });
-      game.missions.progress.respect = 172;
       const ilo = at(1.5, -1);
       const threat = at(6, -6);
       game.player.placeOnFoot(ilo.x, ilo.z, facing(ilo, threat));

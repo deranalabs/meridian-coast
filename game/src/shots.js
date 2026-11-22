@@ -2,6 +2,7 @@
 import { ACTION_SHOTS } from './shotsaction.js';
 import { SHOP_SHOTS } from './shotsshop.js';
 import { HEIST_SHOTS } from './shotsheist.js';
+import { STORY_POINTS, seedStory } from './shotsstory.js';
 import { STORY_MISSIONS } from './missions/story/index.js';
 import { parseSave } from './save/savegame.js';
 
@@ -175,7 +176,7 @@ const MAP_SHOT = {
   focus: [40, 0, 90],
   stage(game) {
     const { police } = game.action;
-    game.missions.progress.done.push(...STORY_MISSIONS.slice(0, 3).map((def) => def.id));
+    seedStory(game, STORY_POINTS.fourthJob);
     game.player.placeOnFoot(44, 92, Math.PI * 0.75);
     police.setStars(2);
     for (const [x, z] of [[102, 40], [-20, 150]]) police.units.adopt(game.fleet.reuse('cruiser', '#16203a'), x, z, 0);
