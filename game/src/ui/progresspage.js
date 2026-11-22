@@ -62,7 +62,7 @@ function mapBlips(game, next) {
 export function createProgressPage(parent, game, storedSave) {
   const root = document.createElement('section');
   root.className = 'progress-page';
-  root.innerHTML = `<header><h2>Progress</h2><span class="pg-saved"></span>
+  root.innerHTML = `<header><h2>Progress</h2><span class="pg-packages"></span><span class="pg-saved"></span>
       <span class="pg-keys"><kbd>Esc</kbd> or <kbd>Enter</kbd> back</span></header>
     <div class="pg-figures"></div>
     <div class="pg-body"><div class="pg-map"><canvas></canvas></div>
@@ -92,6 +92,8 @@ export function createProgressPage(parent, game, storedSave) {
     show() {
       const view = progressView(stateOf(game));
       part('saved').textContent = lastSaveText(storedSave());
+      const { count, total } = game.packages;
+      part('packages').innerHTML = `Packages <b>${count}/${total}</b>`;
       part('figures').innerHTML = view.figures.map(figureHtml).join('');
       part('job').innerHTML = jobHtml(view.job);
       part('rank').innerHTML = rankHtml(view.rank);

@@ -25,8 +25,26 @@
   color: var(--mc-gold, #ffc94a);
   text-shadow: 0 4px 20px rgba(255, 79, 160, 0.5);
 }
-.pg-saved { font-size: calc(28 * var(--u)); font-weight: 900; color: var(--mc-cash, #9dffb5); }
-.pg-keys { margin-left: auto; font-size: calc(16 * var(--u)); color: var(--mc-ui-tint, #9fb7c9); }
+.pg-saved { font-size: calc(28 * var(--u)); font-weight: 900; color: var(--mc-cash, #9dffb5); white-space: nowrap; }
+/* Dark on gold: at a fifth of its size it still reads as a word and a count. */
+.pg-packages {
+  padding: 0 calc(12 * var(--u));
+  border-radius: calc(5 * var(--u));
+  background: var(--mc-gold, #ffc94a);
+  color: #24103a;
+  font-family: var(--pg-narrow);
+  font-size: calc(43 * var(--u));
+  font-weight: 900;
+  line-height: 1.12;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.pg-keys {
+  margin-left: auto;
+  font-size: calc(16 * var(--u));
+  color: var(--mc-ui-tint, #9fb7c9);
+  white-space: nowrap;
+}
 
 /* The row of large figures */
 .pg-figures {

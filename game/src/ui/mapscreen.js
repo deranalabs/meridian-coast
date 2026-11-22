@@ -23,9 +23,13 @@ const LEGEND = [
   ['you', '#c45cff', 'You'],
 ];
 
-function legendHtml() {
+/** Only a game with packages out in it lists them; a staged scene has none. */
+const PACKAGE_KEY = '<li><i class="map-key-dot" style="--c:#ffc94a;transform:scale(0.65);border-color:#1a0f28"></i>'
+  + 'Hidden package</li>';
+
+function legendHtml(packages) {
   const marks = LEGEND.map(([kind, colour, text]) =>
-    `<li><i class="map-key-${kind}" style="--c:${colour}"></i>${text}</li>`).join('');
+    `<li><i class="map-key-${kind}" style="--c:${colour}"></i>${text}</li>`).join('') + (packages ? PACKAGE_KEY : '');
   const areas = DISTRICT_LIST.map((d) => `<li><i class="map-key-area" style="--c:${d.accent}"></i>${d.name}</li>`)
     .join('');
   return `<h3>Legend</h3><ul>${marks}</ul><h3>Districts</h3><ul>${areas}</ul>`;
@@ -36,7 +40,7 @@ export function createMapScreen(game) {
   const root = document.createElement('div');
   root.id = 'map-screen';
   root.innerHTML = `<header><span class="map-kicker">Map</span><h2>${CITY_NAME}</h2><p class="map-where"></p></header>
-    <canvas></canvas><aside class="map-legend">${legendHtml()}</aside>
+    <canvas></canvas><aside class="map-legend">${legendHtml(game.packages.active)}</aside>
     <footer><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> pan &nbsp; <kbd>+</kbd><kbd>−</kbd> or wheel zoom
     &nbsp; <kbd>Space</kbd> find me &nbsp; <kbd>N</kbd> close</footer>`;
   document.body.appendChild(root);

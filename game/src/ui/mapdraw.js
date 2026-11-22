@@ -103,6 +103,17 @@ function marks(ctx, projection, list, pinScale) {
   const boxes = [];
   for (const blip of list) {
     projection.toScreen(blip.x, blip.z, a);
+    if (blip.parcel) {
+      // A hidden package is a small dot with no name; it neither takes nor blocks a label's place.
+      ctx.fillStyle = blip.colour;
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(a.x, a.y, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      continue;
+    }
     ctx.save();
     ctx.translate(a.x, a.y);
     const rise = mark(ctx, blip, pinScale);

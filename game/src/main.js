@@ -38,7 +38,7 @@ const canvas = document.getElementById('game');
 const { renderer, stats, resize } = createRenderer(canvas);
 const focus = shot?.focus ? new THREE.Vector3(...shot.focus) : new THREE.Vector3(36, 0, -68);
 const weather = startingWeather(shot, params.get('weather'));
-const game = createGame({ renderer, seed, timeOfDay, focus, showHud, weather });
+const game = createGame({ renderer, seed, timeOfDay, focus, showHud, weather, staged: Boolean(shot) });
 // A stored save waits for Continue on the title; Start Story and Free Roam begin a new game.
 const startFrom = (mode) => {
   if (mode === 'continue' && resume) applySave(game, resume);

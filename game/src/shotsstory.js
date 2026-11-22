@@ -5,6 +5,7 @@ import { WEAPONS } from './combat/weapons.js';
 import { ACTIVITIES } from './missions/activities/index.js';
 import { WEAPON_PRICES, ARMOUR_PRICE, CAR_PRICES, GEAR } from './data/prices.js';
 import { defaultSave, serialise } from './save/savegame.js';
+import { PACKAGE_PAY } from './economy/packages.js';
 
 /** When the staged saves were made: Friday 20 November 2026, 21:14 on the player's clock. */
 export const STAGED_SAVED_AT = new Date(2026, 10, 20, 21, 14).getTime();
@@ -38,8 +39,8 @@ export const STORY_POINTS = Object.freeze({
   sixDone: Object.freeze({ jobs: 6, weapons: Object.freeze(['pistol', 'smg']) }),
   /** Gilded Tide is next. */
   lastJob: Object.freeze(LAST_JOB),
-  /** The last-job point with two cars bought for the garage. */
-  garage: Object.freeze({ ...LAST_JOB, cars: Object.freeze(['sedan', 'pickup']) }),
+  /** The last-job point with two cars bought for the garage and seven hidden packages found on the way. */
+  garage: Object.freeze({ ...LAST_JOB, cars: Object.freeze(['sedan', 'pickup']), packages: 7 }),
 });
 
 const total = (list, value) => list.reduce((sum, entry) => sum + value(entry), 0);
@@ -48,11 +49,12 @@ const total = (list, value) => list.reduce((sum, entry) => sum + value(entry), 0
 const gearCost = (def) => total(def.stages.filter((stage) => stage.type === 'buy'),
   (stage) => GEAR[stage.item.split(':')[1]].price);
 
-/** What play leaves a new game with at `point`: { done, paid, cash, respect }. */
+/** What play leaves a new game with at `point`: { done, paid, cash, respect, packages }. */
 export function storyTotals(point) {
   const jobs = STORY_MISSIONS.slice(0, point.jobs);
   const sides = (point.sides ?? []).map((id) => ACTIVITIES.find((def) => def.id === id));
   const earned = [...jobs, ...sides];
+  const packages = Array.from({ length: point.packages ?? 0 }, (_, index) => index);
   const spent = total(jobs, gearCost)
     + total(point.weapons, (id) => WEAPON_PRICES[id])
     + total(point.cars ?? [], (type) => CAR_PRICES[type])
@@ -60,7 +62,8 @@ export function storyTotals(point) {
   return {
     done: [...new Set(earned.map((def) => def.id))],
     paid: jobs.map((def) => def.id),
-    cash: defaultSave().cash + total(earned, (def) => def.reward.cash) - spent,
+    packages,
+    cash: defaultSave().cash + total(earned, (def) => def.reward.cash) + packages.length * PACKAGE_PAY - spent,
     respect: total(earned, (def) => def.reward.respect),
   };
 }
@@ -70,7 +73,8 @@ const boughtCars = (point) => (point.cars ?? []).map((type) => ({ type, colour: 
 
 /** Put a new game at `point`; call it before jumping to a job. The scene then sets ammo, health and position. */
 export function seedStory(game, point) {
-  const { done, paid, cash, respect } = storyTotals(point);
+  const { done, paid, cash, respect, packages } = storyTotals(point);
+  game.packages?.restore(packages);
   const { progress } = game.missions;
   progress.done.push(...done);
   progress.paid.push(...paid);
@@ -84,10 +88,11 @@ export function seedStory(game, point) {
 
 /** The text a game at `point` saves, stamped STAGED_SAVED_AT. */
 export function storySaveText(point) {
-  const { done, paid, cash, respect } = storyTotals(point);
+  const { done, paid, cash, respect, packages } = storyTotals(point);
   return serialise({
     ...defaultSave(),
     cash,
+    packages,
     armour: point.armour ? ARMOUR_PRICE.amount : 0,
     weapons: Object.fromEntries(point.weapons.map((id) => [id,
       { clip: WEAPONS[id].clip, reserve: WEAPONS[id].startReserve }])),

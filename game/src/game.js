@@ -33,6 +33,7 @@ import { edgeBand, EDGE_LINE } from './world/boundary.js';
 import { roamHint } from './ui/controlslist.js';
 import { createInCarCamera } from './vehicles/incarcamera.js';
 import { createClimate } from './systems/climate.js';
+import { createPackages } from './systems/packages.js';
 
 const CAR_VIEW_NAMES = { chase: 'Chase', driver: "Driver's seat", bonnet: 'Bonnet' };
 /** The same keyboard with this step's presses hidden (the phone has them); held keys still steer a car. */
@@ -59,7 +60,7 @@ function addParkedCars(fleet, parking, focus, random) {
 }
 
 /** Build everything for `seed` and `timeOfDay`; focus is where ambient life spawns first. */
-export function createGame({ renderer, seed, timeOfDay, focus, showHud, weather }) {
+export function createGame({ renderer, seed, timeOfDay, focus, showHud, weather, staged = false }) {
   const scene = new THREE.Scene();
   scene.fog = installFog(timeOfDay);
   scene.environment = createEnvironment(renderer, timeOfDay);
@@ -123,6 +124,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud, weather 
   radio.listen(game.action.events);
   game.prompt = null;
   game.climate = createClimate(game, weather);
+  game.packages = createPackages(game, { staged });
   let heldInput = null;
 
   game.step = (dt, rawInput) => {
@@ -130,6 +132,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud, weather 
     const phoneKeys = !game.services.shops.openPlace && game.phone.update(rawInput);
     const input = phoneKeys ? (heldInput ??= pressFree(rawInput)) : rawInput;
     game.climate.update(dt, input);
+    game.packages.update(game.time);
     game.prompt = game.services.update(dt, input);
     const missionPrompt = game.services.respawn.active ? null : game.missions.update(dt, input);
     game.prompt ??= missionPrompt;
@@ -246,7 +249,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud, weather 
     const driving = player.state.mode === 'driving';
     const subject = driving ? player.state.car.position : ilo.position;
     return { x: subject.x, z: subject.z, heading: driving ? player.state.car.heading : footCamera.state.yaw,
-      blips: game.blips(), route: game.missions.route };
+      blips: [...game.packages.dots(), ...game.blips()], route: game.missions.route };
   };
   game.map = createMapScreen(game);
 

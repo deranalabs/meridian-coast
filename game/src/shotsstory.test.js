@@ -11,6 +11,7 @@ import { lockReason } from './missions/respect.js';
 import { STORY_MISSIONS } from './missions/story/index.js';
 import { ACTIVITIES } from './missions/activities/index.js';
 import { defaultSave, parseSave } from './save/savegame.js';
+import { PACKAGE_PAY } from './economy/packages.js';
 
 const START = defaultSave().cash;
 const jobsPay = (count, key) => STORY_MISSIONS.slice(0, count).reduce((total, def) => total + def.reward[key], 0);
@@ -57,12 +58,13 @@ test('the last-job point: seven jobs and one sprint paid, less both guns, the ve
   assert.deepEqual(availableMissions(progress, STORY_MISSIONS).map((def) => def.number), [8]);
 });
 
-test('the progress point is the last-job point less two cars', () => {
+test('the progress point is the last-job point less two cars, plus the pay for seven packages', () => {
   const last = storyTotals(STORY_POINTS.lastJob);
   const { progress, wallet, game } = seeded(STORY_POINTS.garage);
   const types = game.ownedCars.map((car) => car.type);
   assert.equal(types.length, 2);
-  assert.equal(wallet.cash, last.cash - types.reduce((total, type) => total + CAR_PRICES[type], 0));
+  const found = STORY_POINTS.garage.packages * PACKAGE_PAY;
+  assert.equal(wallet.cash, last.cash + found - types.reduce((total, type) => total + CAR_PRICES[type], 0));
   assert.equal(progress.respect, last.respect);
 });
 
