@@ -51,12 +51,11 @@ function stateOf(game) {
   return { progress: game.missions.progress, wallet, arsenal, vitals, outfit: game.outfit, cars: game.ownedCars };
 }
 
-/** The panel's map: the shops, a pin for each job open now, and the next story job on top. */
+/** The panel's map: a pin for each job open now, the next story job on top. Shop tiles would hide the names here. */
 function mapBlips(game, next) {
   const pins = game.missions.available().filter((def) => def.startAt).map((def) => ({ id: def.id, x: def.startAt.x,
     z: def.startAt.z, mission: true, colour: def.colour, label: def.title }));
-  pins.sort((one, other) => Number(one.id === next?.id) - Number(other.id === next?.id));
-  return [...game.services.blips, ...pins];
+  return pins.sort((one, other) => Number(one.id === next?.id) - Number(other.id === next?.id));
 }
 
 /** createProgressPage(parent, game, storedSave) → { show(), hide(), update() }; storedSave() reads the last save. */
