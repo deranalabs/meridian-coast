@@ -138,6 +138,7 @@ try {
   if (errors.length) console.log(`console errors:\n${errors.join('\n')}`);
   if (errors.length || checks.some(([, ok]) => !ok)) process.exitCode = 1;
 } finally {
-  await chrome.stop();
+  // The server goes first, so a failed profile cleanup cannot leave it holding the port.
   server.stop();
+  await chrome.stop();
 }

@@ -340,6 +340,7 @@ try {
   if (errors.length) console.log(`console errors:\n${errors.join('\n')}`);
   if (errors.length || checks.some(([, ok]) => !ok)) process.exitCode = 1;
 } finally {
-  await chrome.stop();
+  // The server goes first: if removing Chrome's profile throws, port 8135 must not be left to a stale server.
   server.stop();
+  await chrome.stop();
 }
