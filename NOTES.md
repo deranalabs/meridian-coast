@@ -551,3 +551,63 @@ cost 0.3 and 4.0 FPS in two passes.
 
 **For the recording gate**: two messages held two calls each. The first held two reads. The second wrote
 `shotsstory.js` and then ran its test. That file was edited again afterwards in three single-call messages.
+
+## Recording 7c: the map back on the sheet, unit jobs and the car line
+
+All three items are done. The cover's scene, camera and light, the police behaviour and the missions are untouched.
+
+**The sheet's four files** (`tests/shot-list.mjs`, pinned by `tests/shot-list.test.mjs`)
+
+| File | Scene | What it shows |
+|---|---|---|
+| `1-mission.jpg` | `mission` | the cover: Gilded Tide's escape, with the new chips and the car line |
+| `2-map.jpg` | `map` | the full map at `lastJob`: Gilded Tide and both side jobs pinned, two stars, police cars |
+| `3-progress.jpg` | `progress` | unchanged, not rewritten (`browser.mjs` now leaves identical bytes alone) |
+| `4-fight.jpg` | `combat` | the night fight, with the new chips |
+
+The shop left the sheet and stays a debug scene. `fourthJob` is now used by the shop scene only.
+
+**What changed**
+1. **Unit jobs** (`police/report.js`, tested): each chip is one of RAMMING, FLANKING, CUTTING OFF, ON FOOT,
+   SPOTLIGHT, OVERHEAD, ROADBLOCK, SEARCHING, RETURNING. Returning outranks officers out, which outrank a search,
+   which outranks the role. A car with no known role reads RAMMING, as `pursuit.js` drives it. The plain word
+   beside the chip is gone, and with it the roadblock row's "2 cars".
+2. **Car line** (`ui/carline.js`, tested): the model name, or a job car's label, and Cab, Job car, Yours or Stolen,
+   in the open foot of the dial. "Yours" follows `car.owned`, which the spray bay also sets, so a resprayed stolen
+   car reads Yours, just as the police stop treating it as a theft.
+3. **Cover check** (`tests/browser.mjs`): every chip is a known job, at least 6 px tall and clear of the minimap,
+   and the car line is whole, readable, off the dial's ink and off the dialogue card. Both are also checked in a
+   true 768x480 window.
+4. **Harness**: deleting Chrome's profile retries (`tests/cdp.mjs`), after one play run died on it with all 42
+   checks passed. That crash also left a server on port 8135, which later runs silently used, so `play.mjs` and
+   `playstory.mjs` now stop their server before Chrome.
+
+**Look numbers** (768x480 with HUD; gradEnergy / flatBlocks / colors / brightShare / meanSat)
+
+| File | 7c |
+|---|---|
+| 1-mission | 9.68 / 0.226 / 178 / 10.29 % / 0.278 (still misses brightShare and meanSat) |
+| 2-map | 3.99 / 0.589 / 76 / 3.00 % / 0.404 |
+| 3-progress | 8.06 / 0.500 / 69 / 3.82 % / 0.595 |
+| 4-fight | 6.71 / 0.304 / 177 / 4.23 % / 0.376 |
+
+**Tests** (final tree): unit 165 → 177, all pass; lint 240 → 243 files, 0 problems; `play.mjs` 42 of 42 in each of
+the last three runs; `playstory.mjs` 40 of 40. Drive at 1440x900, DPR 1.5, straight after the browser tests: 70 draw
+calls, 51.0 FPS at render scale 0.6-0.7 (7b on a warm laptop: 49.5; 7b cool: 58.3; no cool run was measured in 7c).
+
+**An intermittent play failure, older than 7c, not fixed.** "shooting someone raises a wanted star", and "police
+units respond" after it, failed in 4 of 26 full runs on the item 3 tree. The cause is in the test: it puts the
+pedestrian along Ilo's heading (0 rad) but fires down the camera (about -0.8 rad), so it hit someone in 1 of 18
+probed runs. The star then comes from a patrol car within 55 m or a bystander's call, and both depend on timing.
+With neither there is no star. The same failure was reproduced on c75d429, the commit before this recording, served
+from memory at normal load speed (1 of 8 runs; 10 full runs over a slower server all passed). A fix would place the
+pedestrian on the camera's ray and a witness beside them.
+
+**Skipped and left**
+- The judge was not asked, so the effect on the verdict is untested. The sheet was read on a mock at its sizes.
+- In a true 768x480 window the older overlaps remain: the minimap over the dispatch call signs and distances, the
+  radio over the mission head and the WANTED banner, the dialogue card over the dial, and a clipped "Ratchet SMG".
+  The job chips and the car line are clear. The 1280x800 shots on the sheet have none of these overlaps.
+- The map, Progress and fight cells' small type does not read at 253x158; their shapes and big figures do.
+
+**For the recording gate**: one message held two calls, both read-only shell commands; neither wrote a file.
