@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { launchChrome, startServer, panelBoxes, ROOT, sleep } from './cdp.mjs';
 import { hudLayout } from './look-metrics.mjs';
 import { SHOT_LIST } from './shot-list.mjs';
+import { JOBS } from '../game/src/police/report.js';
 
 const MAX_BYTES = 256 * 1024;
 const args = new Set(process.argv.slice(2));
@@ -59,7 +60,7 @@ const COVER_LABELS = {
   job: '#hud .mission-panel.show .mp-job', title: '#hud .mission-panel.show .mp-title',
   stage: '#hud .mission-panel.show .mp-stage', dispatchTag: '#hud .dispatch.show .dispatch-tag',
   units: '#hud .dispatch.show .dispatch-units', dispatchStars: '#hud .dispatch.show .dispatch-stars',
-  chip: '#hud .dispatch.show .state[data-chip]', rankStep: '#hud .rank-step', rankName: '#hud .rank-name',
+  chip: '#hud .dispatch.show .unit-job[data-chip]', rankStep: '#hud .rank-step', rankName: '#hud .rank-name',
   rankLine: '#hud .rank-next', cash: '#hud .status .cash',
 };
 /** Labels that must also stand this many pixels tall on the 768x480 cover, whatever their font size says. */
@@ -83,10 +84,41 @@ function spilledLabels(page) {
   })()`);
 }
 
+/** Dispatch rows on show that lack a call sign, a distance or a known job, or whose job is too small to read. */
+function badRows(page, scale) {
+  const jobs = Object.values(JOBS);
+  return page.evaluate(`(() => {
+    const all = [...document.querySelectorAll('#hud .dispatch.show .dispatch-row')];
+    const shown = all.filter((li) => li.offsetHeight > 0);
+    if (!shown.length) return ['no rows'];
+    return shown.filter((li) => {
+      const text = (name) => li.querySelector(name)?.textContent ?? '';
+      const chip = li.querySelector('.unit-job[data-chip]');
+      return !text('.call') || !text('.metres') || !${JSON.stringify(jobs)}.includes(chip?.textContent)
+        || chip.getBoundingClientRect().height * ${scale} < ${MIN_LABEL_HEIGHT};
+    }).map((li) => li.textContent);
+  })()`);
+}
+
+/** The same cover laid out in a true 768x480 window: every row and label still whole. */
+async function checkSmallWindow(page, viewport) {
+  const size = (box) => page.send('Emulation.setDeviceMetricsOverride',
+    { ...box, deviceScaleFactor: 1, mobile: false });
+  await size({ width: 768, height: 480 });
+  await sleep(300);
+  const problems = [...await spilledLabels(page), ...await badRows(page, 1)];
+  await size(viewport);
+  await sleep(300);
+  if (problems.length) throw new Error(`cover HUD in a 768x480 window: ${problems.join(', ')}`);
+}
+
 /** The cover's HUD panels and labels are all there, apart, whole and readable at 768x480, or the run fails. */
 async function checkCover(page) {
   const viewport = { width: 1280, height: 800 };
   const scale = 768 / viewport.width;
+  const rows = await badRows(page, scale);
+  if (rows.length) throw new Error(`cover dispatch rows: ${rows.join(', ')}`);
+  await checkSmallWindow(page, viewport);
   const boxes = await panelBoxes(page, COVER_PANELS);
   const result = hudLayout(boxes, viewport);
   const labelBoxes = await panelBoxes(page, COVER_LABELS);

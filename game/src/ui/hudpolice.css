@@ -66,7 +66,7 @@
 #hud .dispatch-rows { list-style: none; margin: 0; padding: 0; }
 #hud .dispatch-row {
   display: grid;
-  grid-template-columns: 9px 112px 1fr 44px 60px;
+  grid-template-columns: 9px 1fr 48px 112px;
   align-items: center;
   column-gap: 5px;
   padding: 1px 0;
@@ -82,34 +82,42 @@
 }
 #hud .dispatch-row.air::before { background: var(--mc-gold, #ffc94a); border-radius: 1px; }
 #hud .dispatch-row.block::before { background: var(--mc-police-red, #ff2a4a); border-radius: 1px; }
-/* Short call signs and seven-letter jobs fit the columns whole, so nothing is cut off with an ellipsis. */
+/* Call signs and the longest job (CUTTING OFF) fit their columns whole, so nothing is cut off with an ellipsis. */
 #hud .dispatch-row .call { font-weight: 800; }
-#hud .dispatch-row .detail { opacity: 0.86; }
 #hud .dispatch-row .metres { text-align: right; font-variant-numeric: tabular-nums; }
-/* Each state word sits on a chip in a police lamp colour: red in pursuit, blue with eyes on, amber for a block. */
-#hud .dispatch-row .state {
-  justify-self: end;
+/* Each job sits on a chip in a lamp colour: red on the car in front, blue beside or on foot, cream for the light. */
+#hud .dispatch-row .unit-job {
   box-sizing: border-box;
-  width: 100%;
   margin: 1px 0;
-  padding: 0 2px;
+  padding: 0 3px;
   border-radius: 3px;
+  background: var(--mc-ui-ink, #120a24);
   text-align: center;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   line-height: 15px;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.6px;
   text-shadow: none;
 }
-#hud .state[data-chip="pursuit"] { background: var(--mc-police-red, #ff2a4a); color: #fff; }
-#hud .state[data-chip="eyes-on"] { background: var(--mc-police-blue, #6f97ff); color: var(--mc-ui-ink, #120a24); }
-#hud .state[data-chip="holding"] { background: var(--mc-police-amber, #ffb03a); color: var(--mc-ui-ink, #120a24); }
-#hud .state[data-chip="search"] {
-  background: var(--mc-ui-ink, #120a24);
+#hud .unit-job:is([data-chip="ramming"], [data-chip="cutting-off"]) {
+  background: var(--mc-police-red, #ff2a4a);
+  color: #fff;
+}
+#hud .unit-job:is([data-chip="flanking"], [data-chip="on-foot"]) {
+  background: var(--mc-police-blue, #6f97ff);
+  color: var(--mc-ui-ink, #120a24);
+}
+#hud .unit-job[data-chip="spotlight"] { background: #fff3c4; color: var(--mc-ui-ink, #120a24); }
+#hud .unit-job[data-chip="overhead"] {
+  color: var(--mc-police-blue, #6f97ff);
+  box-shadow: inset 0 0 0 1px var(--mc-police-blue, #6f97ff);
+}
+#hud .unit-job[data-chip="roadblock"] { background: var(--mc-police-amber, #ffb03a); color: var(--mc-ui-ink, #120a24); }
+#hud .unit-job[data-chip="searching"] {
   color: var(--mc-police-amber, #ffb03a);
   box-shadow: inset 0 0 0 1px var(--mc-police-amber, #ffb03a);
 }
-#hud .state[data-chip="return"] { background: var(--mc-ui-tint, #9fb7c9); color: var(--mc-ui-ink, #120a24); }
+#hud .unit-job[data-chip="returning"] { background: var(--mc-ui-tint, #9fb7c9); color: var(--mc-ui-ink, #120a24); }
 #hud .dispatch-count {
   margin-top: 4px;
   font-size: 11px;
@@ -185,8 +193,8 @@
   #hud .leftcol { top: 14px; left: 14px; width: 292px; gap: 6px; }
   #hud .dispatch { padding: 5px 9px 6px; font-size: 11px; line-height: 1.2; }
   #hud .dispatch-state { font-size: 12px; margin-bottom: 3px; }
-  #hud .dispatch-row { grid-template-columns: 7px 96px 1fr 40px 52px; column-gap: 4px; }
-  #hud .dispatch-row .state { margin: 0; font-size: 9px; line-height: 12px; }
+  #hud .dispatch-row { grid-template-columns: 7px 1fr 42px 94px; column-gap: 4px; }
+  #hud .dispatch-row .unit-job { margin: 0; font-size: 10px; line-height: 12px; }
   #hud .dispatch-head { gap: 5px; }
   #hud .dispatch-tag { font-size: 9px; letter-spacing: 1px; }
   #hud .dispatch-units { padding: 0 3px; font-size: 9px; line-height: 12px; }

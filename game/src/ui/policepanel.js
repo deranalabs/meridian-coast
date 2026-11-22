@@ -1,5 +1,5 @@
-// Police dispatch panel: units and stars in the head, the chase state, up to six unit rows with state chips, totals.
-import { stateKey } from '../police/report.js';
+// Police dispatch panel: units and stars in the head, the chase state, up to six unit rows with job chips, totals.
+import { jobKey } from '../police/report.js';
 
 const MAX_ROWS = 6;
 const CLEAR_SECONDS = 4;
@@ -35,9 +35,8 @@ export function createPolicePanel(parent) {
     rows.push({
       li,
       call: make(li, 'call', 'span'),
-      detail: make(li, 'detail', 'span'),
       metres: make(li, 'metres', 'span'),
-      state: make(li, 'state', 'span'),
+      job: make(li, 'unit-job', 'span'),
       key: null,
     });
   }
@@ -63,18 +62,16 @@ export function createPolicePanel(parent) {
     for (let i = 0; i < MAX_ROWS; i += 1) {
       const slot = rows[i];
       const row = items[i];
-      const key = row ? `${row.call}|${row.detail}|${row.metres}|${row.state}` : '';
+      const key = row ? `${row.call}|${row.metres}|${row.job}` : '';
       if (key === slot.key) continue;
       slot.key = key;
       slot.li.style.display = row ? '' : 'none';
       if (!row) continue;
       slot.li.className = `dispatch-row ${row.kind}`;
       slot.call.textContent = row.call;
-      slot.detail.textContent = row.brief ?? row.detail;
-      slot.detail.title = row.detail;
       slot.metres.textContent = formatMetres(row.metres);
-      slot.state.textContent = row.state;
-      slot.state.dataset.chip = stateKey(row.state);
+      slot.job.textContent = row.job;
+      slot.job.dataset.chip = jobKey(row.job);
     }
     const extra = items.length > MAX_ROWS ? ` · +${items.length - MAX_ROWS} more` : '';
     count.textContent = report
@@ -101,8 +98,9 @@ export function createPolicePanel(parent) {
         return;
       }
       last.stars = starCount;
-      const key = `${starCount}|${searching}|${report.cars}|${report.officers}|${report.rows.length}|`
-        + report.rows.slice(0, MAX_ROWS).map((r) => `${r.call}${r.metres}${r.state}${r.detail}`).join(',');
+      const key = `${starCount}|${searching}|${report.cars}|${report.officers}|${report.responding}|`
+        + `${report.rows.length}|`
+        + report.rows.slice(0, MAX_ROWS).map((r) => `${r.call}${r.metres}${r.job}`).join(',');
       show(true);
       if (key === last.key) return;
       last.key = key;

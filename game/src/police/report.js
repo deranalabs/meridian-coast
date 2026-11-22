@@ -1,18 +1,36 @@
-// Dispatch report: turns the live police state into radio-style rows (call sign, job, distance, state) for the HUD.
+// Dispatch report: turns the live police state into radio rows (call sign, distance, what it is doing) for the HUD.
 
 /** Port Meridian PD radio names; a cruiser's call sign comes from its fleet slot so it stays the same all chase. */
 export const CALL_NAMES = Object.freeze(['Cobalt', 'Marlin', 'Palmetto', 'Lantern', 'Harbor', 'Solano', 'Pelican']);
 
-/** What each pursuit role does, in dispatch words. */
-export const ROLE_DETAIL = Object.freeze({ ram: 'Ram', left: 'Flank left', right: 'Flank right', block: 'Cut off' });
-/** The same jobs in at most seven letters, so a HUD row never has to cut them short. */
-export const ROLE_BRIEF = Object.freeze({ ram: 'Ram', left: 'Flank L', right: 'Flank R', block: 'Cut off' });
+/** Everything a unit can be doing, as the word on its chip. */
+export const JOBS = Object.freeze({
+  ramming: 'RAMMING',
+  flanking: 'FLANKING',
+  cuttingOff: 'CUTTING OFF',
+  onFoot: 'ON FOOT',
+  spotlight: 'SPOTLIGHT',
+  overhead: 'OVERHEAD',
+  roadblock: 'ROADBLOCK',
+  searching: 'SEARCHING',
+  returning: 'RETURNING',
+});
 
-/** Unit mode to the state word on the panel. */
-export const MODE_STATE = Object.freeze({ pursue: 'Pursuit', search: 'Search', leave: 'Return' });
+/** The job of each pursuit role in pursuit.js, which drives an unknown role as a rammer. */
+const ROLE_JOB = Object.freeze({
+  ram: JOBS.ramming, left: JOBS.flanking, right: JOBS.flanking, block: JOBS.cuttingOff,
+});
 
-/** A state word as the key of its chip on the panel: 'Eyes on' becomes 'eyes-on'. */
-export const stateKey = (state) => state.toLowerCase().replaceAll(' ', '-');
+/** A job as the key of its chip colour: 'CUTTING OFF' becomes 'cutting-off'. */
+export const jobKey = (job) => job.toLowerCase().replaceAll(' ', '-');
+
+/** A car going back is only returning; otherwise officers out outrank a search, and a search outranks the role. */
+function carJob(unit) {
+  if (unit.mode === 'leave') return JOBS.returning;
+  if (unit.officersOut) return JOBS.onFoot;
+  if (unit.mode === 'search') return JOBS.searching;
+  return ROLE_JOB[unit.driver?.role] ?? JOBS.ramming;
+}
 
 /** "2-Cobalt-31": district division, radio name and unit number, all from the car's slot. */
 export function callSign(index) {
@@ -23,19 +41,16 @@ export function callSign(index) {
   return `${division}-${name}-${number}`;
 }
 
-/** policeReport(police, x, z) → { rows, cars, officers, nearest }; rows sorted nearest first. */
+/** policeReport(police, x, z) → { rows, cars, officers, responding, nearest }; rows sorted nearest first. */
 export function policeReport(police, x, z) {
   const rows = [];
   const metresTo = (px, pz) => Math.round(Math.hypot(px - x, pz - z));
   for (const unit of police.units.units) {
-    const onFoot = unit.officersOut && unit.mode !== 'leave';
     rows.push({
       call: callSign(unit.car?.index ?? rows.length),
       kind: 'car',
-      detail: onFoot ? 'Officers out' : ROLE_DETAIL[unit.driver?.role] ?? 'Patrol',
-      brief: onFoot ? 'On foot' : ROLE_BRIEF[unit.driver?.role] ?? 'Patrol',
       metres: metresTo(unit.vehicle.x, unit.vehicle.z),
-      state: MODE_STATE[unit.mode] ?? 'Pursuit',
+      job: carJob(unit),
     });
   }
   const air = police.helicopter?.state;
@@ -43,26 +58,16 @@ export function policeReport(police, x, z) {
     rows.push({
       call: 'Air-1 Gull',
       kind: 'air',
-      detail: air.spot ? 'Searchlight' : 'Overhead',
-      brief: air.spot ? 'Lamp on' : 'Above',
       metres: metresTo(air.x, air.z),
-      state: air.spot ? 'Eyes on' : 'Search',
+      job: air.spot ? JOBS.spotlight : JOBS.overhead,
     });
   }
   for (const block of police.roadblocks?.blocks ?? []) {
-    const standing = block.officers.filter((o) => o.active && !o.down).length;
-    rows.push({
-      call: 'Roadblock',
-      kind: 'block',
-      detail: `${block.cars.length} cars, ${standing} out`,
-      brief: `${block.cars.length} ${block.cars.length === 1 ? 'car' : 'cars'}`,
-      metres: metresTo(block.x, block.z),
-      state: 'Holding',
-    });
+    rows.push({ call: 'Roadblock', kind: 'block', metres: metresTo(block.x, block.z), job: JOBS.roadblock });
   }
   rows.sort((a, b) => a.metres - b.metres);
   const officers = police.officers.pool.filter((o) => o.active && !o.down).length;
   // Responding: every row still on the call (car, helicopter, roadblock) plus each officer on foot.
-  const responding = rows.filter((row) => row.state !== MODE_STATE.leave).length + officers;
+  const responding = rows.filter((row) => row.job !== JOBS.returning).length + officers;
   return { rows, cars: police.units.units.length, officers, responding, nearest: rows.length ? rows[0].metres : null };
 }
