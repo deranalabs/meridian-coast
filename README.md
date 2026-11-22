@@ -25,16 +25,21 @@ the game loads.
 |---|---|---|
 | W A S D / arrows | move | drive |
 | Shift | run | |
-| Space | | handbrake |
+| Space | jump | handbrake |
 | C | crouch | |
+| V | | camera: chase, driver's seat, bonnet |
 | E | enter a car, use a shop, meet a contact at a gold pillar | get out |
 | Mouse (click to lock) | look and aim | look around |
 | Q / F or click | aim / fire | |
 | 1–4, Tab, R | pick a weapon, next weapon, reload | R changes the radio station |
-| P | phone: jobs, activities, the next rank | |
+| T | rain on or off | rain on or off |
+| P | phone: jobs, activities, the next rank, the time | |
 | N | full city map (drag or WASD to pan, wheel or +/− to zoom, Space finds you) | |
 | M, Esc | mute; pause, progress, settings, save | |
 | Enter, Backspace | skip a line or retry a failed job; call a failed job off | |
+
+Two options go in the address: `?weather=rain` starts in rain, and `?time=day`, `dusk`, `night` or `dawn` holds
+that time of day. They combine, as in `index.html?time=day&weather=rain`.
 
 ## The story
 
@@ -63,8 +68,13 @@ the game loads.
 - **Shops**: Halcyon Arms, Saltwater Threads, Marlin Motors, Quick Coat Spray Bay and Taco Tide carts.
 - **Progression**: respect ranks from Nobody to Tide Caller, which unlock weapons, cars and clothes.
 - **Radio**: four stations with music generated as you play, hosts, fake ads and news flashes about your own chases.
+- **A living day**: in free roam a whole day takes twelve minutes, from dawn through noon and dusk to night. The
+  street lamps follow it, the pause screen and the phone show the time, and a job keeps the light it began in.
+- **Rain**: T brings rain at any hour, with wet streets, haze and a darker sky, and T again stops it.
+- **Hidden packages**: twenty gold parcels on the pavements, five in each district, each paying $150. The full
+  map shows the ones still out there and the Progress page counts them.
 - **Map, phone, save**: a rotating minimap, a full map with job pins and routes, a phone for picking jobs, and a
-  save slot in the browser's local storage.
+  save slot in the browser's local storage, which also keeps the hour and the packages found.
 
 ## How it is built
 
