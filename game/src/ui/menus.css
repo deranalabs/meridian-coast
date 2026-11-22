@@ -114,6 +114,36 @@
 #screen .line { font-size: 22px; font-weight: 700; margin-top: 8px; }
 #screen .line em { color: #ffd166; font-style: normal; }
 
+#shop li.owned .price { color: #9dffb5; text-decoration: none; }
+
+/* A short stock on a full-size window: type big enough to read across the room */
+@media (min-height: 720px) and (min-width: 1100px) {
+  /* The big menu covers the right of the HUD, whose cash it repeats */
+  body:has(> #shop.few.open) #hud :is(.status, .weapon, .weaponbar) { visibility: hidden; }
+  #shop.few { padding-right: 24px; }
+  #shop.few .panel { width: 660px; }
+  #shop.few .kicker { font-size: 24px; }
+  #shop.few .name { font-size: 92px; white-space: nowrap; }
+  #shop.few .sub { font-size: 22px; margin-bottom: 14px; }
+  #shop.few li { padding: 5px 16px; margin: 5px 0; font-size: 33px; line-height: 1.12; font-weight: 900; }
+  #shop.few li:not(.active) { background: rgba(22, 8, 40, 0.86); }
+  #shop.few li small { font-size: 22px; font-weight: 800; opacity: 0.9; }
+  #shop.few li .price { flex: none; padding-left: 12px; font-size: 48px; font-weight: 900; }
+  #shop.few li.owned { opacity: 1; border: 3px solid #9dffb5; }
+  #shop.few li.owned .price { color: #9dffb5; text-decoration: none; text-transform: uppercase; }
+  #shop.few li.locked { opacity: 1; filter: none; border: 3px dashed var(--mc-gold, #ffc94a); }
+  #shop.few li.locked .tag { padding: 2px 8px; font-size: 22px; vertical-align: 4px; background: #ffd166; }
+  #shop.few li.locked small {
+    font-size: 30px;
+    text-transform: uppercase;
+    opacity: 1;
+    color: var(--mc-gold, #ffc94a);
+  }
+  #shop.few li.locked .price { color: #d5cee2; }
+  #shop.few .foot { font-size: 16px; }
+  #shop.few .foot .cash { font-size: 54px; line-height: 1; }
+}
+
 /* Pause menu over the frozen city */
 #pause {
   position: fixed;

@@ -1,9 +1,28 @@
 // Shop menu overlay: the shop's name, a list of items with prices, the highlighted row, cash and key hints.
 
 const ROWS = 8;
+/** A stock this short gets the large type (menus.css, `#shop.few`). */
+const FEW_ROWS = 5;
+const OWNED = 'Owned';
 
 function escape(text) {
   return String(text).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+}
+
+/** What the right end of a row says: the price, or that Ilo has it already. */
+function priceText(item) {
+  if (item.reason === OWNED) return OWNED;
+  return item.price ? `$${item.price.toLocaleString('en-US')}` : 'Free';
+}
+
+function tagHtml(item) {
+  if (item.job) return '<b class="tag">Job</b>';
+  return item.locked ? '<b class="tag">Locked</b>' : '';
+}
+
+/** The line under a row's name: why it cannot be bought, else what it is. */
+function detailText(item) {
+  return item.reason === OWNED ? 'In your holster' : item.reason || item.detail;
 }
 
 /** A hidden menu; open(title, subtitle, items) shows it, render(items, index, cash, note) refreshes it. */
@@ -34,17 +53,16 @@ export function createShopMenu() {
       open = false;
     },
     render(items, index, cash, note = '') {
-      const price = (item) => (item.price ? `$${item.price.toLocaleString('en-US')}` : 'Free');
       const first = Math.max(0, Math.min(items.length - ROWS, index - Math.floor(ROWS / 2)));
+      root.classList.toggle('few', items.length <= FEW_ROWS);
       list.classList.toggle('more-above', first > 0);
       list.classList.toggle('more-below', first + ROWS < items.length);
       const shown = items.slice(first, first + ROWS);
       const flags = (item, row) => [row + first === index ? 'active' : '', item.disabled ? 'disabled' : '',
-        item.job ? 'job' : '', item.locked ? 'locked' : ''].join(' ');
-      const tag = (item) => (item.job ? '<b class="tag">Job</b>' : item.locked ? '<b class="tag">Rank</b>' : '');
-      list.innerHTML = shown.map((item, row) => `<li class="${flags(item, row)}"><span class="label">${tag(item)}${
-        escape(item.label)}<small>${escape(item.reason || item.detail)}</small></span><span class="price">${
-        price(item)}</span></li>`).join('');
+        item.job ? 'job' : '', item.locked ? 'locked' : '', item.reason === OWNED ? 'owned' : ''].join(' ');
+      list.innerHTML = shown.map((item, row) => `<li class="${flags(item, row)}"><span class="label">${tagHtml(item)}${
+        escape(item.label)}<small>${escape(detailText(item))}</small></span><span class="price">${
+        priceText(item)}</span></li>`).join('');
       q('.cash').textContent = `$${cash.toLocaleString('en-US')}`;
       q('.note').textContent = note;
     },
