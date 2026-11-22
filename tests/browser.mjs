@@ -91,9 +91,17 @@ function badRows(page, scale) {
     const all = [...document.querySelectorAll('#hud .dispatch.show .dispatch-row')];
     const shown = all.filter((li) => li.offsetHeight > 0);
     if (!shown.length) return ['no rows'];
+    const map = document.querySelector('#hud .minimap').getBoundingClientRect();
+    const underMap = (box) => {
+      const dx = Math.max(box.left - (map.left + map.width / 2), 0);
+      const middle = map.top + map.height / 2;
+      const dy = Math.max(box.top - middle, middle - box.bottom, 0);
+      return Math.hypot(dx, dy) < map.width / 2;
+    };
     return shown.filter((li) => {
       const text = (name) => li.querySelector(name)?.textContent ?? '';
       const chip = li.querySelector('.unit-job[data-chip]');
+      if (chip && underMap(chip.getBoundingClientRect())) return true;
       return !text('.call') || !text('.metres') || !${JSON.stringify(jobs)}.includes(chip?.textContent)
         || chip.getBoundingClientRect().height * ${scale} < ${MIN_LABEL_HEIGHT};
     }).map((li) => li.textContent);
