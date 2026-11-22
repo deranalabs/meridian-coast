@@ -55,7 +55,15 @@ const COVER_PANELS = {
   speedo: '#hud .speedo', rank: '#hud .rankbar', armour: '#hud .status .armour',
 };
 
-/** The labels that say how deep the game is. Each is one line of its panel; an empty one counts as missing. */
+/** In a true 768x480 window none of these may touch another: the cover's scene shows every one at once. */
+const SMALL_WINDOW_PANELS = {
+  mission: '#hud .mission-panel.show', dispatch: '#hud .dispatch.show', district: '#hud .district',
+  minimap: '#hud .minimap', radio: '#hud .radio', banner: '#hud .message.show', cash: '#hud .status .cash',
+  health: '#hud .status .health', rank: '#hud .rankbar', stars: '#hud .status .wanted',
+  weapons: '#hud .weaponbar', card: '#hud .dialogue-card.show', speedo: '#hud .speedo',
+};
+
+/** The labels that say how deep the game is.Each is one line of its panel; an empty one counts as missing. */
 const COVER_LABELS = {
   job: '#hud .mission-panel.show .mp-job', title: '#hud .mission-panel.show .mp-title',
   stage: '#hud .mission-panel.show .mp-stage', dispatchTag: '#hud .dispatch.show .dispatch-tag',
@@ -148,6 +156,11 @@ async function checkSmallWindow(page, viewport) {
   await size({ width: 768, height: 480 });
   await sleep(300);
   const problems = [...await spilledLabels(page), ...await badRows(page, 1), ...await carLineProblems(page, 1)];
+  const panels = hudLayout(await panelBoxes(page, SMALL_WINDOW_PANELS), { width: 768, height: 480 },
+    { scale: 1, minFont: 8 });
+  if (!panels.ok) problems.push(JSON.stringify(panels));
+  problems.push(...await page.evaluate(`[...document.querySelectorAll('#hud .wslot .wname')]
+    .filter((el) => el.scrollWidth > el.clientWidth).map((el) => 'cut ' + el.textContent)`));
   await size(viewport);
   await sleep(300);
   if (problems.length) throw new Error(`cover HUD in a 768x480 window: ${problems.join(', ')}`);

@@ -188,6 +188,37 @@
 }
 #hud .wslot.dry .wammo { color: #ff6b7a; }
 
+/*
+ * On foot in a full window there is no dial or radio to share the screen with, so a fight reads at a glance:
+ * the job, the star count and what each unit is doing are big and heavy, still above the minimap.
+ */
+@media (min-width: 1180px) and (min-height: 780px) {
+  #hud.on-foot .leftcol { top: 16px; left: 18px; width: 470px; gap: 7px; }
+  #hud.on-foot .mission-panel { padding: 7px 12px 8px; }
+  #hud.on-foot .mp-job { font-size: 22px; line-height: 26px; }
+  #hud.on-foot .mp-title { font-size: 26px; font-weight: 900; line-height: 28px; }
+  #hud.on-foot .mp-stage { font-size: 15px; }
+  #hud.on-foot .mp-giver { font-size: 14px; }
+  #hud.on-foot .mp-objective { font-size: 20px; font-weight: 800; line-height: 1.15; }
+  #hud.on-foot .mp-next { margin-top: 3px; font-size: 14px; }
+  #hud.on-foot .dispatch { padding: 5px 10px 6px; font-size: 18px; }
+  #hud.on-foot .dispatch-head { align-items: center; }
+  #hud.on-foot .dispatch-tag { font-size: 16px; letter-spacing: 1px; }
+  #hud.on-foot .dispatch-units { font-size: 24px; line-height: 27px; font-weight: 900; }
+  #hud.on-foot .dispatch-stars b { font-size: 24px; line-height: 26px; }
+  #hud.on-foot .dispatch-state { margin-bottom: 2px; font-size: 21px; font-weight: 900; line-height: 24px; }
+  #hud.on-foot .dispatch-row { grid-template-columns: 10px 1fr 62px 194px; padding: 0; }
+  #hud.on-foot .dispatch-row .call { font-size: 17px; }
+  #hud.on-foot .dispatch-row .metres { font-size: 17px; font-weight: 800; }
+  #hud.on-foot .dispatch-row .unit-job {
+    padding: 0 2px; font-size: 25px; font-weight: 900; line-height: 27px; letter-spacing: 0.2px;
+  }
+  #hud.on-foot .dispatch-count { margin-top: 2px; font-size: 13px; }
+  #hud.on-foot .message { left: 496px; right: 372px; transform: none; text-align: center; white-space: normal; }
+  #hud.on-foot .wslot .wname, #hud.on-foot .wslot .wammo { font-size: 12px; font-weight: 900; }
+  #hud.on-foot .wslot { width: 86px; }
+}
+
 /* Small windows (the 768x480 cover): tighter type so the column clears the minimap. */
 @media (max-width: 900px), (max-height: 560px) {
   #hud .leftcol { top: 14px; left: 14px; width: 292px; gap: 6px; }

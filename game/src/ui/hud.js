@@ -121,6 +121,7 @@ export function createHud(layout, visible = true) {
     say: (html, seconds, kind) => messages.say(html, seconds, kind),
     update(view) {
       root.classList.toggle('menu', Boolean(view.menu));
+      root.classList.toggle('on-foot', !view.driving);
       cash.textContent = `$${view.cash.toLocaleString('en-US')}`;
       healthBar.style.width = `${Math.max(0, Math.min(100, view.health))}%`;
       armourBar.style.width = `${Math.max(0, Math.min(100, view.armour ?? 0))}%`;

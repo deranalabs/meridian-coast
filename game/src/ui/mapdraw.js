@@ -1,34 +1,21 @@
-// Full-map painting: the shared city canvas, district names, the job route, labelled blips and Ilo's arrow.
+// Full-map painting: the shared city canvas, the job route, blips, big labels kept apart, and Ilo's arrow.
 import { WORLD_BOUNDS } from '../world/heightfield.js';
 import { DISTRICT_LIST, PARK } from '../world/districts.js';
+import { labelSizes, placeLabels } from './maplabels.js';
 
 const FONT = '"Avenir Next", "Helvetica Neue", Arial, sans-serif';
 const INK = '#1a0f28';
-const AREAS = [...DISTRICT_LIST, { ...PARK, accent: '#7fd18b' }];
 const a = {};
 const b = {};
 
-function label(ctx, text, x, y, size, colour, weight = 800) {
-  ctx.font = `${weight} ${size}px ${FONT}`;
-  ctx.lineWidth = Math.max(3, size * 0.28);
-  ctx.strokeStyle = 'rgba(16, 6, 30, 0.85)';
+function drawLabel(ctx, { text, x, y, size, colour }) {
+  ctx.font = `900 ${size}px ${FONT}`;
+  ctx.lineWidth = Math.max(4, size * 0.3);
+  ctx.lineJoin = 'round';
+  ctx.strokeStyle = 'rgba(16, 6, 30, 0.95)';
   ctx.strokeText(text, x, y);
   ctx.fillStyle = colour;
   ctx.fillText(text, x, y);
-}
-
-function districtNames(ctx, projection) {
-  const size = Math.min(34, 16 + projection.view.zoom * 4);
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.globalAlpha = 0.82;
-  for (const area of AREAS) {
-    const r = area.rect;
-    projection.toScreen((r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2, a);
-    const small = area === AREAS[AREAS.length - 1];
-    label(ctx, area.name.toUpperCase(), a.x, a.y, small ? size * 0.62 : size, area.accent, 900);
-  }
-  ctx.globalAlpha = 1;
 }
 
 function route(ctx, projection, points) {
@@ -70,11 +57,13 @@ function pin(ctx, colour, s) {
   ctx.fill();
 }
 
+const isPin = (blip) => Boolean(blip.mission && !blip.target);
+
 /** One blip's mark at the origin; returns how far above the point its label should sit. */
-function mark(ctx, blip) {
-  if (blip.mission && !blip.target) {
-    pin(ctx, blip.colour ?? '#ffc94a', 1);
-    return 36;
+function mark(ctx, blip, pinScale) {
+  if (isPin(blip)) {
+    pin(ctx, blip.colour ?? '#ffc94a', pinScale);
+    return 30 * pinScale + 2;
   }
   ctx.fillStyle = blip.colour ?? '#ffffff';
   ctx.strokeStyle = blip.mission ? INK : 'rgba(255,255,255,0.95)';
@@ -94,7 +83,7 @@ function mark(ctx, blip) {
     ctx.fill();
     ctx.strokeStyle = INK;
     ctx.stroke();
-    return 14;
+    return 12;
   }
   ctx.fill();
   ctx.stroke();
@@ -105,23 +94,53 @@ function mark(ctx, blip) {
     ctx.textBaseline = 'middle';
     ctx.fillText(blip.letter, 0, 1);
   }
-  return 16;
+  return 14;
 }
 
-function blips(ctx, projection, list) {
-  const zoom = projection.view.zoom;
+/** Every blip's mark; returns the named ones and the boxes of the marks that a label must keep off. */
+function marks(ctx, projection, list, pinScale) {
+  const named = [];
+  const boxes = [];
   for (const blip of list) {
     projection.toScreen(blip.x, blip.z, a);
     ctx.save();
     ctx.translate(a.x, a.y);
-    const rise = mark(ctx, blip);
+    const rise = mark(ctx, blip, pinScale);
     ctx.restore();
-    const named = blip.label && (blip.mission || blip.landmark || zoom >= 2);
-    if (!named) continue;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-    label(ctx, blip.label, a.x, a.y - rise, blip.mission ? 14 : 12, blip.mission ? '#ffe3a0' : '#f4ecff', 700);
+    boxes.push(isPin(blip) ? { x: a.x, y: a.y - 15 * pinScale, width: 22 * pinScale, height: 30 * pinScale }
+      : { x: a.x, y: a.y, width: 18, height: 18 });
+    const shown = blip.label && (blip.mission || blip.landmark || projection.view.zoom >= 2);
+    if (shown) named.push({ blip, x: a.x, y: a.y, rise });
   }
+  return { named, boxes };
+}
+
+/** The labels, most wanted first: jobs, the four districts, then the landmarks and the park where there is room. */
+function labels(projection, named, sizes) {
+  const jobs = [];
+  const others = [];
+  for (const { blip, x, y, rise } of named) {
+    const job = Boolean(blip.mission);
+    (job ? jobs : others).push({ text: blip.label, x, y, rise, optional: !job,
+      size: job ? sizes.job : sizes.landmark, colour: job ? '#ffe3a0' : '#f4ecff' });
+  }
+  const area = (district, size, colour, optional) => {
+    const r = district.rect;
+    projection.toScreen((r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2, a);
+    return { text: district.name.toUpperCase(), x: a.x, y: a.y, size, colour, optional };
+  };
+  return [...jobs, ...DISTRICT_LIST.map((district) => area(district, sizes.district, district.accent, false)),
+    ...others, area(PARK, sizes.park, '#7fd18b', true)];
+}
+
+function drawLabels(ctx, projection, named, obstacles, sizes) {
+  const items = labels(projection, named, sizes).map((item) => {
+    ctx.font = `900 ${item.size}px ${FONT}`;
+    return { ...item, width: ctx.measureText(item.text).width + item.size * 0.2, height: item.size };
+  });
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (const placed of placeLabels(items, projection.view, obstacles)) drawLabel(ctx, placed);
 }
 
 function player(ctx, projection, x, z, heading, time) {
@@ -158,8 +177,11 @@ export function paintMap(ctx, projection, base, view, time) {
   projection.toScreen(WORLD_BOUNDS.x1, WORLD_BOUNDS.z1, b);
   ctx.imageSmoothingEnabled = true;
   ctx.drawImage(base, a.x, a.y, b.x - a.x, b.y - a.y);
-  districtNames(ctx, projection);
   if (view.route?.length > 1) route(ctx, projection, view.route);
-  blips(ctx, projection, view.blips);
+  const sizes = labelSizes(width, height);
+  const { named, boxes } = marks(ctx, projection, view.blips, Math.max(0.85, sizes.job / 25));
+  projection.toScreen(view.x, view.z, a);
+  boxes.push({ x: a.x, y: a.y, width: 40, height: 40 });
+  drawLabels(ctx, projection, named, boxes, sizes);
   player(ctx, projection, view.x, view.z, view.heading, time);
 }
