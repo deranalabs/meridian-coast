@@ -1,5 +1,6 @@
 // Mission director: offers jobs at their start pillars, runs one at a time, retries from checkpoints, pays out.
-import { createRun, stepRun, restartRun, failRun, currentStage, jobLabel, stageLabel, stageTexts } from './machine.js';
+import { createRun, stepRun, restartRun, failRun, markAlarm, currentStage, jobLabel, stageLabel, stageTexts }
+  from './machine.js';
 import { createProgress, cleanProgress, availableMissions, payReward } from './progress.js';
 import { failText } from './failures.js';
 import { resolveMission } from './resolve.js';
@@ -54,7 +55,11 @@ export function createMissions(game, defs, places, hooks = {}) {
   function enterStage(index) {
     state.props?.onStage?.(index);
     const stage = state.run.def.stages[index];
-    if (stage.alert) game.action.police.alert(stage.alert, world.view.x, world.view.z);
+    if (!stage.alert) return;
+    game.action.police.alert(stage.alert, world.view.x, world.view.z);
+    // The alarm is up as of now. Waiting for the next step to see it would miss stars cleared in between
+    // (stood down, resprayed), and the evade would then wait for stars that never come back.
+    markAlarm(state.run);
   }
 
   function announce(stage) {

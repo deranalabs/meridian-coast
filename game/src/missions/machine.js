@@ -85,6 +85,11 @@ export function stepRun(run, view, dt) {
   return events;
 }
 
+/** The current stage's alarm was raised: an evade may now clear as soon as no stars are left (objectives.js). */
+export function markAlarm(run) {
+  run.memo.hot = true;
+}
+
 /** Restart a failed run from its last checkpoint; returns the stage event so the world can set it up again. */
 export function restartRun(run) {
   if (run.status !== 'failed') return [];
