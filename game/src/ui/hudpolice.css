@@ -186,7 +186,10 @@
   #hud .dispatch { padding: 5px 9px 6px; font-size: 11px; line-height: 1.2; }
   #hud .dispatch-state { font-size: 12px; margin-bottom: 3px; }
   #hud .dispatch-row { grid-template-columns: 7px 96px 1fr 40px 52px; column-gap: 4px; }
-  #hud .dispatch-row .state { font-size: 9px; }
+  #hud .dispatch-row .state { margin: 0; font-size: 9px; line-height: 12px; }
+  #hud .dispatch-head { gap: 5px; }
+  #hud .dispatch-tag { font-size: 9px; letter-spacing: 1px; }
+  #hud .dispatch-units { padding: 0 3px; font-size: 9px; line-height: 12px; }
   #hud .dispatch-stars b { font-size: 13px; }
   #hud .wslot { width: 54px; padding: 10px 2px 2px; }
   #hud .wslot kbd { font-size: 9px; }

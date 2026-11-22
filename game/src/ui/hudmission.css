@@ -8,8 +8,9 @@
   box-shadow: inset 0 1px 0 rgba(255, 201, 74, 0.18);
 }
 #hud .mission-panel.show { display: block; }
-/* Head line: the gold job badge, the title (a long one wraps inside its own column), the stage at the right. */
-#hud .mp-head { display: flex; align-items: baseline; gap: 8px; }
+/* Head line: the gold job badge, the title (wrapping by the word), the stage at the right or, with a clock and a
+   long title, at the right of the line below. */
+#hud .mp-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 1px 8px; }
 #hud .mp-job {
   flex: none;
   padding: 1px 5px;
@@ -25,7 +26,8 @@
 }
 #hud .mp-job:empty { display: none; }
 #hud .mp-title {
-  min-width: 0;
+  flex: 1 1 0;
+  min-width: min-content;
   font-size: 16px;
   font-weight: 800;
   letter-spacing: 0.8px;
@@ -114,4 +116,8 @@
     text-shadow: 0 1px 6px rgba(0, 0, 0, 0.75);
   }
   #hud .message.passed-line { font-size: 18px; }
+  #hud .mp-head { column-gap: 5px; }
+  #hud .mp-job { padding: 0 3px; font-size: 9px; line-height: 13px; letter-spacing: 0.2px; }
+  #hud .mp-title { font-size: 13px; letter-spacing: 0.4px; }
+  #hud .mp-stage { font-size: 9px; letter-spacing: 0.3px; }
 }
