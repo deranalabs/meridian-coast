@@ -54,13 +54,50 @@ const COVER_PANELS = {
   speedo: '#hud .speedo', rank: '#hud .rankbar', armour: '#hud .status .armour',
 };
 
-/** The cover's HUD panels are all there, on screen, apart and readable at contact-sheet size, or the run fails. */
+/** The labels that say how deep the game is. Each is one line of its panel; an empty one counts as missing. */
+const COVER_LABELS = {
+  job: '#hud .mission-panel.show .mp-job', title: '#hud .mission-panel.show .mp-title',
+  stage: '#hud .mission-panel.show .mp-stage', dispatchTag: '#hud .dispatch.show .dispatch-tag',
+  units: '#hud .dispatch.show .dispatch-units', dispatchStars: '#hud .dispatch.show .dispatch-stars',
+  chip: '#hud .dispatch.show .state[data-chip]', rankStep: '#hud .rank-step', rankName: '#hud .rank-name',
+  rankLine: '#hud .rank-next', cash: '#hud .status .cash',
+};
+/** Labels that must also stand this many pixels tall on the 768x480 cover, whatever their font size says. */
+const TALL_LABELS = ['job', 'units'];
+const MIN_LABEL_HEIGHT = 6;
+
+/** Labels inside the cover's panels that are cut short or reach past their panel's edge. */
+function spilledLabels(page) {
+  return page.evaluate(`(() => {
+    const out = [];
+    for (const panel of document.querySelectorAll('#hud :is(.mission-panel.show, .dispatch.show, .rankbar)')) {
+      const edge = panel.getBoundingClientRect();
+      for (const el of panel.querySelectorAll('*')) {
+        const r = el.getBoundingClientRect();
+        if (!r.width) continue;
+        const cut = el.clientWidth > 0 && el.scrollWidth > el.clientWidth + 1;
+        if (cut || r.left < edge.left - 1 || r.right > edge.right + 1) out.push(el.className);
+      }
+    }
+    return out;
+  })()`);
+}
+
+/** The cover's HUD panels and labels are all there, apart, whole and readable at 768x480, or the run fails. */
 async function checkCover(page) {
+  const viewport = { width: 1280, height: 800 };
+  const scale = 768 / viewport.width;
   const boxes = await panelBoxes(page, COVER_PANELS);
-  const result = hudLayout(boxes, { width: 1280, height: 800 });
+  const result = hudLayout(boxes, viewport);
+  const labelBoxes = await panelBoxes(page, COVER_LABELS);
+  const labels = hudLayout(labelBoxes, viewport);
+  const short = TALL_LABELS.filter((name) => !((labelBoxes[name]?.height ?? 0) * scale >= MIN_LABEL_HEIGHT));
+  const spilled = await spilledLabels(page);
+  const ok = result.ok && labels.ok && !short.length && !spilled.length;
   const fonts = Object.entries(boxes).map(([name, box]) => `${name} ${box ? box.font : '-'}px`).join(', ');
-  console.log(`cover HUD: ${result.ok ? 'ok' : 'FAILED'} (smallest text: ${fonts})`);
-  if (!result.ok) throw new Error(`cover HUD layout: ${JSON.stringify(result)}`);
+  const heights = TALL_LABELS.map((name) => `${name} ${((labelBoxes[name]?.height ?? 0) * scale).toFixed(1)}px`);
+  console.log(`cover HUD: ${ok ? 'ok' : 'FAILED'} (smallest text: ${fonts}; at 768x480: ${heights.join(', ')})`);
+  if (!ok) throw new Error(`cover HUD layout: ${JSON.stringify({ panels: result, labels, short, spilled })}`);
 }
 
 async function runShots(server, nohud) {
