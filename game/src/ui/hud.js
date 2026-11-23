@@ -101,7 +101,8 @@ export function createHud(layout, visible = true) {
   const radio = element(root, 'radio');
   let lastRadio = null;
   const district = element(root, 'district');
-  const minimap = createMinimap(element(root, 'minimap'), layout);
+  const minimapBox = element(root, 'minimap');
+  const minimap = createMinimap(minimapBox, layout);
   const speedoBox = element(root, 'speedo');
   const speedo = document.createElement('canvas');
   speedo.width = 380;
@@ -127,7 +128,10 @@ export function createHud(layout, visible = true) {
       armourBar.style.width = `${Math.max(0, Math.min(100, view.armour ?? 0))}%`;
       armourBar.parentElement.style.display = view.armour > 0 ? 'block' : 'none';
       rankBar.update(view.respect ?? 0);
-      wanted.update(view.stars ?? 0, Boolean(view.searching));
+      const starMode = view.starState ?? (view.stars > 0 ? (view.searching ? 'searching' : 'seen') : 'none');
+      wanted.update(view.stars ?? 0, starMode);
+      // While a unit has the player in sight the minimap's rim flashes red and blue.
+      minimapBox.classList.toggle('seen', starMode === 'seen');
       if (view.weapon) weapon.update(view.weapon);
       weapon.root.style.display = view.driving ? 'none' : 'flex';
       if (view.arsenal) weaponBar.update(view.arsenal);

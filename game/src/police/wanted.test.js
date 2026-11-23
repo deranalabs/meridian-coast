@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   createWanted, commitCrime, updateWanted, clearWanted, setStars, starsFor, coolTime, isSearching, dispatchFor,
-  STAR_HEAT,
+  STAR_HEAT, starState,
 } from './wanted.js';
 
 test('an unwitnessed crime adds nothing; a witnessed one gives at least one star', () => {
@@ -77,4 +77,32 @@ test('clearing resets everything and dispatch grows with the level', () => {
   assert.equal(dispatchFor(4).helicopter, true);
   assert.ok(dispatchFor(5).cars >= dispatchFor(4).cars);
   assert.equal(dispatchFor(9).cars, dispatchFor(5).cars);
+});
+
+test('the stars read solid while seen, flash once sight breaks and go hollow past half the cool time', () => {
+  const wanted = createWanted();
+  assert.equal(starState(wanted), 'none');
+  commitCrime(wanted, 'stealCar', { x: 1, z: 2 });
+  updateWanted(wanted, 0.1, true, 1, 2);
+  assert.equal(starState(wanted), 'seen');
+  updateWanted(wanted, 0.3, false, 1, 2);
+  assert.equal(starState(wanted), 'seen', 'a blink of lost sight is not a search');
+  updateWanted(wanted, 0.5, false, 1, 2);
+  assert.equal(starState(wanted), 'searching');
+  const half = coolTime(wanted.stars) / 2;
+  updateWanted(wanted, half - 0.8 - 0.01, false, 1, 2);
+  assert.equal(starState(wanted), 'searching');
+  updateWanted(wanted, 0.02, false, 1, 2);
+  assert.equal(starState(wanted), 'cold');
+  updateWanted(wanted, 0.1, true, 3, 4);
+  assert.equal(starState(wanted), 'seen', 'seen again: solid at once');
+});
+
+test('reading the star state changes neither the stars nor the clock', () => {
+  const wanted = createWanted();
+  commitCrime(wanted, 'stealCar');
+  updateWanted(wanted, 2, false, 0, 0);
+  const before = JSON.stringify(wanted);
+  starState(wanted);
+  assert.equal(JSON.stringify(wanted), before);
 });

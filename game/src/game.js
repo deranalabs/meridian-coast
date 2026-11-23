@@ -1,6 +1,6 @@
 // Game assembly: builds the world, actors, vehicles, cameras and HUD, and runs one fixed step and one draw.
 import * as THREE from '../vendor/three.module.min.js';
-import { isSearching } from './police/wanted.js';
+import { isSearching, starState } from './police/wanted.js';
 import { policeReport } from './police/report.js';
 import { createPlayer } from './actors/player.js';
 import { createStory } from './missions/setup.js';
@@ -230,6 +230,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud, weather,
       respect: game.missions.progress?.respect ?? 0,
       stars: game.action.police.wanted.stars,
       searching: isSearching(game.action.police.wanted),
+      starState: starState(game.action.police.wanted),
       weapon: ammoView(player.state.arsenal),
       arsenal: player.state.arsenal,
       menu: Boolean(game.services.shops.openPlace),

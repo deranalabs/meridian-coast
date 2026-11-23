@@ -36,6 +36,13 @@
 }
 #hud .wanted.searching .star.lit { animation: star-blink 0.7s steps(2, jump-none) infinite; }
 @keyframes star-blink { 0% { opacity: 1; } 100% { opacity: 0.25; } }
+/* Cold trail: the police hunt with no description, so the lit stars are only gold outlines. */
+#hud .wanted.cold .star.lit path {
+  fill: rgba(20, 10, 30, 0.25);
+  stroke: #ffd27a;
+  stroke-width: 2.4;
+  filter: drop-shadow(0 0 3px #ffb347);
+}
 #hud .weapon {
   display: flex;
   justify-content: flex-end;

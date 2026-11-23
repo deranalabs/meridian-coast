@@ -235,3 +235,14 @@
   #hud .wslot kbd { font-size: 9px; }
   #hud .wslot .wname, #hud .wslot .wammo { font-size: 9px; }
 }
+
+/* While a unit sees the player the minimap's rim is half red, half blue, and the halves swap like a light bar. */
+#hud .minimap.seen {
+  border-color: #ff3b4e #3b8bff #3b8bff #ff3b4e;
+  box-shadow: -4px 0 12px rgba(255, 59, 78, 0.75), 4px 0 12px rgba(59, 139, 255, 0.75), 0 8px 24px rgba(0, 0, 0, 0.5);
+  animation: rim-siren 0.9s steps(2, jump-none) infinite;
+}
+@keyframes rim-siren {
+  0% { border-color: #ff3b4e #3b8bff #3b8bff #ff3b4e; }
+  100% { border-color: #3b8bff #ff3b4e #ff3b4e #3b8bff; }
+}

@@ -90,6 +90,17 @@ export function isSearching(wanted) {
   return wanted.stars > 0 && !wanted.seen && wanted.hiddenTime > 0.4;
 }
 
+/**
+ * How the HUD draws the stars, read from the state above and changing no rule: 'seen' (solid, a unit has the
+ * player in sight), 'searching' (flashing, sight broken), 'cold' (hollow: past half the cool time the police hunt
+ * with no description), or 'none' with no stars.
+ */
+export function starState(wanted) {
+  if (wanted.stars === 0) return 'none';
+  if (!isSearching(wanted)) return 'seen';
+  return wanted.hiddenTime >= coolTime(wanted.stars) / 2 ? 'cold' : 'searching';
+}
+
 /** What the police send at each level. */
 export function dispatchFor(stars) {
   const table = [
