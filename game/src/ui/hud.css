@@ -252,3 +252,50 @@
   font-weight: 800;
   text-shadow: none;
 }
+
+/* A district's banner, big and centred above the street, its turf line in the faction's colour; then the car's
+   name above the speedo on getting in. Both fade in and out. */
+#hud .place-flash, #hud .car-flash {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  font-family: "Avenir Next Condensed", "Arial Narrow", sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+#hud .place-flash { top: 27%; left: 0; right: 0; text-align: center; }
+#hud .place-flash b {
+  display: block;
+  font-size: 64px;
+  font-style: italic;
+  line-height: 1;
+  letter-spacing: 3px;
+  color: #ffffff;
+  text-shadow: 0 0 22px rgba(62, 230, 255, 0.65), 0 3px 0 #1a0c33, 0 0 4px #1a0c33;
+}
+#hud .place-flash span {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 1px 12px;
+  background: rgba(10, 4, 24, 0.72);
+  font-size: 20px;
+  letter-spacing: 5px;
+}
+#hud .place-flash span:empty { display: none; }
+#hud .car-flash {
+  right: 30px;
+  bottom: 232px;
+  font-size: 34px;
+  font-style: italic;
+  letter-spacing: 1.5px;
+  color: #3ee6ff;
+  text-shadow: 0 0 14px rgba(62, 230, 255, 0.55), 0 2px 0 #07131f;
+}
+#hud .place-flash.show, #hud .car-flash.show { opacity: 1; }
+#hud.menu .place-flash, #hud.menu .car-flash, #hud.cutscene .place-flash { visibility: hidden; }
+@media (max-width: 900px), (max-height: 560px) {
+  #hud .place-flash b { font-size: 38px; }
+  #hud .place-flash span { font-size: 13px; letter-spacing: 3px; }
+  #hud .car-flash { bottom: 150px; right: 18px; font-size: 22px; }
+}

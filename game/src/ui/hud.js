@@ -10,6 +10,7 @@ import { createMessages } from './messages.js';
 import { createWeaponBar } from './weaponbar.js';
 import { createPolicePanel } from './policepanel.js';
 import { carLine } from './carline.js';
+import { createPlaceFlash } from './placeflash.js';
 
 function element(parent, className, tag = 'div') {
   const node = document.createElement(tag);
@@ -101,6 +102,7 @@ export function createHud(layout, visible = true) {
   const radio = element(root, 'radio');
   let lastRadio = null;
   const district = element(root, 'district');
+  const flashes = createPlaceFlash(root);
   const minimapBox = element(root, 'minimap');
   const minimap = createMinimap(minimapBox, layout);
   const speedoBox = element(root, 'speedo');
@@ -120,6 +122,8 @@ export function createHud(layout, visible = true) {
     root,
     messages,
     say: (html, seconds, kind) => messages.say(html, seconds, kind),
+    /** Flash the district Ilo stands in on the next frame, as on entering it. */
+    announcePlace: () => flashes.announce(),
     update(view) {
       root.classList.toggle('menu', Boolean(view.menu));
       root.classList.toggle('on-foot', !view.driving);
@@ -154,11 +158,14 @@ export function createHud(layout, visible = true) {
         radio.innerHTML = `&#9835; <b>${line.station}</b><i>${RADIO_TAG[line.kind] ?? ''}</i>${line.text}`;
         radio.style.display = view.driving ? '' : 'none';
       }
-      district.textContent = placeName(view.x, view.z);
+      const place = placeName(view.x, view.z);
+      district.textContent = place;
       minimap.update(view.x, view.z, view.heading, view.blips, view.route, view.search);
       speedoBox.style.display = view.driving ? 'block' : 'none';
       if (view.driving) drawSpeedo(speedoCtx, speedo.width, Math.abs(view.speed) * 3.6);
       const driven = carLine(view.car);
+      // Menus and the map hide the flashes; their timers keep running.
+      flashes.update(place, view.driving ? driven?.name ?? '' : '', view.dt ?? 1 / 60);
       const carKey = driven ? `${driven.name}|${driven.standing}` : '';
       if (carKey !== lastCar) {
         lastCar = carKey;
