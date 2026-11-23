@@ -265,4 +265,15 @@ export const ACTION_SHOTS = {
       };
     },
   },
+  // The same chase at night in the rain: wet road, neon and window glows, the cruisers' bars on the water. A cover
+  // candidate kept beside the sheet, not on it.
+  missionRain: {
+    time: 'night',
+    weather: 'rain',
+    steps: COVER.steps,
+    focus: [COVER.laneX, 0, COVER.startZ - 30],
+    stage(game) {
+      return ACTION_SHOTS.mission.stage(game);
+    },
+  },
 };

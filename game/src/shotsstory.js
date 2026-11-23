@@ -32,6 +32,8 @@ const LAST_JOB = {
  * `jobs` story jobs done in order, one entry in `sides` per side job won, and the shop buys still owned.
  */
 export const STORY_POINTS = Object.freeze({
+  /** White Van under way: two jobs done and the pistol from the first pay. */
+  thirdJob: Object.freeze({ jobs: 2, weapons: Object.freeze(['pistol']) }),
   /** Headline is next. */
   fourthJob: Object.freeze({ jobs: 3, weapons: Object.freeze(['pistol']) }),
   /** Headline under way, with the SMG that Known Face (reached at job three) lets Ilo buy. */

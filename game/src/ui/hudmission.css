@@ -157,4 +157,10 @@
   #hud .mp-job { padding: 0 3px; font-size: 9px; line-height: 13px; letter-spacing: 0.2px; }
   #hud .mp-title { font-size: 13px; letter-spacing: 0.4px; }
   #hud .mp-stage { font-size: 9px; letter-spacing: 0.3px; }
+  /* The giver and the pay share one line and the steps sit tight; the Next line gives way to keep the card short. */
+  #hud .mp-giver { flex-wrap: nowrap; margin-bottom: 3px; font-size: 9px; }
+  #hud .mp-reward b { margin-right: 0; font-size: 11px; }
+  #hud .mp-reward span { display: none; }
+  #hud .mp-steps { gap: 1px 5px; margin-top: 3px; font-size: 8.5px; }
+  #hud .mp-next { display: none !important; }
 }

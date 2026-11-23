@@ -32,16 +32,30 @@ function stagedGame() {
   return { game, seen };
 }
 
-test('the sheet is the chase, the full map, Progress and the night fight, in that order', () => {
+test('the sheet is the chase, the street job, the shop and Progress, in that order', () => {
   assert.deepEqual(SHOT_LIST.map((shot) => `${shot.name}:${shot.file}`), [
-    'mission:1-mission.jpg', 'map:2-map.jpg', 'progress:3-progress.jpg', 'combat:4-fight.jpg',
+    'mission:1-mission.jpg', 'street:2-street.jpg', 'shop:3-shop.jpg', 'progress:4-progress.jpg',
   ]);
 });
 
-test('the sheet sorts by file name as listed, and every slot has a scene; the shop stays a debug scene', () => {
+test('the sheet sorts by file name as listed, and every slot has a scene; map, fight and rain stay debug', () => {
   const files = SHOT_LIST.map((shot) => shot.file);
   assert.deepEqual([...files].sort(), files);
-  for (const { name } of [...SHOT_LIST, { name: 'shop' }]) assert.ok(getShot(name), name);
+  for (const { name } of [...SHOT_LIST, { name: 'map' }, { name: 'combat' }, { name: 'missionRain' }]) {
+    assert.ok(getShot(name), name);
+  }
+  assert.equal(getShot('missionRain').weather, 'rain');
+});
+
+test('the street cell is job 3 of 8 under way: two jobs done, its last stage on foot with a line of talk', () => {
+  assert.equal(storyTotals(STORY_POINTS.thirdJob).paid.length, 2);
+  const def = STORY_MISSIONS[2];
+  assert.equal(def.id, 'white-van');
+  assert.equal(def.number, 3);
+  const stage = def.stages[3];
+  assert.equal(stage.onFoot, true);
+  assert.ok(stage.talk.length > 0);
+  assert.equal(getShot('street').time, 'golden');
 });
 
 test('the map stands at the last job: it pins Gilded Tide and both side jobs, with two stars and two cruisers', () => {

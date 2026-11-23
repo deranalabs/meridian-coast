@@ -5,6 +5,7 @@ import { HEIST_SHOTS } from './shotsheist.js';
 import { STORY_POINTS, seedStory, storySaveText } from './shotsstory.js';
 import { parseSave } from './save/savegame.js';
 import { PROGRESS_SHOTS } from './shotsprogress.js';
+import { STREET_SHOTS } from './shotsstreet.js';
 
 /** The title scene's save, as stored text: six jobs done, Tide Tables next, saved on a fixed evening. */
 const TITLE_SAVE_TEXT = storySaveText(STORY_POINTS.sixDone);
@@ -210,5 +211,6 @@ const MAP_SHOT = {
 
 export function getShot(name) {
   if (name === 'map') return MAP_SHOT;
-  return SHOTS[name] ?? ACTION_SHOTS[name] ?? HEIST_SHOTS[name] ?? SHOP_SHOTS[name] ?? PROGRESS_SHOTS[name] ?? null;
+  return SHOTS[name] ?? ACTION_SHOTS[name] ?? HEIST_SHOTS[name] ?? SHOP_SHOTS[name] ?? PROGRESS_SHOTS[name]
+    ?? STREET_SHOTS[name] ?? null;
 }

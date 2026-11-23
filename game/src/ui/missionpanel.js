@@ -50,7 +50,8 @@ export function createMissionPanel(parent) {
       title.textContent = view.title;
       stage.textContent = view.stage;
       giver.textContent = view.giver ? `Job for ${view.giver}` : '';
-      reward.innerHTML = view.reward ? `<b>${view.reward.cash}</b>${view.reward.respect}` : '';
+      // The respect has its own span: a small window drops it and keeps the cash.
+      reward.innerHTML = view.reward ? `<b>${view.reward.cash}</b><span>${view.reward.respect}</span>` : '';
       // ✓ done, ▸ now, nothing for the steps still ahead.
       steps.innerHTML = (view.steps ?? []).map(({ name, state }) => `<span class="${state}">`
         + `${state === 'done' ? '&#10003; ' : state === 'now' ? '&#9656; ' : ''}${name}</span>`).join('');
