@@ -665,3 +665,35 @@ ground under it and is moved out of any car by the nearest side. Space is still 
 
 **Skipped in 8a**: rain and the hidden packages (no code was started for either), and this section. The play and
 story browser runs were not repeated when this section was written; 8b's section reports them.
+
+## Recording 8b: rain, twenty packages and a twelve-minute day
+
+Four commits on 41e043e (482de2d, 7934b61, 20dccc4, 5145350) after the 8a notes in 396a8a5. This section was
+written at the start of 8c from `git log 41e043e..HEAD` and the diffs.
+
+**1. Rain** (482de2d, `systems/weather.js`, `render/rain.js`, `render/rainlook.js`, tested). T toggles rain in
+free roam and `?weather=rain` starts in it; the change eases in over 4 s. Streaks are instanced quads in a
+15 x 11 x 15 m box wrapped round the camera and pushed 6.5 m ahead of it, falling at about 17 m/s with a little
+wind; `streakCount` caps them at `MAX_STREAKS` = 400. The sky turns slate, haze thickens, sun and ambient light
+dim, and the road and pavement shaders darken and shine. A staged `rain` scene (the drive at dusk, behind the
+car) exists but is not on the sheet: a scene that names no weather is locked dry, so the sheet rendered to the
+same bytes. The rain state is not saved.
+
+**2. Twenty hidden packages** (7934b61, `economy/packages.js`, `world/packagespots.js`, `economy/parcels.js`,
+`systems/packages.js`, tested). `PACKAGE_COUNT` = 20 seeded spots on open pavement, five per district, at least
+30 m apart, each a turning glowing box worth `PACKAGE_PAY` = $150, picked up within 1.4 m on foot or 2.8 m in a
+car. The found set is saved, the full map shows the ones left as amber dots, and the Progress page counts them.
+Staged scenes only count them, so three of the four sheet files kept their bytes; `3-progress.jpg` was retaken.
+
+**3. A twelve-minute day** (20dccc4, `systems/dayclock.js`, `render/daycycle.js`, tested). `DAY_SECONDS` = 720:
+free roam starts at dusk (19:12) and blends dawn, day, dusk and night presets without a seam, with lamps and
+windows off by day. A job holds the clock. `?time=day|dusk|night|dawn` pins it, staged scenes keep their own time
+and ignore the parameter, and a save stores the hour. The pause screen and the phone show the hour as "21:40";
+the phone was also made to fit short windows.
+
+**4. README** (5145350): the keys (T for rain), rain, the day and the packages.
+
+**The sheet in 8b** stayed the four files of 7c and 8a: `1-mission.jpg`, `2-map.jpg`, `3-progress.jpg` and
+`4-fight.jpg`.
+
+**Skipped in 8b**: the motorbike (no code was started) and this section.
