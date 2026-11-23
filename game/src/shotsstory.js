@@ -3,9 +3,10 @@ import { giveWeapon } from './combat/arsenal.js';
 import { STORY_MISSIONS } from './missions/story/index.js';
 import { WEAPONS } from './combat/weapons.js';
 import { ACTIVITIES } from './missions/activities/index.js';
-import { WEAPON_PRICES, ARMOUR_PRICE, CAR_PRICES, GEAR } from './data/prices.js';
+import { WEAPON_PRICES, ARMOUR_PRICE, CAR_PRICES, GEAR, PENALTIES } from './data/prices.js';
 import { defaultSave, serialise } from './save/savegame.js';
 import { PACKAGE_PAY } from './economy/packages.js';
+import { penaltyFor } from './economy/wallet.js';
 
 /** When the staged saves were made: Friday 20 November 2026, 21:14 on the player's clock. */
 export const STAGED_SAVED_AT = new Date(2026, 10, 20, 21, 14).getTime();
@@ -39,8 +40,14 @@ export const STORY_POINTS = Object.freeze({
   sixDone: Object.freeze({ jobs: 6, weapons: Object.freeze(['pistol', 'smg']) }),
   /** Gilded Tide is next. */
   lastJob: Object.freeze(LAST_JOB),
-  /** The last-job point with two cars bought for the garage and seven hidden packages found on the way. */
-  garage: Object.freeze({ ...LAST_JOB, cars: Object.freeze(['sedan', 'pickup']), packages: 7 }),
+  /**
+   * The last-job point with two cars bought for the garage, seven hidden packages found and the career a run that
+   * far leaves: cars taken, stars shaken off, two busts and a death, every district and five of the seven shops.
+   */
+  garage: Object.freeze({ ...LAST_JOB, cars: Object.freeze(['sedan', 'pickup']), packages: 7,
+    career: Object.freeze({ stolen: 23, starsLost: 41, busted: 2, wasted: 1, metres: 48650,
+      districts: Object.freeze(['neon', 'beach', 'harbor', 'heights']),
+      shops: Object.freeze(['gun', 'clothes', 'dealer', 'spray', 'food1']) }) }),
 });
 
 const total = (list, value) => list.reduce((sum, entry) => sum + value(entry), 0);
@@ -55,10 +62,14 @@ export function storyTotals(point) {
   const sides = (point.sides ?? []).map((id) => ACTIVITIES.find((def) => def.id === id));
   const earned = [...jobs, ...sides];
   const packages = Array.from({ length: point.packages ?? 0 }, (_, index) => index);
+  // Each bust and death in the career is charged as play charges it, taken early with a new game's cash in hand.
+  const start = { cash: defaultSave().cash };
+  const fines = (point.career?.busted ?? 0) * penaltyFor(start, PENALTIES.busted)
+    + (point.career?.wasted ?? 0) * penaltyFor(start, PENALTIES.wasted);
   const spent = total(jobs, gearCost)
     + total(point.weapons, (id) => WEAPON_PRICES[id])
     + total(point.cars ?? [], (type) => CAR_PRICES[type])
-    + (point.armour ? ARMOUR_PRICE.price : 0);
+    + (point.armour ? ARMOUR_PRICE.price : 0) + fines;
   return {
     done: [...new Set(earned.map((def) => def.id))],
     paid: jobs.map((def) => def.id),
@@ -84,6 +95,7 @@ export function seedStory(game, point) {
   for (const id of point.weapons) giveWeapon(arsenal, id);
   if (point.armour) vitals.armour = ARMOUR_PRICE.amount;
   if (point.cars) game.ownedCars = boughtCars(point);
+  if (point.career) game.career?.restore(point.career);
 }
 
 /** The text a game at `point` saves, stamped STAGED_SAVED_AT. */
@@ -100,5 +112,6 @@ export function storySaveText(point) {
     clock: STAGED_CLOCK,
     savedAt: STAGED_SAVED_AT,
     missions: { done, paid, respect, fails: STAGED_FAILS },
+    career: point.career ?? null,
   });
 }

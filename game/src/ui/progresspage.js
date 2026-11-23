@@ -1,4 +1,5 @@
-// Progress page of the pause menu: the large figures, the city map and what comes next, on one screen.
+// Progress page of the pause menu: the completion percentage and its bars, the city map, the career counters and
+// what comes next, on one screen.
 import { progressView, lastSaveText } from './progressdata.js';
 import { createProjection } from './mapprojection.js';
 import { paintMap } from './mapdraw.js';
@@ -11,10 +12,19 @@ const CITY_VIEW = { zoom: 1.36, x: 66, z: 30 };
 
 const money = (value) => `$${value.toLocaleString('en-US')}`;
 
-function figureHtml({ id, value, of, label, detail }) {
-  const long = `${value}${of ?? ''}`.length > 3 ? ' long' : '';
-  return `<div class="pg-figure${long}" data-figure="${id}"><b>${value}${of === null ? '' : `<i>/${of}</i>`}</b>
-    <span>${label}</span><small>${detail}</small></div>`;
+function completeHtml(percent) {
+  return `<b>${percent}<i>%</i></b><span>Complete</span><div class="pg-meter"><i style="width:${percent}%"></i></div>`;
+}
+
+/** One part of the city: its name, a bar filled to have/of and the count, full parts in mint. */
+function barHtml({ id, label, have, of }) {
+  const share = of > 0 ? Math.min(1, have / of) : 0;
+  return `<li data-bar="${id}" class="${share >= 1 ? 'full' : ''}"><span>${label}</span>
+    <div class="pg-track"><i style="width:${(share * 100).toFixed(1)}%"></i></div><b>${have}<i>/${of}</i></b></li>`;
+}
+
+function careerHtml({ id, value, label }) {
+  return `<li data-career="${id}"><b>${value}</b><span>${label}</span></li>`;
 }
 
 function jobHtml(job) {
@@ -23,17 +33,12 @@ function jobHtml(job) {
     <p class="pg-title">${job.title}<em>from ${job.giver}</em></p>`;
 }
 
-function rankHtml(rank) {
-  if (!rank) return '<h3>Next rank</h3><p class="pg-line"><b>Top rank</b><em>everything is open</em></p>';
-  const opens = rank.opens.length ? `opens ${rank.opens.join(', ')}` : 'opens nothing new';
-  return `<h3>Next rank &middot; ${rank.needed} respect to go</h3>
-    <p class="pg-line"><b>${rank.name}</b><em>${opens}</em></p>`;
-}
-
-function districtsHtml(list) {
-  const rows = list.map(({ name, faction, colour }) =>
-    `<li style="--c:${colour}"><b>${name}</b><em>${faction}</em></li>`).join('');
-  return `<h3>Who holds the city</h3><ul class="pg-turf">${rows}</ul>`;
+/** The rank held now with its respect, then the next one and what it opens. */
+function rankHtml(now, rank) {
+  const held = `<h3>Rank ${now.step} of ${now.of} &middot; ${now.respect} respect</h3>`;
+  if (!rank) return `${held}<p class="pg-line"><b>${now.name}</b><em>top rank, everything is open</em></p>`;
+  const opens = rank.opens.length ? `, opens ${rank.opens.join(', ')}` : '';
+  return `${held}<p class="pg-line"><b>${now.name}</b><em>${rank.needed} to ${rank.name}${opens}</em></p>`;
 }
 
 function saleHtml(list) {
@@ -45,10 +50,11 @@ function saleHtml(list) {
   return `<h3>On sale now</h3><ul class="pg-sale">${rows}</ul>`;
 }
 
-/** The state the figures read, from the live game. */
+/** The state the page reads, from the live game. */
 function stateOf(game) {
   const { wallet, arsenal, vitals } = game.player.state;
-  return { progress: game.missions.progress, wallet, arsenal, vitals, outfit: game.outfit, cars: game.ownedCars };
+  return { progress: game.missions.progress, wallet, arsenal, vitals, outfit: game.outfit, cars: game.ownedCars,
+    career: game.career.record, packages: { count: game.packages.count, total: game.packages.total } };
 }
 
 /** The panel's map: a pin for each job open now, the next story job on top. Shop tiles would hide the names here. */
@@ -62,11 +68,11 @@ function mapBlips(game, next) {
 export function createProgressPage(parent, game, storedSave) {
   const root = document.createElement('section');
   root.className = 'progress-page';
-  root.innerHTML = `<header><h2>Progress</h2><span class="pg-packages"></span><span class="pg-saved"></span>
+  root.innerHTML = `<header><h2>Progress</h2><span class="pg-saved"></span>
       <span class="pg-keys"><kbd>Esc</kbd> or <kbd>Enter</kbd> back</span></header>
-    <div class="pg-figures"></div>
+    <div class="pg-top"><div class="pg-complete"></div><ul class="pg-bars"></ul></div>
     <div class="pg-body"><div class="pg-map"><canvas></canvas></div>
-      <div class="pg-side"><div class="pg-job"></div><div class="pg-rank"></div><div class="pg-districts"></div>
+      <div class="pg-side"><ul class="pg-career"></ul><div class="pg-job"></div><div class="pg-rank"></div>
         <div class="pg-shops"></div></div></div>`;
   parent.appendChild(root);
   const part = (name) => root.querySelector(`.pg-${name}`);
@@ -92,12 +98,11 @@ export function createProgressPage(parent, game, storedSave) {
     show() {
       const view = progressView(stateOf(game));
       part('saved').textContent = lastSaveText(storedSave());
-      const { count, total } = game.packages;
-      part('packages').innerHTML = `Packages <b>${count}/${total}</b>`;
-      part('figures').innerHTML = view.figures.map(figureHtml).join('');
+      part('complete').innerHTML = completeHtml(view.complete);
+      part('bars').innerHTML = view.bars.map(barHtml).join('');
+      part('career').innerHTML = view.career.map(careerHtml).join('');
       part('job').innerHTML = jobHtml(view.job);
-      part('rank').innerHTML = rankHtml(view.rank);
-      part('districts').innerHTML = districtsHtml(view.districts);
+      part('rank').innerHTML = rankHtml(view.now, view.rank);
       part('shops').innerHTML = saleHtml(view.sale);
       root.classList.add('open');
       map = { ...game.mapView(), route: null, blips: mapBlips(game, view.job) };

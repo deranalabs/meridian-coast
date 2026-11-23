@@ -36,6 +36,7 @@ import { createClimate } from './systems/climate.js';
 import { createPackages } from './systems/packages.js';
 import { createSunGlow } from './render/sunglow.js';
 import { createGlowSprites, windowGlows } from './render/glowsprites.js';
+import { createCareerWatch } from './systems/careerwatch.js';
 
 const CAR_VIEW_NAMES = { chase: 'Chase', driver: "Driver's seat", bonnet: 'Bonnet' };
 /** The same keyboard with this step's presses hidden (the phone has them); held keys still steer a car. */
@@ -132,6 +133,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud, weather,
   game.prompt = null;
   game.climate = createClimate(game, weather, clock);
   game.packages = createPackages(game, { staged });
+  game.career = createCareerWatch(game, { staged });
   let heldInput = null;
 
   game.step = (dt, rawInput) => {
@@ -140,6 +142,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud, weather,
     const input = phoneKeys ? (heldInput ??= pressFree(rawInput)) : rawInput;
     game.climate.update(dt, input);
     game.packages.update(game.time);
+    game.career.update(dt);
     game.prompt = game.services.update(dt, input);
     const missionPrompt = game.services.respawn.active ? null : game.missions.update(dt, input);
     game.prompt ??= missionPrompt;

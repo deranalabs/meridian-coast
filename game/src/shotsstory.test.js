@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import { STORY_POINTS, STAGED_SAVED_AT, seedStory, storyTotals, storySaveText } from './shotsstory.js';
 import { createArsenal } from './combat/arsenal.js';
 import { createVitals, MAX_ARMOUR } from './combat/vitals.js';
-import { createWallet } from './economy/wallet.js';
-import { WEAPON_PRICES, ARMOUR_PRICE, CAR_PRICES, GEAR } from './data/prices.js';
+import { createWallet, penaltyFor } from './economy/wallet.js';
+import { WEAPON_PRICES, ARMOUR_PRICE, CAR_PRICES, GEAR, PENALTIES } from './data/prices.js';
 import { createProgress, availableMissions, cleanProgress, isAvailable } from './missions/progress.js';
 import { lockReason } from './missions/respect.js';
 import { STORY_MISSIONS } from './missions/story/index.js';
@@ -58,14 +58,21 @@ test('the last-job point: seven jobs and one sprint paid, less both guns, the ve
   assert.deepEqual(availableMissions(progress, STORY_MISSIONS).map((def) => def.number), [8]);
 });
 
-test('the progress point is the last-job point less two cars, plus the pay for seven packages', () => {
+test('the progress point is the last-job point less two cars and its busts and deaths, plus seven packages', () => {
   const last = storyTotals(STORY_POINTS.lastJob);
   const { progress, wallet, game } = seeded(STORY_POINTS.garage);
   const types = game.ownedCars.map((car) => car.type);
   assert.equal(types.length, 2);
   const found = STORY_POINTS.garage.packages * PACKAGE_PAY;
-  assert.equal(wallet.cash, last.cash + found - types.reduce((total, type) => total + CAR_PRICES[type], 0));
+  const { busted, wasted } = STORY_POINTS.garage.career;
+  const start = { cash: defaultSave().cash };
+  const fines = busted * penaltyFor(start, PENALTIES.busted) + wasted * penaltyFor(start, PENALTIES.wasted);
+  assert.ok(fines > 0);
+  assert.equal(wallet.cash, last.cash + found - fines - types.reduce((total, type) => total + CAR_PRICES[type], 0));
   assert.equal(progress.respect, last.respect);
+  const saved = parseSave(storySaveText(STORY_POINTS.garage)).save.career;
+  assert.equal(saved.stolen, STORY_POINTS.garage.career.stolen);
+  assert.equal(saved.shops.length, 5);
 });
 
 test('every point can be reached: money in hand, side jobs open and each buy unlocked by its rank', () => {

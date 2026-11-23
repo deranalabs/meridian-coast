@@ -101,7 +101,8 @@ export function createShops(game, hooks) {
     state.note = '';
     player.state.frozen = true;
     menu.show(place, SHOP_TITLES[place.kind] ?? '');
-    game.action.events.emit('ui', { kind: 'open' });
+    // The shop's id goes with it, so the career record knows which doors Ilo has been through.
+    game.action.events.emit('ui', { kind: 'open', place: place.id });
     preview();
   }
 

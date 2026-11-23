@@ -115,6 +115,9 @@ try {
   await hold(page, ['KeyW'], 2500);
   const driving = await state(page);
   check('throttle builds speed', driving.speedKmh > 12);
+  // The coupe was nobody's: the career counts it as stolen, and the metres driven so far.
+  const career = JSON.parse(await page.evaluate('JSON.stringify(window.__meridian.game.career.record)'));
+  check('the career counts the coupe as stolen and the metres driven', career.stolen === 1 && career.metres > 5);
   await hold(page, ['KeyW', 'KeyA', 'Space'], 900);
   let pedal = null;
   let calm = 0;
@@ -193,14 +196,17 @@ try {
   await tap(page, 'Enter');
   const progressPage = JSON.parse(await page.evaluate(`JSON.stringify((() => {
     const root = document.querySelector('.progress-page.open');
-    return { figures: root?.querySelectorAll('.pg-figure').length ?? 0,
-      guns: root?.querySelector('[data-figure=weapons] b')?.textContent,
-      respect: root?.querySelector('[data-figure=respect] b')?.textContent,
-      want: String(window.__meridian.game.missions.progress.respect),
+    return { bars: root?.querySelectorAll('.pg-bars li').length ?? 0,
+      guns: root?.querySelector('[data-bar=guns] b')?.textContent,
+      stolen: root?.querySelector('[data-career=stolen] b')?.textContent,
+      complete: root?.querySelector('.pg-complete b')?.textContent ?? '',
+      rank: root?.querySelector('.pg-rank h3')?.textContent ?? '',
+      want: \`\${Math.floor(window.__meridian.game.missions.progress.respect)} respect\`,
       saved: root?.querySelector('.pg-saved')?.textContent, map: root?.querySelector('canvas')?.width ?? 0 }; })())`));
-  check('Progress opens with the player\'s own figures, the map and the last save', progressPage.figures === 8
-    && progressPage.guns === '1/3' && progressPage.respect === progressPage.want
-    && progressPage.saved === 'Not saved yet' && progressPage.map > 300);
+  check('Progress opens with the player\'s own bars, career, percentage, map and last save', progressPage.bars === 7
+    && progressPage.guns === '1/3' && progressPage.stolen === '1' && /^\d{1,3}%$/.test(progressPage.complete)
+    && progressPage.rank.endsWith(progressPage.want) && progressPage.saved === 'Not saved yet'
+    && progressPage.map > 300);
   await tap(page, 'Escape');
   check('Esc leaves Progress for the menu, still paused', (await state(page)).paused
     && await page.evaluate("!document.querySelector('.progress-page.open')"));

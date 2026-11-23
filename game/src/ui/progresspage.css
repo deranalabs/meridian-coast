@@ -1,9 +1,13 @@
-/* Progress page styles: one screen of figures, map and lines, all in design pixels of a 1280x800 window. */
+/* Progress page styles: one screen of completion, bars, map, career and lines, in design pixels of a 1280x800
+   window. The key figures are built to read in a cell a fifth of that size. */
 #pause .progress-page {
   --u: min(0.078125vw, 0.125vh);
-  /* Narrow heavy faces let the figures and their words grow taller in the same eight columns. */
+  /* Narrow heavy faces let the figures and their words grow taller in the same columns. */
   --pg-narrow: "Avenir Next Condensed", "Bahnschrift Condensed", "Roboto Condensed", "Arial Narrow",
     "Liberation Sans Narrow", "Helvetica Neue", Arial, sans-serif;
+  --pg-cyan: #3ee6ff;
+  --pg-mint: #6dffa8;
+  --pg-panel: rgba(8, 3, 20, 0.82);
   position: absolute;
   inset: 0;
   display: none;
@@ -26,19 +30,6 @@
   text-shadow: 0 4px 20px rgba(255, 79, 160, 0.5);
 }
 .pg-saved { font-size: calc(28 * var(--u)); font-weight: 900; color: var(--mc-cash, #9dffb5); white-space: nowrap; }
-/* Dark on gold: at a fifth of its size it still reads as a word and a count. */
-.pg-packages {
-  padding: 0 calc(12 * var(--u));
-  border-radius: calc(5 * var(--u));
-  background: var(--mc-gold, #ffc94a);
-  color: #24103a;
-  font-family: var(--pg-narrow);
-  font-size: calc(43 * var(--u));
-  font-weight: 900;
-  line-height: 1.12;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
 .pg-keys {
   margin-left: auto;
   font-size: calc(16 * var(--u));
@@ -46,62 +37,86 @@
   white-space: nowrap;
 }
 
-/* The row of large figures */
-.pg-figures {
-  display: grid;
+/* Top row: the one big percentage, then a bar for each part of the city */
+.pg-top { display: flex; flex: none; gap: calc(14 * var(--u)); height: calc(262 * var(--u)); }
+.pg-complete {
+  display: flex;
   flex: none;
-  grid-template-columns: 1fr 1.36fr 1.24fr 0.94fr 0.94fr 1fr 1fr 0.96fr;
-  gap: calc(5 * var(--u));
-}
-.pg-figure {
-  min-width: 0;
-  padding: calc(6 * var(--u)) 0 calc(5 * var(--u));
-  text-align: center;
-  white-space: nowrap;
-  border-top: calc(6 * var(--u)) solid var(--mc-gold, #ffc94a);
-  border-radius: calc(5 * var(--u));
-  background: rgba(8, 3, 20, 0.85);
-}
-.pg-figure:nth-child(even) { border-top-color: #ff5fa2; }
-.pg-figure b {
-  display: block;
+  flex-direction: column;
+  justify-content: center;
+  width: calc(330 * var(--u));
+  padding: 0 calc(18 * var(--u));
+  box-sizing: border-box;
+  border-left: calc(8 * var(--u)) solid var(--pg-cyan);
+  border-radius: calc(6 * var(--u));
+  background: var(--pg-panel);
   font-family: var(--pg-narrow);
-  font-size: calc(106 * var(--u));
+}
+.pg-complete b {
+  font-size: calc(156 * var(--u));
   font-weight: 900;
-  line-height: 0.88;
-  letter-spacing: calc(-1 * var(--u));
+  line-height: 0.86;
+  letter-spacing: calc(-3 * var(--u));
   color: #ffffff;
-  font-variant-numeric: lining-nums;
+  text-shadow: 0 0 calc(24 * var(--u)) rgba(62, 230, 255, 0.45);
 }
-.pg-figure i { font-style: normal; font-size: calc(84 * var(--u)); color: var(--mc-gold, #ffc94a); }
-.pg-figure.long b { font-size: calc(80 * var(--u)); line-height: 1.2; }
-.pg-figure span {
-  display: block;
-  margin-top: calc(2 * var(--u));
-  font-family: var(--pg-narrow);
-  font-size: calc(41 * var(--u));
+.pg-complete b i { font-style: normal; font-size: calc(96 * var(--u)); color: var(--pg-cyan); }
+.pg-complete span {
+  font-size: calc(38 * var(--u));
   font-weight: 900;
-  line-height: 1;
+  line-height: 1.1;
+  letter-spacing: calc(4 * var(--u));
   text-transform: uppercase;
-  color: var(--mc-gold, #ffc94a);
+  color: var(--pg-cyan);
 }
-.pg-figure small {
-  display: block;
+.pg-meter, .pg-track { position: relative; overflow: hidden; background: rgba(255, 255, 255, 0.12); }
+.pg-meter { height: calc(14 * var(--u)); margin-top: calc(10 * var(--u)); border-radius: calc(7 * var(--u)); }
+.pg-meter i, .pg-track i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(90deg, var(--pg-cyan), var(--pg-mint));
+}
+.pg-bars {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  margin: 0;
+  padding: calc(8 * var(--u)) calc(16 * var(--u));
+  list-style: none;
+  border-radius: calc(6 * var(--u));
+  background: var(--pg-panel);
   font-family: var(--pg-narrow);
-  font-size: calc(27 * var(--u));
+}
+.pg-bars li { display: flex; align-items: center; gap: calc(16 * var(--u)); line-height: 1; }
+.pg-bars span {
+  flex: none;
+  width: calc(190 * var(--u));
+  font-size: calc(28 * var(--u));
   font-weight: 900;
-  line-height: 1.08;
   text-transform: uppercase;
-  letter-spacing: calc(-0.2 * var(--u));
   color: #ffd1e6;
 }
+.pg-track { flex: 1; height: calc(16 * var(--u)); border-radius: calc(3 * var(--u)); }
+.pg-bars b {
+  flex: none;
+  width: calc(112 * var(--u));
+  text-align: right;
+  font-size: calc(36 * var(--u));
+  font-weight: 900;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+}
+.pg-bars b i { font-style: normal; color: var(--mc-gold, #ffc94a); }
+.pg-bars .full span, .pg-bars .full b, .pg-bars .full b i { color: var(--pg-mint); }
 
-/* The map on the left, what comes next on the right */
+/* The map on the left; the career, the rank, the next job and the sale list on the right */
 .pg-body { display: flex; flex: 1; min-height: 0; gap: calc(16 * var(--u)); }
 .pg-map {
   position: relative;
   flex: none;
-  width: calc(576 * var(--u));
+  width: calc(500 * var(--u));
   overflow: hidden;
   border: calc(4 * var(--u)) solid var(--mc-gold, #ffc94a);
   border-radius: calc(8 * var(--u));
@@ -125,6 +140,31 @@
   color: #ffd1e6;
 }
 .pg-side p, .pg-side ul { margin: 0; padding: 0; list-style: none; }
+.pg-career { display: grid; grid-template-columns: repeat(5, 1fr); gap: calc(6 * var(--u)); }
+.pg-career li {
+  padding: calc(4 * var(--u)) 0 calc(6 * var(--u));
+  text-align: center;
+  white-space: nowrap;
+  border-top: calc(5 * var(--u)) solid #ff5fa2;
+  border-radius: calc(5 * var(--u));
+  background: var(--pg-panel);
+}
+.pg-career b {
+  display: block;
+  font-size: calc(66 * var(--u));
+  font-weight: 900;
+  line-height: 0.95;
+  color: #ffffff;
+  font-variant-numeric: lining-nums;
+}
+.pg-career span {
+  display: block;
+  font-size: calc(22 * var(--u));
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+  color: #ffd1e6;
+}
 .pg-job {
   padding: calc(6 * var(--u)) calc(14 * var(--u));
   border-radius: calc(6 * var(--u));
@@ -132,24 +172,13 @@
 }
 .pg-title, .pg-line { display: flex; align-items: baseline; gap: calc(14 * var(--u)); white-space: nowrap; }
 .pg-title {
-  font-size: calc(54 * var(--u));
+  font-size: calc(48 * var(--u));
   font-weight: 900;
   font-style: italic;
   line-height: 1;
 }
 .pg-side em { font-style: normal; font-size: calc(25 * var(--u)); font-weight: 800; color: #f4ecff; }
 .pg-line b { font-size: calc(36 * var(--u)); font-weight: 900; line-height: 1.1; color: var(--mc-gold, #ffc94a); }
-.pg-turf { display: grid; grid-template-columns: 1fr 1fr; gap: calc(4 * var(--u)) calc(10 * var(--u)); }
-.pg-turf li {
-  display: flex;
-  flex-direction: column;
-  padding: calc(1 * var(--u)) calc(10 * var(--u));
-  border-left: calc(9 * var(--u)) solid var(--c);
-  background: rgba(8, 3, 20, 0.7);
-  line-height: 1;
-}
-.pg-turf b { font-size: calc(27 * var(--u)); font-weight: 900; }
-.pg-turf li em { color: var(--c); font-weight: 900; }
 .pg-sale li {
   display: flex;
   align-items: baseline;

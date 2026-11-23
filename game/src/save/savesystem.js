@@ -27,6 +27,7 @@ export function snapshot(game) {
     savedAt: Date.now(),
     packages: game.packages?.list() ?? [],
     missions: game.missions ? game.missions.progress : null,
+    career: game.career?.record ?? null,
   };
 }
 
@@ -43,6 +44,7 @@ export function loadSave() {
 /** Put a parsed save into a freshly built game. */
 export function applySave(game, save) {
   game.packages?.restore(save.packages);
+  game.career?.restore(save.career);
   game.climate?.setHour(save.hour);
   const p = game.player.state;
   p.wallet.cash = save.cash;
