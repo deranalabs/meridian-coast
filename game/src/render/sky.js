@@ -81,6 +81,15 @@ void main() {
   } else {
     sky = mix(uHorizon * 0.8 + uHaze * 0.4, uHaze, smoothstep(0.0, -0.12, h));
   }
+  // A low sun throws a pink and violet belt into the sky opposite it, strongest a little above the horizon.
+  float lowSun = smoothstep(0.45, 0.05, uSunDir.y) * smoothstep(-0.2, 0.0, uSunDir.y);
+  float away = max(-dot(normalize(dir.xz + vec2(1e-4)), normalize(uSunDir.xz + vec2(1e-4))), 0.0);
+  float belt = exp(-abs(h - 0.08) * 7.0) * away * lowSun;
+  sky = mix(sky, sky * vec3(1.08, 0.82, 1.2) + vec3(0.05, 0.015, 0.07), belt * 0.6);
+  // The last few degrees meet the haze colour, so fogged buildings stand against a sky of the same tone.
+  sky = mix(sky, uHaze, exp(-abs(h) * 28.0) * 0.45);
+  // Dither of about half a step of 8-bit output keeps the long gradient from banding.
+  sky *= 1.0 + (hash(gl_FragCoord.xy + fract(uTime) * 61.0) - 0.5) * 0.012;
   gl_FragColor = vec4(sky, 1.0);
 }`;
 

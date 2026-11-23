@@ -1,5 +1,7 @@
-// Post chain written on core three: HDR scene target, mip bloom, ACES tone map, dusk grade and vignette.
+// Post chain written on core three: HDR scene target, mip bloom, ACES tone map, a warm and cool split grade by the
+// sun, and vignette.
 import * as THREE from '../../vendor/three.module.min.js';
+import { splitTone, sunHeight } from './grade.js';
 
 const BLOOM_LEVELS = 6;
 /** MSAA samples for the HDR scene target; 2 keeps edges clean at a fraction of 4x's bandwidth. */
@@ -87,6 +89,11 @@ uniform float uVignette;
 uniform float uGrain;
 uniform float uTime;
 uniform vec2 uResolution;
+uniform vec3 uWarmTint;
+uniform vec3 uCoolTint;
+uniform float uSplit;
+uniform vec2 uSunScreen;
+uniform float uSunFacing;
 varying vec2 vUv;
 
 vec3 acesFit(vec3 x) {
@@ -137,6 +144,11 @@ void main() {
   colour *= mix(vec3(1.0), uHighlightTint, smoothstep(0.25, 0.9, luma));
   vec2 centred = vUv - 0.5;
   centred.x *= uResolution.x / uResolution.y;
+  // Split grade: lit parts and the side of the frame towards the sun go warm, shadows and the far side cool.
+  vec2 toSun = (uSunScreen - vUv) * vec2(uResolution.x / uResolution.y, 1.0);
+  float sunSide = (1.0 - smoothstep(0.0, 1.05, length(toSun))) * uSunFacing;
+  float warmth = clamp(smoothstep(0.12, 0.8, luma) * 0.6 + sunSide * 0.75, 0.0, 1.0);
+  colour *= mix(vec3(1.0), mix(uCoolTint, uWarmTint, warmth), uSplit);
   float vignette = 1.0 - uVignette * smoothstep(0.35, 1.05, length(centred));
   colour *= vignette;
   colour = linearToSrgb(clamp(colour, 0.0, 1.0));
@@ -212,6 +224,11 @@ export function createPost(renderer, timeOfDay) {
       uGrain: { value: 0.05 },
       uTime: { value: 0 },
       uResolution: { value: new THREE.Vector2(1, 1) },
+      uWarmTint: { value: new THREE.Vector3(1, 1, 1) },
+      uCoolTint: { value: new THREE.Vector3(1, 1, 1) },
+      uSplit: { value: 0 },
+      uSunScreen: { value: new THREE.Vector2(0.5, 0.5) },
+      uSunFacing: { value: 0 },
     },
     vertexShader: QUAD_VERTEX,
     fragmentShader: COMPOSITE_FRAGMENT,
@@ -281,6 +298,25 @@ export function createPost(renderer, timeOfDay) {
     renderer.autoClear = true;
   }
 
+  // The split follows the live sun (the day cycle moves timeOfDay.sunDir); nothing here allocates per frame.
+  const tone = splitTone(90);
+  const sunPoint = new THREE.Vector3();
+  const forward = new THREE.Vector3();
+  function gradeFor(camera) {
+    const sunDir = timeOfDay.sunDir;
+    const grade = compositeMaterial.uniforms;
+    splitTone(sunHeight(sunDir), tone);
+    grade.uWarmTint.value.fromArray(tone.warm);
+    grade.uCoolTint.value.fromArray(tone.cool);
+    grade.uSplit.value = tone.split;
+    camera.getWorldDirection(forward);
+    grade.uSunFacing.value = Math.max(0, forward.dot(sunDir));
+    sunPoint.copy(sunDir).multiplyScalar(1000).add(camera.position).project(camera);
+    // Behind the camera the projection flips; the facing term is zero there anyway.
+    grade.uSunScreen.value.set(Math.max(-2, Math.min(3, sunPoint.x * 0.5 + 0.5)),
+      Math.max(-2, Math.min(3, sunPoint.y * 0.5 + 0.5)));
+  }
+
   return {
     composite: compositeMaterial,
     setSize,
@@ -289,6 +325,7 @@ export function createPost(renderer, timeOfDay) {
       return size.scale;
     },
     render(scene, camera, time) {
+      gradeFor(camera);
       renderer.setRenderTarget(sceneTarget);
       renderer.render(scene, camera);
       renderBloom();
