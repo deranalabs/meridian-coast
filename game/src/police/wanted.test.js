@@ -106,3 +106,17 @@ test('reading the star state changes neither the stars nor the clock', () => {
   starState(wanted);
   assert.equal(JSON.stringify(wanted), before);
 });
+
+test('the star state is none again after a clear, and a fresh crime reads seen once spotted', () => {
+  const wanted = createWanted();
+  commitCrime(wanted, 'hitPolice');
+  updateWanted(wanted, 3, false, 0, 0);
+  assert.notEqual(starState(wanted), 'none');
+  clearWanted(wanted);
+  assert.equal(starState(wanted), 'none', 'a clear leaves no stars to show');
+  assert.equal(wanted.stars, 0);
+  commitCrime(wanted, 'stealCar');
+  updateWanted(wanted, 0.1, true, 0, 0);
+  assert.equal(starState(wanted), 'seen', 'a new crime after a clear starts solid');
+  assert.equal(wanted.stars, 1);
+});
