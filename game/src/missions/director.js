@@ -7,6 +7,7 @@ import { resolveMission } from './resolve.js';
 import { createWorldView } from './worldview.js';
 import { createPillars } from './pillar.js';
 import { missionGuide } from './guide.js';
+import { stepList, rewardParts } from './steplist.js';
 
 const START_REACH = 2.6;
 const FAIL_KEYS = '<kbd>Enter</kbd> retry from checkpoint &nbsp; <kbd>Backspace</kbd> call it off';
@@ -225,6 +226,7 @@ export function createMissions(game, defs, places, hooks = {}) {
       return { title: run.def.title, job: jobLabel(run.def, resolved), giver: giverName(run.def),
         colour: run.def.colour, stage: stageLabel(run), objective: texts.objective, next: texts.next,
         progress: state.phase === 'active' ? guide.progress(run) : null,
+        reward: rewardParts(run.def), steps: stepList(run),
         failed: state.phase === 'failed' ? { text: failText(run.reason), keys: FAIL_KEYS } : null };
     },
     get blips() {

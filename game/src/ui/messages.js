@@ -1,6 +1,9 @@
 // HUD text: a queued message line (objective lines wait their turn), the objective card and the mission slot.
+import { countUp } from '../missions/steplist.js';
 
 const QUEUE_LIMIT = 5;
+/** How long a passed job's pay takes to count up. */
+const COUNT_SECONDS = 1.2;
 /** Kinds that are never cut short: they queue and each gets its full time on screen. */
 const STICKY = new Set(['objective', 'passed', 'failed']);
 
@@ -23,6 +26,19 @@ export function createMessages(parent, cardParent = parent) {
     state.timer = entry.seconds;
     line.innerHTML = entry.html;
     line.className = `message show${entry.kind ? ` ${entry.kind}-line` : ''}`;
+    // A passed job's pay counts up from $0 to the amount the line was given.
+    const pay = entry.kind === 'passed' ? line.querySelector('em') : null;
+    const target = Number(pay?.textContent.replace(/[^0-9]/g, '') ?? 0);
+    state.count = pay && target > 0 ? { pay, target, seconds: 0 } : null;
+    if (state.count) pay.textContent = '+$0';
+  }
+
+  function countPay(dt) {
+    const count = state.count;
+    if (!count) return;
+    count.seconds += dt;
+    count.pay.textContent = `+$${countUp(count.target, count.seconds).toLocaleString('en-US')}`;
+    if (count.seconds >= COUNT_SECONDS) state.count = null;
   }
 
   return {
@@ -77,6 +93,7 @@ export function createMessages(parent, cardParent = parent) {
       objective.classList.toggle('idle', label === 'NO MISSION');
     },
     update(dt) {
+      countPay(dt);
       if (state.timer <= 0) return;
       state.timer -= dt;
       if (state.timer > 0) return;

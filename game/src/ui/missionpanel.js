@@ -1,4 +1,5 @@
-// Mission panel: job badge, title, giver, "Stage n of m", the objective, the next step, a progress bar, fail state.
+// Mission panel: "Job n of m" badge, title, giver and reward, "Stage n of m", the objective, ticked steps, the next
+// step, a progress bar and the fail state.
 
 function node(parent, className, tag = 'div') {
   const el = document.createElement(tag);
@@ -17,8 +18,11 @@ export function createMissionPanel(parent) {
   const job = node(head, 'mp-job');
   const title = node(head, 'mp-title');
   const stage = node(head, 'mp-stage');
-  const giver = node(root, 'mp-giver');
+  const giverRow = node(root, 'mp-giver');
+  const giver = node(giverRow, 'mp-for', 'span');
+  const reward = node(giverRow, 'mp-reward', 'span');
   const objective = node(root, 'mp-objective');
+  const steps = node(root, 'mp-steps');
   const bar = node(node(root, 'mp-bar'), 'mp-fill');
   const next = node(root, 'mp-next');
   const failed = node(root, 'mp-failed');
@@ -34,8 +38,9 @@ export function createMissionPanel(parent) {
         bar.parentElement.style.display = fill < 0 ? 'none' : 'block';
         bar.style.width = `${Math.max(0, fill) * 100}%`;
       }
+      const stepKey = view?.steps?.map((step) => step.state[0]).join('') ?? '';
       const nextKey = view ? [view.job, view.title, view.giver, view.colour, view.stage, view.objective, view.next,
-        view.failed?.text ?? ''].join('|') : '';
+        view.failed?.text ?? '', view.reward?.cash ?? '', stepKey].join('|') : '';
       if (nextKey === key) return;
       key = nextKey;
       root.classList.toggle('show', Boolean(view));
@@ -45,6 +50,11 @@ export function createMissionPanel(parent) {
       title.textContent = view.title;
       stage.textContent = view.stage;
       giver.textContent = view.giver ? `Job for ${view.giver}` : '';
+      reward.innerHTML = view.reward ? `<b>${view.reward.cash}</b>${view.reward.respect}` : '';
+      // ✓ done, ▸ now, nothing for the steps still ahead.
+      steps.innerHTML = (view.steps ?? []).map(({ name, state }) => `<span class="${state}">`
+        + `${state === 'done' ? '&#10003; ' : state === 'now' ? '&#9656; ' : ''}${name}</span>`).join('');
+      steps.style.display = view.steps?.length > 1 ? '' : 'none';
       objective.innerHTML = view.objective ?? '';
       next.innerHTML = view.next ? `<span>Next</span> ${view.next}` : '';
       next.style.display = view.next ? 'block' : 'none';

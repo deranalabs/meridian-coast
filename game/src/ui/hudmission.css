@@ -8,21 +8,22 @@
   box-shadow: inset 0 1px 0 rgba(255, 201, 74, 0.18);
 }
 #hud .mission-panel.show { display: block; }
-/* Head line: the gold job badge, the title (wrapping by the word), the stage at the right or, with a clock and a
-   long title, at the right of the line below. */
+/* Head line: the cyan "JOB n OF m" tab, the title (wrapping by the word), the stage at the right or, with a clock
+   and a long title, at the right of the line below. */
 #hud .mp-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 1px 8px; }
 #hud .mp-job {
   flex: none;
-  padding: 1px 5px;
-  border-radius: 3px;
-  background: var(--mc-gold);
-  color: var(--mc-ui-ink);
-  font-size: 11px;
-  font-weight: 800;
-  line-height: 16px;
-  letter-spacing: 0.5px;
+  padding: 1px 6px;
+  border-radius: 2px;
+  background: #3ee6ff;
+  color: #07131f;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 17px;
+  letter-spacing: 0.9px;
   text-transform: uppercase;
   text-shadow: none;
+  box-shadow: 0 0 8px rgba(62, 230, 255, 0.45);
 }
 #hud .mp-job:empty { display: none; }
 #hud .mp-title {
@@ -32,7 +33,7 @@
   font-weight: 800;
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  color: var(--mc-gold);
+  color: #ffffff;
 }
 #hud .mp-stage {
   flex: none;
@@ -50,8 +51,29 @@
   text-transform: uppercase;
   color: var(--mp-accent);
   margin: 1px 0 5px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 8px;
+}
+/* The pay for the job, in the cash figure's mint, at the right of the giver line or under it when both are long. */
+#hud .mp-reward { margin-left: auto; white-space: nowrap; color: var(--mc-ui-tint); letter-spacing: 0.6px; }
+#hud .mp-for { white-space: nowrap; }
+#hud .mp-reward b {
+  margin-right: 6px;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  color: #6dffa8;
+  text-shadow: 0 0 6px rgba(60, 255, 150, 0.45), 0 1px 0 #0a2a18;
 }
 #hud .mp-objective { font-size: 16px; font-weight: 650; line-height: 1.3; }
+/* One row of the job's steps: ticked in mint when done, the current one bright with an accent underline. */
+#hud .mp-steps { display: flex; flex-wrap: wrap; gap: 2px 7px; margin-top: 6px; font-size: 11px; font-weight: 800;
+  letter-spacing: 0.2px; text-transform: uppercase; }
+#hud .mp-steps span { color: rgba(255, 255, 255, 0.42); white-space: nowrap; }
+#hud .mp-steps .done { color: #6dffa8; }
+#hud .mp-steps .now { color: #fff; box-shadow: inset 0 -2px 0 var(--mp-accent); }
 #hud .mp-objective b { color: var(--mc-gold); }
 #hud .mp-bar { height: 4px; margin-top: 7px; background: rgba(255, 255, 255, 0.14); }
 #hud .mp-fill { height: 100%; width: 0; background: var(--mc-gold); transition: width 0.15s linear; }
@@ -96,10 +118,19 @@
 }
 #hud .objective small { color: #fff6f0; }
 #hud .message.objective-line { color: var(--mc-gold); }
+/* A passed job: a cyan headline in a condensed face and the pay counting up in mint, no gold script. */
 #hud .message.passed-line {
-  font-size: 30px;
-  color: var(--mc-gold);
-  text-shadow: 0 0 18px rgba(255, 201, 74, 0.45);
+  font: 900 30px "Avenir Next Condensed", "Arial Narrow", sans-serif;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #3ee6ff;
+  text-shadow: 0 0 14px rgba(62, 230, 255, 0.5), 0 2px 0 #07131f;
+}
+#hud .message.passed-line em {
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  color: #6dffa8;
+  text-shadow: 0 0 12px rgba(60, 255, 150, 0.5), 0 2px 0 #0a2a18;
 }
 #hud .message.failed-line { color: var(--mc-police-red); }
 #hud.map-large .leftcol .mission-panel { max-width: 300px; }
