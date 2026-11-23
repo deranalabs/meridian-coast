@@ -10,6 +10,7 @@ import { createRoadblocks } from './roadblocks.js';
 import { createHelicopter } from './helicopter.js';
 import { createBeacons } from './beacons.js';
 import { drawLightBars } from './lightbar.js';
+import { searchArea } from './searcharea.js';
 import { createPoliceGunfire } from './gunfire.js';
 import { createRandom } from '../core/random.js';
 import { createLampLight } from './lamplight.js';
@@ -219,15 +220,21 @@ export function createPolice({ fleet, layout, ground, colliders, characters, eff
     helicopter,
     reportCrime,
     update,
-    /** Minimap dots for pursuing cruisers and the helicopter, flashing red and blue. */
+    /**
+     * Dots for pursuing cruisers, flashing red and blue, and the helicopter. The cruisers show on the full map
+     * only: the minimap draws the search circle in their place.
+     */
     blips(time) {
       const colour = Math.sin(time * 12) > 0 ? '#ff2a4a' : '#3b6bff';
-      const list = units.units.map((unit) => ({ x: unit.vehicle.x, z: unit.vehicle.z, colour, police: true }));
+      const list = units.units.map((unit) => ({ x: unit.vehicle.x, z: unit.vehicle.z, colour, police: true,
+        mapOnly: true }));
       if (helicopter.state.active) {
         list.push({ x: helicopter.state.x, z: helicopter.state.z, colour: '#ffd166', police: true, air: true });
       }
       return list;
     },
+    /** The minimap's search circle (police/searcharea.js), or null when not wanted. */
+    search: () => searchArea(wanted),
     draw(time) {
       beacons.begin();
       drawLightBars(beacons, fleet.cars, time, lightLevel);

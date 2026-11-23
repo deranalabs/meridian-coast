@@ -155,7 +155,7 @@ export function createHud(layout, visible = true) {
         radio.style.display = view.driving ? '' : 'none';
       }
       district.textContent = placeName(view.x, view.z);
-      minimap.update(view.x, view.z, view.heading, view.blips, view.route);
+      minimap.update(view.x, view.z, view.heading, view.blips, view.route, view.search);
       speedoBox.style.display = view.driving ? 'block' : 'none';
       if (view.driving) drawSpeedo(speedoCtx, speedo.width, Math.abs(view.speed) * 3.6);
       const driven = carLine(view.car);

@@ -166,7 +166,29 @@ export function cityCanvas(layout) {
   return drawn.get(layout);
 }
 
-/** A circular minimap inside `container`; update(x, z, heading, blips, route) redraws it. */
+/**
+ * The police search area (police/searcharea.js) in rotated map space: a tinted disc with a dashed rim, red while
+ * a unit sees the player and amber once they search. `scale` is map pixels a metre, `unit` one screen pixel.
+ */
+function drawSearch(ctx, search, mx, mz, scale, unit) {
+  const [sx, sz] = toMap(search.x, search.z);
+  const colour = search.seen ? '255, 59, 78' : '255, 176, 58';
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(sx - mx, sz - mz, search.radius * scale, 0, Math.PI * 2);
+  ctx.fillStyle = `rgba(${colour}, ${search.seen ? 0.26 : 0.2})`;
+  ctx.fill();
+  ctx.setLineDash([12 * unit, 8 * unit]);
+  ctx.lineWidth = 5 * unit;
+  ctx.strokeStyle = `rgba(${colour}, 0.95)`;
+  ctx.stroke();
+  ctx.restore();
+}
+
+/**
+ * A circular minimap inside `container`; update(x, z, heading, blips, route, search) redraws it, with the police
+ * search circle in place of cruiser dots.
+ */
 export function createMinimap(container, layout) {
   const base = cityCanvas(layout);
   const canvas = document.createElement('canvas');
@@ -176,7 +198,7 @@ export function createMinimap(container, layout) {
   const ctx = canvas.getContext('2d');
   const scale = MAP_SIZE / (WORLD_BOUNDS.x1 - WORLD_BOUNDS.x0);
   return {
-    update(x, z, heading, blips = [], route = null) {
+    update(x, z, heading, blips = [], route = null, search = null) {
       const size = canvas.width;
       const zoom = size / (VIEW_METRES * scale);
       ctx.save();
@@ -189,6 +211,7 @@ export function createMinimap(container, layout) {
       ctx.drawImage(base, -mx, -mz);
       const rim = (size / 2 - 16) / zoom;
       if (route?.length > 1) drawRoute(ctx, route, mx, mz, 1 / zoom);
+      if (search) drawSearch(ctx, search, mx, mz, scale, 1 / zoom);
       for (const blip of blips) {
         if (blip.mapOnly) continue;
         const [bx, bz] = toMap(blip.x, blip.z);
