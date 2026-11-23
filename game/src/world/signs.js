@@ -169,6 +169,7 @@ export function createSigns(buildings, timeOfDay, seed) {
   const atlas = neonAtlas();
   const builder = new MeshBuilder({ position: 3, normal: 3, uv: 2, aPhase: 1 });
   const glows = [];
+  const halos = [];
   for (const sign of buildings.signs) {
     const randomIndex = random.int(0, RANDOM_WORDS - 1);
     const wordIndex = sign.word ? WORD_INDEX[sign.word] : randomIndex;
@@ -188,14 +189,20 @@ export function createSigns(buildings, timeOfDay, seed) {
         strength: 0.55,
       });
     }
+    // A soft halo of the tube's colour round every sign, drawn by render/glowsprites.js.
+    const halo = { x: sign.x, y: sign.y, z: sign.z, colour: WORDS[wordIndex][1], size: 3.4 };
+    halos.push(halo);
     if (sign.kind === 'flat') {
       const height = Math.min(1.9, (sign.width + 0.6) / slot.aspect);
       signQuad(builder, slot, [sign.x, sign.y, sign.z], sign.rot, height, phase, 0.02);
+      halo.size = Math.min(9, sign.width + 2.4);
     } else if (sign.kind === 'blade') {
       signQuad(builder, slot, [sign.x, sign.y, sign.z], sign.rot, 1.1, phase, 0.09, BLADE_WIDTH);
       signQuad(builder, slot, [sign.x, sign.y, sign.z], sign.rot + Math.PI, 1.1, phase, 0.09, BLADE_WIDTH);
     } else {
       const height = Math.min(sign.word ? 5 : 3.2, sign.width / slot.aspect);
+      halo.y = sign.y + height / 2;
+      halo.size = Math.min(16, sign.width * 0.9);
       signQuad(builder, slot, [sign.x, sign.y + height / 2, sign.z], sign.rot, height, phase, 0);
       signQuad(builder, slot, [sign.x, sign.y + height / 2, sign.z], sign.rot + Math.PI, height, phase, 0.05);
     }
@@ -256,6 +263,7 @@ export function createSigns(buildings, timeOfDay, seed) {
     group,
     billboards,
     glows,
+    halos,
     update(time) {
       uniforms.uTime.value = time;
     },

@@ -35,6 +35,7 @@ import { createInCarCamera } from './vehicles/incarcamera.js';
 import { createClimate } from './systems/climate.js';
 import { createPackages } from './systems/packages.js';
 import { createSunGlow } from './render/sunglow.js';
+import { createGlowSprites, windowGlows } from './render/glowsprites.js';
 
 const CAR_VIEW_NAMES = { chase: 'Chase', driver: "Driver's seat", bonnet: 'Bonnet' };
 /** The same keyboard with this step's presses hidden (the phone has them); held keys still steer a car. */
@@ -91,6 +92,9 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud, weather,
   const traffic = createTraffic(fleet, city.layout, ground, TRAFFIC, seed, focus);
   const smoke = createSmoke(400, timeOfDay);
   scene.add(smoke.points);
+  const glowSprites = createGlowSprites({ neon: city.signHalos, windows: windowGlows(city.buildings.roofs),
+    cars: fleet.cars, timeOfDay });
+  scene.add(glowSprites.mesh);
 
   const characters = createCharacters(PEDESTRIANS + 20 + STORY_ACTORS, city.surfaces.data);
   scene.add(characters.mesh);
@@ -114,7 +118,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud, weather,
   const game = {
     scene, camera, city, landmarks, ground, colliders, fleet, traffic, smoke, characters, ilo, pedestrians, player,
     chase, footCamera, post, hud, radio, lighting, sky, timeOfDay, seed, time: 0, cameraMode: 'auto',
-    chaseOptions: undefined, playerHooks, inCar,
+    chaseOptions: undefined, playerHooks, inCar, glowSprites,
   };
   game.action = createAction(game);
   game.baseLook = ilo.appearance;
@@ -193,6 +197,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud, weather,
     lighting.lightSubject(ilo.position, camera);
     sky.update(camera, time);
     sunGlow.update(camera, sky.material.uniforms.uSunDir.value, sky.material.uniforms.uSunGlow.value);
+    glowSprites.update(camera);
     game.action.draw(time);
     game.climate.draw(time);
     post.render(scene, camera, time);

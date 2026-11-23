@@ -57,6 +57,8 @@ export function createCity(seed, timeOfDay) {
     casino,
     props,
     surfaces,
+    /** Where each neon sign's halo sits, with its tube colour. */
+    signHalos: signs.halos,
     update(time) {
       water.update(time);
       signs.update(time);

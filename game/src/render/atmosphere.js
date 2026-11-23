@@ -115,6 +115,7 @@ export function createAtmosphere(game) {
     targets.boards.emissiveIntensity = shown.boards;
     targets.glows.value = shown.glows;
     targets.beam.copy(BEAM).multiplyScalar(shown.beam);
+    game.glowSprites?.levels(shown.neonLevel, shown.windowsLit, level);
   }
 
   function showGrade() {
