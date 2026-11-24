@@ -31,11 +31,12 @@ function hideParkedNear(game, x, z0, z1, halfWidth) {
 const CHASE = { laneX: 102, startZ: 30, speed: 21, steps: 110 };
 // The cover runs the northbound lane of Shoreline Parade, beside the boardwalk, clear of the causeway junction.
 // yaw: the van's slide off the road axis (about 15 degrees); roll: the camera's tilt about its view axis.
-// wreck: the burning cruiser's place from the van's start (slewed in the far lane about 19 m ahead of the van at
-// the capture, clear of Air-1's cone), its slew off the road axis and the ram speed in m/s that lit it
-// (police/burnrule.js).
+// wreck: the burning cruiser's place from the van's start (shoved up onto the beach side about 11 m right of the
+// lane and level with the van's nose at the capture, so its flames stand right of the chase, below the stars panel
+// and clear of Air-1's cone), its turn from the run's heading (spun round by the ram, its burning engine bay toward
+// the camera and the road) and the ram speed in m/s that lit it (police/burnrule.js).
 const COVER = { laneX: BEACH_ROAD_X + 3, startZ: 30, speed: 21, steps: 110, paint: '#ff6f3c', yaw: 0.26, roll: -0.06,
-  wreck: { dx: -8.3, dz: -62, turn: 0.95, ram: 19 } };
+  wreck: { dx: 10.6, dz: -44.5, turn: 3.72, ram: 19 } };
 // The cover's run-up was staged on this handling. It keeps it, so play's handling never moves the staged frame.
 const COVER_STEERING = { maxSteer: 0.6, steerFade: 0.62, steerFollow: 7 };
 const COVER_ENGINES = { pickup: { maxSpeed: 44, accel: 9 }, cruiser: { maxSpeed: 52, accel: 12.5 } };
@@ -186,12 +187,13 @@ export const ACTION_SHOTS = {
     },
   },
 
-  // The cover: Gilded Tide, stage 4 of 5. Night on Shoreline Parade: Ilo runs the dragnet north in the linen van
-  // (sprayed sunset orange for the job) sliding between the hotels and the beach, a cruiser at each rear quarter,
-  // a third behind, Air-1 ahead with its spotlight cone on the road, a rammed cruiser burning in the far lane,
-  // while Solis calls every unit on the radio.
+  // The cover: Gilded Tide, stage 4 of 5. Dusk on Shoreline Parade, the sky still light enough to show the palms,
+  // the sea and Air-1 while the lamps and the light bars glow: Ilo runs the dragnet north in the linen van (sprayed
+  // sunset orange for the job) sliding between the hotels and the beach, a cruiser at each rear quarter, a third
+  // behind, Air-1 ahead with its spotlight cone on the road, a rammed cruiser burning on the beach side beside the
+  // van, while Solis calls every unit on the radio.
   mission: {
-    time: 'night',
+    time: 'dusk',
     steps: COVER.steps,
     focus: [COVER.laneX, 0, COVER.startZ - 30],
     stage(game) {
