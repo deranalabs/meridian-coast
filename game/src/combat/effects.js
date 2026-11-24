@@ -1,11 +1,13 @@
 // Gunfire and mission effects: pooled tracer ribbons, muzzle flashes, spark bursts, mission pass and fail
 // showers; one draw for each kind.
 import * as THREE from '../../vendor/three.module.min.js';
+import { FLASH_LIFE, TRACER_LIFE, muzzleFlash, streak } from './shotlight.js';
 
 const TRACER_VERTEX = /* glsl */ `
 attribute vec3 aStart;
 attribute vec3 aEnd;
 attribute float aAge;
+attribute vec2 aSpan;
 varying float vAlong;
 varying float vAge;
 varying float vSide;
@@ -13,7 +15,8 @@ void main() {
   vAlong = position.x;
   vSide = position.y;
   vAge = aAge;
-  vec3 p = mix(aStart, aEnd, position.x);
+  // Only the streak's piece of the shot is drawn, tail to head (combat/shotlight.js moves it each frame).
+  vec3 p = mix(aStart, aEnd, mix(aSpan.x, aSpan.y, position.x));
   vec3 dir = normalize(aEnd - aStart + vec3(1e-5));
   vec3 side = normalize(cross(dir, p - cameraPosition + vec3(0.0, 1e-4, 0.0)));
   float width = 0.05 + 0.0012 * distance(p, cameraPosition);
@@ -30,7 +33,8 @@ void main() {
   if (vAge >= 1.0) discard;
   float edge = 1.0 - abs(vSide);
   float head = smoothstep(0.0, 1.0, vAlong) * 0.8 + 0.2;
-  float fade = 1.0 - vAge;
+  // The streak lives about two frames, so it dims only a little on its way and stays a bright thin line.
+  float fade = 1.0 - vAge * 0.45;
   gl_FragColor = vec4(uColour * edge * edge * head * fade * 5.0, 1.0);
 }`;
 
@@ -55,7 +59,7 @@ void main() {
 }`;
 
 const additive = { transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false };
-const TRACER_LIFE = 0.2;
+// Tracer and flash timing now come from combat/shotlight.js (TRACER_LIFE, FLASH_LIFE, streak, muzzleFlash).
 
 function createTracers(capacity) {
   const geometry = new THREE.InstancedBufferGeometry();
@@ -69,6 +73,10 @@ function createTracers(capacity) {
   geometry.setAttribute('aStart', start);
   geometry.setAttribute('aEnd', end);
   geometry.setAttribute('aAge', age);
+  // Each shot's streak as {tail, head} shares of the shot, and the shot's length that sizes it.
+  const span = new THREE.InstancedBufferAttribute(new Float32Array(capacity * 2), 2).setUsage(THREE.DynamicDrawUsage);
+  const lengths = new Float32Array(capacity);
+  geometry.setAttribute('aSpan', span);
   geometry.instanceCount = capacity;
   const material = new THREE.ShaderMaterial({ uniforms: { uColour: { value: new THREE.Color('#ffc46a') } },
     vertexShader: TRACER_VERTEX, fragmentShader: TRACER_FRAGMENT, side: THREE.DoubleSide, ...additive });
@@ -83,14 +91,24 @@ function createTracers(capacity) {
       start.setXYZ(cursor, a.x, a.y, a.z);
       end.setXYZ(cursor, b.x, b.y, b.z);
       age.setX(cursor, 0);
+      lengths[cursor] = Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z);
+      const first = streak(0, lengths[cursor]);
+      span.setXY(cursor, first.tail, first.head);
+      span.needsUpdate = true;
       cursor = (cursor + 1) % capacity;
       start.needsUpdate = true;
       end.needsUpdate = true;
     },
     update(dt) {
       const ages = age.array;
-      for (let i = 0; i < capacity; i += 1) if (ages[i] < 1) ages[i] = Math.min(1, ages[i] + dt / TRACER_LIFE);
+      for (let i = 0; i < capacity; i += 1) {
+        if (ages[i] >= 1) continue;
+        ages[i] = Math.min(1, ages[i] + dt / TRACER_LIFE);
+        const now = streak(ages[i] * TRACER_LIFE, lengths[i]);
+        span.setXY(i, now.tail, now.head);
+      }
       age.needsUpdate = true;
+      span.needsUpdate = true;
     },
   };
 }
@@ -167,9 +185,11 @@ export function createEffects() {
     group,
     tracer: (a, b) => tracers.add(a, b),
     muzzle(p, dir) {
-      sparks.spawn(p.x, p.y, p.z, 0, 0, 0, FLASH, 0.42, 0.05, 0);
-      sparks.spawn(p.x + dir.x * 0.18, p.y + dir.y * 0.18, p.z + dir.z * 0.18, dir.x * 2, dir.y * 2, dir.z * 2,
-        FLASH, 0.18, 0.05, 0);
+      // A hot core at the muzzle and a tongue thrown ahead of it, both gone in FLASH_LIFE (combat/shotlight.js).
+      const core = muzzleFlash(0);
+      sparks.spawn(p.x, p.y, p.z, 0, 0, 0, FLASH, core.size, FLASH_LIFE, 0);
+      sparks.spawn(p.x + dir.x * 0.22, p.y + dir.y * 0.22, p.z + dir.z * 0.22, dir.x * 3, dir.y * 3, dir.z * 3,
+        FLASH, core.size * 0.45, FLASH_LIFE, 0);
     },
     impact(p, normal, kind) {
       const colour = kind === 'body' ? BLOOD : kind === 'ground' ? DUST : SPARK;
