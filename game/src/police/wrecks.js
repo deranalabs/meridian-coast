@@ -33,12 +33,13 @@ void main() {
 }`;
 
 const FIRE = new THREE.Color('#ff7a1e');
-const CORE = [1.0, 0.8, 0.4];
-const EMBER = [1.0, 0.38, 0.08];
-const SMOKE = [0.3, 0.25, 0.22];
-/** Additive light has to outshine a sunlit road: the flames burn past white at their core, the smoke stays a haze. */
-const FLAME_GAIN = 3.2;
-const SMOKE_GAIN = 1.5;
+const CORE = [1.0, 0.6, 0.2];
+const EMBER = [1.0, 0.3, 0.06];
+const FLASH = [1.0, 0.78, 0.4];
+const SMOKE = [0.34, 0.2, 0.12];
+/** Additive light has to outshine a lit road and stay orange: the flames run hot, the fire-lit smoke a warm haze. */
+const FLAME_GAIN = 2.3;
+const SMOKE_GAIN = 1.4;
 const canvasSize = new THREE.Vector2();
 
 /** ignite(car, x, z, speed) sets a car alight; update(dt, time) moves the fires; light(beacons, time) washes. */
@@ -116,17 +117,17 @@ export function createWrecks() {
           const lick = flicker(time + k * 0.37, slot.seed + k);
           const rise = ((time * 1.9 + k / FLAMES) % 1);
           const spread = (k - 1.5) * 0.34;
-          put(base + k, slot.x + spread * Math.cos(slot.seed), slot.y + 1.0 + rise * 2.3 * level,
-            slot.z + spread * Math.sin(slot.seed), k % 2 ? EMBER : CORE, FLAME_GAIN * level * lick * (1 - rise * 0.55),
-            (3.1 - rise * 1.3) * (0.6 + level * 0.4));
+          put(base + k, slot.x + spread * Math.cos(slot.seed), slot.y + 1.1 + rise * 3.2 * level,
+            slot.z + spread * Math.sin(slot.seed), k % 2 ? EMBER : CORE, FLAME_GAIN * level * lick * (1 - rise * 0.5),
+            (4.6 - rise * 2) * (0.6 + level * 0.4));
         }
         for (let k = 0; k < PUFFS; k += 1) {
           const phase = (time * 0.32 + k / PUFFS + slot.seed) % 1;
-          put(base + FLAMES + k, slot.x + phase * 1.6 + Math.sin(time * 0.8 + k) * 0.4, slot.y + 1.9 + phase * 7,
-            slot.z - phase * 0.9, SMOKE, SMOKE_GAIN * level * (1 - phase * 0.8), 2.6 + phase * 4.4);
+          put(base + FLAMES + k, slot.x + phase * 2 + Math.sin(time * 0.8 + k) * 0.5, slot.y + 2.6 + phase * 9,
+            slot.z - phase * 1.2, SMOKE, SMOKE_GAIN * level * (1 - phase * 0.8), 3.6 + phase * 6);
         }
         const flash = flashLevel(slot.flash);
-        put(base + PER_SLOT - 1, slot.fx, slot.fy, slot.fz, CORE, flash * 1.6, 4.5 + (1 - flash) * 3);
+        put(base + PER_SLOT - 1, slot.fx, slot.fy, slot.fz, FLASH, flash * 1.8, 4.5 + (1 - flash) * 3);
         any = any || level > 0 || flash > 0;
       });
       points.visible = any;
