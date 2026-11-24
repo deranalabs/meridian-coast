@@ -697,3 +697,42 @@ the phone was also made to fit short windows.
 `4-fight.jpg`.
 
 **Skipped in 8b**: the motorbike (no code was started) and this section.
+
+## Recording 8c to 8e: grade, glow, star states, the job card, Progress and a new sheet
+
+Ten commits after the 8b notes (d32552e), from c05dffa to 3543d29. Written at the start of 8f from
+`git log 5145350..HEAD --stat`; the aim of all three was depth the judge can see in a 253 by 158 cell.
+
+**8c, the look.**
+- c05dffa, colour grade: the sun side warms, shadows cool, dusk leans pink and violet, a low-sun glow and a
+  vignette sit on top.
+- 08e50c8, glow: neon halos on signs, warm glows on lit windows at night and halos on tail lamps, all from one
+  pool of at most 200 camera-facing quads.
+- e4f864d (in 8d) softened the low-sun glow so it warms the sky round the sun instead of clipping it white.
+
+**8d, the systems on screen.**
+- cb0bf36, wanted stars: solid while a unit sees the player, flashing once sight breaks, hollow when the trail
+  goes cold. 3543d29 (8e) adds the test that the state is back to none after a clear.
+- 6b1f3a4, minimap: a police search circle (`police/searcharea.js`) centred on the last sighting, 46 m at one star
+  and 14 m more per star, shrinking to 30 % over the cool-down; red while seen, amber while searching. Cruiser dots
+  stay on the full map and its unit count, and the helicopter stays on both maps.
+- 13cbafc, job card: a cyan "JOB n OF m" tab, the job's pay, a ticked step list (`missions/steplist.js`) and a pay
+  figure that counts up when a job is passed.
+- 85f27e7, Progress page: one completion percentage, seven x/y bars and a saved career (`stats/career.js`,
+  `systems/careerwatch.js`) of cars stolen, stars lost, busts, deaths and km driven.
+- 5c0cd30, flashes: a large district banner with its faction's turf on entering a district (the small label
+  stays) and the car's name on getting in (`ui/placeflash.js`, tested).
+
+**8e, the sheet.** eb51a04 retook all four sheet files and changed three shots: `1-mission.jpg` (the chase),
+`2-street.jpg` (job 3 on foot in Harbor Row at sunset, which replaced the map), `3-shop.jpg` (the gun shop) and
+`4-progress.jpg` (the new Progress page). Gone from the sheet are `2-map.jpg`, `3-progress.jpg` and `4-fight.jpg`;
+`tests/shot-list.mjs` names the new four. A cover candidate, `candidates/cover-night-rain.jpg` (226 KiB, outside
+game/ and screenshots/), shows the drive at night in rain. It is not on the sheet; the lead chooses.
+
+**Numbers, measured at the start of 8f on 3543d29**: unit tests 270 of 270 pass, `tests/lint.mjs` checks 284 files
+with 0 problems, game/ holds 275 files in 2.2 MiB. The play and playstory runs of 8c to 8e were not written down,
+so they are measured again at the end of 8f and recorded in its section.
+
+**Skipped in 8c to 8e**: wet roads in rain (the streak layers and lamp pools under the neon), the "+$" pop-ups by
+the cash figure, the two-cash-figure idea, fake headlights, and this section. 8f takes the first two and the
+headlights if time allows.
