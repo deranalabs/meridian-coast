@@ -267,13 +267,41 @@ async function runPerf(server) {
   }
 }
 
+/** One ?shot scene to one file outside the sheet, for a look check or a cover candidate: --one=missionRain:path. */
+async function runOne(server, spec) {
+  const [name, path] = spec.split(':');
+  if (!name || !path || path.startsWith('screenshots/')) throw new Error('--one=<scene>:<path outside screenshots/>');
+  const chrome = await launchChrome({ width: 1280, height: 800, port: 9336 });
+  try {
+    const { page } = chrome;
+    await page.send('Page.enable');
+    await page.send('Runtime.enable');
+    await page.send('Log.enable');
+    const errors = watchErrors(page);
+    await page.send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 800, deviceScaleFactor: 1,
+      mobile: false });
+    await openScene(page, `${server.url}index.html?shot=${name}&seed=1`, errors);
+    if (errors.length) throw new Error(`console errors in ${name}:\n${errors.join('\n')}`);
+    const { bytes, quality } = await capture(page);
+    const target = join(ROOT, path);
+    mkdirSync(join(target, '..'), { recursive: true });
+    writeFileSync(target, bytes);
+    const state = await page.evaluate('JSON.stringify(window.__meridian.getState())');
+    console.log(`${path}: ${(bytes.length / 1024).toFixed(0)} KiB q${quality} ${state}`);
+  } finally {
+    await chrome.stop();
+  }
+}
+
+const one = process.argv.find((arg) => arg.startsWith('--one='))?.slice(6);
 const server = await startServer(8131);
 try {
   if (args.has('--shots')) await runShots(server, args.has('--nohud'));
   if (args.has('--perf')) await runPerf(server);
-  if (!args.has('--shots') && !args.has('--perf')) {
+  if (one) await runOne(server, one);
+  if (!args.has('--shots') && !args.has('--perf') && !one) {
     console.log('usage: node tests/browser.mjs --shots [--nohud]'
-      + ' | --perf [--scene=drive|mission] [--dpr=N] [--scale=S]');
+      + ' | --perf [--scene=drive|mission] [--dpr=N] [--scale=S] | --one=<scene>:<path>');
   }
 } finally {
   server.stop();

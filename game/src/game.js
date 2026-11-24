@@ -37,6 +37,7 @@ import { createPackages } from './systems/packages.js';
 import { createSunGlow } from './render/sunglow.js';
 import { createGlowSprites, windowGlows } from './render/glowsprites.js';
 import { createCareerWatch } from './systems/careerwatch.js';
+import { createWetStreaks } from './render/wetstreaks.js';
 
 const CAR_VIEW_NAMES = { chase: 'Chase', driver: "Driver's seat", bonnet: 'Bonnet' };
 /** The same keyboard with this step's presses hidden (the phone has them); held keys still steer a car. */
@@ -96,6 +97,9 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud, weather,
   const glowSprites = createGlowSprites({ neon: city.signHalos, windows: windowGlows(city.buildings.roofs),
     cars: fleet.cars, timeOfDay });
   scene.add(glowSprites.mesh);
+  const wetStreaks = createWetStreaks({ signs: city.signHalos, lamps: city.props.lamps, cars: fleet.cars,
+    groundAt: (x, z) => ground.surfaceAt(x, z).height });
+  scene.add(wetStreaks.mesh);
 
   const characters = createCharacters(PEDESTRIANS + 20 + STORY_ACTORS, city.surfaces.data);
   scene.add(characters.mesh);
@@ -119,7 +123,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud, weather,
   const game = {
     scene, camera, city, landmarks, ground, colliders, fleet, traffic, smoke, characters, ilo, pedestrians, player,
     chase, footCamera, post, hud, radio, lighting, sky, timeOfDay, seed, time: 0, cameraMode: 'auto',
-    chaseOptions: undefined, playerHooks, inCar, glowSprites,
+    chaseOptions: undefined, playerHooks, inCar, glowSprites, wetStreaks,
   };
   game.action = createAction(game);
   game.baseLook = ilo.appearance;
@@ -201,6 +205,7 @@ export function createGame({ renderer, seed, timeOfDay, focus, showHud, weather,
     sky.update(camera, time);
     sunGlow.update(camera, sky.material.uniforms.uSunDir.value, sky.material.uniforms.uSunGlow.value);
     glowSprites.update(camera);
+    wetStreaks.update(camera, time);
     game.action.draw(time);
     game.climate.draw(time);
     post.render(scene, camera, time);

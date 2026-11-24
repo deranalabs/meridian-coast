@@ -3,6 +3,7 @@ import * as THREE from '../../vendor/three.module.min.js';
 import { rainLook } from './rainlook.js';
 import { createRain } from './rain.js';
 import { setFogSun } from './fog.js';
+import { wetnessFromRain } from './wetness.js';
 
 /** Sky uniform → the look's colour. */
 const SKY_COLOURS = { uZenith: 'skyZenith', uMid: 'skyMid', uHorizon: 'skyHorizon', uHaze: 'haze',
@@ -116,6 +117,7 @@ export function createAtmosphere(game) {
     targets.glows.value = shown.glows;
     targets.beam.copy(BEAM).multiplyScalar(shown.beam);
     game.glowSprites?.levels(shown.neonLevel, shown.windowsLit, level);
+    game.wetStreaks?.levels(shown.neonLevel, level, wetnessFromRain(shown.rain ?? 0));
   }
 
   function showGrade() {

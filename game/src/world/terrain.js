@@ -64,6 +64,10 @@ const MAP_FRAGMENT = /* glsl */ `
   sandColour *= 1.0 - wetSand * 0.45;
   vec3 groundColour = asphaltColour * weights.x + grassColour * weights.y + sandColour * weights.z;
   groundColour *= 1.0 - damp * 0.35 - puddle * 0.25;
+#ifdef WET_RAIN
+  // Soaked asphalt goes a shade darker again, so the neon and lamp reflections laid on it stand out.
+  groundColour *= 1.0 - weights.x * uRain * 0.22;
+#endif
   diffuseColor.rgb *= groundColour;
 `;
 
