@@ -736,3 +736,41 @@ so they are measured again at the end of 8f and recorded in its section.
 **Skipped in 8c to 8e**: wet roads in rain (the streak layers and lamp pools under the neon), the "+$" pop-ups by
 the cash figure, the two-cash-figure idea, fake headlights, and this section. 8f takes the first two and the
 headlights if time allows.
+
+## Recording 8g and 8h: Air-1's cone, burning wrecks, gunfire you can see and a night cover
+
+8g added three effects to the playable game, not only to the staged cover. 8h checked the files 8g left
+uncommitted, committed them and wrote this section; it built nothing new.
+
+**What changed.**
+- 80028f8, spotlight: Air-1's lamp is now a visible cone from the helicopter down to the road, brighter than
+  before, with a glowing pool where it lands, so the player can see where the search is looking.
+- 872441a, burning wrecks: a cruiser rammed hard enough (the threshold lives in `police/burnrule.js`) catches
+  fire, with flames over the body, a smoke plume and a short flash at the moment of impact (`police/wrecks.js`).
+- 5982716, gunfire: each shot shows a muzzle flash for three frames and a tracer streak for two.
+- e7c6a94 (8g's last work, committed in 8h): the fire is warmer (orange core and embers, smoke lit brown rather
+  than grey) and the flames and plume rise higher and spread wider. The cover (`screenshots/1-mission.jpg`) is
+  now set at night instead of late afternoon, with the cone on the road ahead of the van and the burning cruiser
+  moved 2 m up the far lane so it sits clear of the cone. The file is 220,629 bytes, under the 256 KiB limit.
+
+**What the cover check found (8h, no retake).** Viewed at 640 px wide and at the 253x158 sheet cell: the cone
+on the road, the chase (van, two cruisers at its rear quarters) and the full HUD all read, and no text was added
+to the image. The burning cruiser is there, in the far left lane behind the chase, but at night it shows as a pale
+smoke column over a warm glow rather than as flames, and at 253x158 it cannot be picked out. `tests/look.mjs`
+also puts the cover outside four of its targets with the HUD on: gradEnergy 7.32 (target 7.5 or more),
+flatBlocks 0.385 (0.33 or less), colors 133 (150 or more) and meanSat 0.520 (0.47 or less); brightShare 1.90 %
+is inside its band. The night frame is darker and more even than the golden-hour one it replaced, which explains
+most of these misses. The brief said to keep the file and record this, so the file is as 8g left it.
+
+**Numbers, measured in 8h on e7c6a94.**
+- Unit tests (`node --test tests/*.test.mjs game/src/**/*.test.js`): 302 of 302 pass.
+- `tests/lint.mjs`: 297 files checked, 0 problems.
+- `tests/play.mjs`: 43 checks pass, none fail; 64 driving frames, cash 3,830 kept across a reload, 50.3 fps,
+  75 draw calls.
+- `tests/playstory.mjs`: one run, exit 0, 40 checks pass, none fail. Every job is done (Gilded Tide included,
+  so the stage 4 and 5 flake did not appear) with cash 78,640 and respect 216; the run's own count of failed
+  attempts was 7. No second or third run was needed.
+- `main.ts` run twice into `out/` gives identical output bytes (checked before the commit of this section).
+
+**Skipped in 8g and 8h**: a retake to make the fire read at sheet size (8h was told not to retake), the look
+targets above, fake headlights, and any change to the other three sheet files.
