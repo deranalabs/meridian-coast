@@ -3,6 +3,7 @@ import * as THREE from '../../vendor/three.module.min.js';
 import { mergeGeometries, composeMatrix as M } from '../core/meshbuilder.js';
 import { createCarMaterial } from '../vehicles/carmaterial.js';
 import { createSearchlight } from './searchlight.js';
+import { beamAim } from './beamaim.js';
 
 const NAMES = ['position', 'normal', 'aTrim', 'aPaint', 'aSurface', 'aGlow'];
 /** Rotor-tip reach when checking roofs below, and the height kept over the tallest of them. */
@@ -60,7 +61,10 @@ function rotor(span, chord, blades) {
   return build(pieces);
 }
 
-/** The helicopter: update(dt, target, active, time) flies it; light(beacons, time) adds its flashing beacons. */
+/**
+ * The helicopter: update(dt, target, time, roofAt, beam) flies it and points the beam; light(beacons, time) adds
+ * its flashing beacons and the pool's wash.
+ */
 export function createHelicopter(timeOfDay, noiseTexture) {
   const material = createCarMaterial(noiseTexture, 1);
   const group = new THREE.Group();
@@ -75,9 +79,10 @@ export function createHelicopter(timeOfDay, noiseTexture) {
   frame.add(main, tail);
   group.add(frame);
   const searchlight = createSearchlight(timeOfDay);
-  group.add(searchlight.cone);
+  group.add(searchlight.cone, searchlight.pool);
   group.visible = false;
-  const state = { active: false, x: 0, y: 60, z: 0, heading: 0, angle: 0, aim: { x: 0, z: 0 }, spot: null };
+  const state = { active: false, x: 0, y: 60, z: 0, heading: 0, angle: 0, aim: { x: 0, z: 0 }, spot: null,
+    watch: null, beam: { x: 0, z: 0 }, sweeping: false };
 
   return {
     group,
@@ -94,8 +99,11 @@ export function createHelicopter(timeOfDay, noiseTexture) {
     leave() {
       state.active = false;
     },
-    /** `roofAt(x, z, reach)` gives the highest roof near a point, so the orbit clears the downtown towers. */
-    update(dt, target, time, roofAt = () => -Infinity) {
+    /**
+     * `roofAt(x, z, reach)` gives the highest roof near a point, so the orbit clears the downtown towers. `beam`
+     * is {stars, search}: the wanted level and the search circle that steer the light (police/beamaim.js).
+     */
+    update(dt, target, time, roofAt = () => -Infinity, beam = { stars: 0, search: null }) {
       if (!group.visible) return;
       state.angle += dt * 0.22;
       const radius = state.active ? 26 : 400;
@@ -124,8 +132,22 @@ export function createHelicopter(timeOfDay, noiseTexture) {
       const follow = Math.min(1, dt * (state.active ? 2.2 : 0.5));
       state.aim.x += (target.x + Math.sin(time * 0.9) * 2.5 - state.aim.x) * follow;
       state.aim.z += (target.z + Math.cos(time * 0.7) * 2.5 - state.aim.z) * follow;
-      state.spot = searchlight.aim({ x: state.x, y: state.y - 1.1, z: state.z }, { x: state.aim.x, y: target.y,
-        z: state.aim.z }, state.active && Math.hypot(state.x - target.x, state.z - target.z) < 70);
+      const near = state.active && Math.hypot(state.x - target.x, state.z - target.z) < 70;
+      // What the crew can see stays on the player as before; only the drawn beam may sweep the search circle.
+      state.watch = near ? { x: state.aim.x, z: state.aim.z } : null;
+      const mark = beamAim({ stars: beam.stars, target, search: beam.search,
+        distance: Math.hypot(state.x - target.x, state.z - target.z) });
+      state.sweeping = mark.x !== target.x || mark.z !== target.z;
+      if (state.sweeping) {
+        const drift = Math.min(1, dt * 0.9);
+        state.beam.x += (mark.x + Math.sin(time * 0.5) * mark.radius * 1.4 - state.beam.x) * drift;
+        state.beam.z += (mark.z + Math.cos(time * 0.37) * mark.radius * 1.4 - state.beam.z) * drift;
+      } else {
+        state.beam.x = state.aim.x;
+        state.beam.z = state.aim.z;
+      }
+      state.spot = searchlight.aim({ x: state.x, y: state.y - 1.1, z: state.z }, { x: state.beam.x, y: target.y,
+        z: state.beam.z }, near, mark.brightness, mark.radius);
       if (!state.active && Math.hypot(state.x - target.x, state.z - target.z) > 380) group.visible = false;
     },
     /** Beacons and the searchlight's ground pool. */
@@ -136,11 +158,14 @@ export function createHelicopter(timeOfDay, noiseTexture) {
       const tailZ = state.z - Math.cos(state.heading) * 5.6;
       beacons.flare(tailX, state.y + 1.3, tailZ, beacons.red, (0.3 + blink * 2) * level, 0.7);
       beacons.flare(state.x, state.y - 1.1, state.z, beacons.blue, (Math.sin(time * 5) > 0 ? 1.4 : 0.2) * level, 0.6);
-      if (state.spot) beacons.wash(state.spot.x, state.spot.y, state.spot.z, searchlight.colour, 1.05 * level, 6.5);
+      if (state.spot) {
+        beacons.wash(state.spot.x, state.spot.y, state.spot.z, searchlight.colour, 1.05 * level * state.spot.brightness,
+          6.5);
+      }
     },
-    /** Whether the searchlight pool is on (x, z). */
+    /** Whether the crew's light is on (x, z): the player-following mark, not the drawn sweep. */
     lit(x, z) {
-      return Boolean(state.active && state.spot && Math.hypot(state.spot.x - x, state.spot.z - z) < 9);
+      return Boolean(state.active && state.watch && Math.hypot(state.watch.x - x, state.watch.z - z) < 9);
     },
   };
 }

@@ -176,7 +176,7 @@ export const ACTION_SHOTS = {
           const lamp = { ...street(2.6, 14.5), y: 0 };
           Object.assign(police.helicopter.state, { ...street(4.4, 44), y: 15.2, heading: 1.2,
             aim: { x: lamp.x, z: lamp.z } });
-          police.helicopter.update(1 / 60, lamp, game.time);
+          police.helicopter.update(1 / 60, lamp, game.time, undefined, { stars: police.wanted.stars });
         },
       };
     },
@@ -251,7 +251,7 @@ export const ACTION_SHOTS = {
           const spot = { x: p.x + 1.4, y: p.y, z: p.z - 9 };
           Object.assign(police.helicopter.state, { x: p.x + 2, z: p.z - 19, y: p.y + 13.2, heading: 0.6,
             aim: { x: spot.x, z: spot.z } });
-          police.helicopter.update(1 / 60, spot, game.time);
+          police.helicopter.update(1 / 60, spot, game.time, undefined, { stars: police.wanted.stars });
           // A chase camera up and behind, pitched about 8 degrees down (horizon near 40 % from the top) and aimed a
           // little right of the van, so it sits left of centre; a slight roll and a wide lens sell the speed.
           const cam = game.camera;

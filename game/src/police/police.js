@@ -199,7 +199,8 @@ export function createPolice({ fleet, layout, ground, colliders, characters, eff
     roadblocks.update(dt, layout.graph, target, plan.roadblocks, driving && Math.abs(target.speed) > 8);
     if (plan.helicopter && !helicopter.state.active) helicopter.arrive(target);
     if (!plan.helicopter && helicopter.state.active) helicopter.leave();
-    helicopter.update(dt, target, time, ground.roofAt ?? undefined);
+    helicopter.update(dt, target, time, ground.roofAt ?? undefined,
+      { stars: wanted.stars, search: searchArea(wanted) });
     checkBust(dt, target, player);
     lampLight.update(units.units, target, time);
     state.siren = Infinity;
