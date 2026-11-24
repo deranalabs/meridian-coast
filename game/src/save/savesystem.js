@@ -63,4 +63,6 @@ export function applySave(game, save) {
   if (save.position) game.player.placeOnFoot(save.position.x, save.position.z, save.position.heading);
   game.action.police.standDown();
   if (save.missions) game.missions?.loadProgress(save.missions);
+  // The saved money and respect are where the game stands, not something just earned: no "+$" for them.
+  game.hud?.quietGains?.();
 }

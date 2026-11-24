@@ -11,6 +11,7 @@ import { createWeaponBar } from './weaponbar.js';
 import { createPolicePanel } from './policepanel.js';
 import { carLine } from './carline.js';
 import { createPlaceFlash } from './placeflash.js';
+import { createGainPops } from './gainpops.js';
 
 function element(parent, className, tag = 'div') {
   const node = document.createElement(tag);
@@ -88,6 +89,7 @@ export function createHud(layout, visible = true) {
   document.body.appendChild(root);
   const status = element(root, 'status');
   const cash = element(status, 'cash');
+  const gainPops = createGainPops(status);
   const healthBar = element(element(status, 'health'), '');
   const armourBar = element(element(status, 'armour'), '');
   const rankBar = createRankBar(status);
@@ -124,10 +126,13 @@ export function createHud(layout, visible = true) {
     say: (html, seconds, kind) => messages.say(html, seconds, kind),
     /** Flash the district Ilo stands in on the next frame, as on entering it. */
     announcePlace: () => flashes.announce(),
+    /** After a load: the money and respect it sets are the new baseline, not a gain to pop up. */
+    quietGains: () => gainPops.quiet(),
     update(view) {
       root.classList.toggle('menu', Boolean(view.menu));
       root.classList.toggle('on-foot', !view.driving);
       cash.textContent = `$${view.cash.toLocaleString('en-US')}`;
+      gainPops.update(view.cash, view.respect, view.dt ?? 1 / 60);
       healthBar.style.width = `${Math.max(0, Math.min(100, view.health))}%`;
       armourBar.style.width = `${Math.max(0, Math.min(100, view.armour ?? 0))}%`;
       armourBar.parentElement.style.display = view.armour > 0 ? 'block' : 'none';
