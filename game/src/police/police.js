@@ -15,6 +15,8 @@ import { createPoliceGunfire } from './gunfire.js';
 import { createRandom } from '../core/random.js';
 import { createLampLight } from './lamplight.js';
 import { keepInside } from '../world/boundary.js';
+import { createWrecks } from './wrecks.js';
+import { ignites } from './burnrule.js';
 
 const NAVY = '#16203a';
 const SIGHT = { car: 75, officer: 50, patrol: 60 };
@@ -37,7 +39,9 @@ export function createPolice({ fleet, layout, ground, colliders, characters, eff
   const gunfire = createPoliceGunfire({ effects, events, colliders, random });
   const group = new THREE.Group();
   group.name = 'police';
-  group.add(helicopter.group, beacons.group);
+  // Rammed cruisers that catch fire: four burning at most, drawn in one additive call (police/wrecks.js).
+  const wrecks = createWrecks();
+  group.add(helicopter.group, beacons.group, wrecks.points);
   const lampLight = createLampLight(timeOfDay);
   if (lampLight.light) group.add(lampLight.light);
   const groundAt = (x, z) => ground.surfaceAt(x, z).height;
@@ -113,6 +117,11 @@ export function createPolice({ fleet, layout, ground, colliders, characters, eff
       if (involvesPlayer && other.police && speed > 5 && state.ramCooldown <= 0) {
         state.ramCooldown = 2;
         reportCrime('ramPolice', body.vehicle.x, body.vehicle.z, true);
+      }
+      // A hard ram sets the rammed cruiser's engine alight; the chase itself goes on exactly as before.
+      const rammed = body.player ? other : body.car;
+      if (involvesPlayer && rammed?.police && ignites(speed)) {
+        wrecks.ignite(rammed, body.vehicle.x, body.vehicle.z, speed);
       }
       events.emit('crash', { speed, x: body.vehicle.x, z: body.vehicle.z, player: Boolean(involvesPlayer) });
     });
@@ -201,6 +210,7 @@ export function createPolice({ fleet, layout, ground, colliders, characters, eff
     if (!plan.helicopter && helicopter.state.active) helicopter.leave();
     helicopter.update(dt, target, time, ground.roofAt ?? undefined,
       { stars: wanted.stars, search: searchArea(wanted) });
+    wrecks.update(dt, time);
     checkBust(dt, target, player);
     lampLight.update(units.units, target, time);
     state.siren = Infinity;
@@ -219,6 +229,7 @@ export function createPolice({ fleet, layout, ground, colliders, characters, eff
     officers,
     roadblocks,
     helicopter,
+    wrecks,
     reportCrime,
     update,
     /**
@@ -240,6 +251,7 @@ export function createPolice({ fleet, layout, ground, colliders, characters, eff
       beacons.begin();
       drawLightBars(beacons, fleet.cars, time, lightLevel);
       helicopter.light(beacons, time, lightLevel);
+      wrecks.light(beacons, time, lightLevel);
       beacons.end();
     },
     /** Raise the level directly (scripted scenes). */

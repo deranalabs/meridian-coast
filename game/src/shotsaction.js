@@ -31,7 +31,10 @@ function hideParkedNear(game, x, z0, z1, halfWidth) {
 const CHASE = { laneX: 102, startZ: 30, speed: 21, steps: 110 };
 // The cover runs the northbound lane of Shoreline Parade, beside the boardwalk, clear of the causeway junction.
 // yaw: the van's slide off the road axis (about 15 degrees); roll: the camera's tilt about its view axis.
-const COVER = { laneX: BEACH_ROAD_X + 3, startZ: 30, speed: 21, steps: 110, paint: '#ff6f3c', yaw: 0.26, roll: -0.06 };
+// wreck: the burning cruiser's place from the van's start (about 21 m ahead of the van at the capture), its slew
+// off the road axis and the ram speed in m/s that lit it (police/burnrule.js).
+const COVER = { laneX: BEACH_ROAD_X + 3, startZ: 30, speed: 21, steps: 110, paint: '#ff6f3c', yaw: 0.26, roll: -0.06,
+  wreck: { dx: -8.3, dz: -64, turn: 0.95, ram: 19 } };
 // The cover's run-up was staged on this handling. It keeps it, so play's handling never moves the staged frame.
 const COVER_STEERING = { maxSteer: 0.6, steerFade: 0.62, steerFollow: 7 };
 const COVER_ENGINES = { pickup: { maxSpeed: 44, accel: 9 }, cruiser: { maxSpeed: 52, accel: 12.5 } };
@@ -215,6 +218,14 @@ export const ACTION_SHOTS = {
         unit.vehicle.vz = -COVER.speed * 1.05;
         return unit;
       });
+      // A cruiser that swung across to block the van got rammed aside earlier in the run: it sits slewed in the far
+      // lane ahead, its engine burning (police/wrecks.js), as the chase comes up on it. A wreck, not a unit, so the
+      // dispatch list and the unit count stay as they are.
+      const wreck = game.fleet.reuse('cruiser', '#16203a');
+      wreck.police = true;
+      wreck.position.set(COVER.laneX + COVER.wreck.dx, 0, COVER.startZ + COVER.wreck.dz);
+      wreck.heading = Math.PI - COVER.wreck.turn;
+      police.wrecks.ignite(wreck, wreck.position.x + 1, wreck.position.z + 1, COVER.wreck.ram);
       stageHandling(game);
       hideParkedNear(game, BEACH_ROAD_X, COVER.startZ - 90, COVER.startZ + 60, 9);
       // About 43 m north of the start is where the van is when the frame is taken.
