@@ -774,3 +774,44 @@ most of these misses. The brief said to keep the file and record this, so the fi
 
 **Skipped in 8g and 8h**: a retake to make the fire read at sheet size (8h was told not to retake), the look
 targets above, fake headlights, and any change to the other three sheet files.
+
+## Recording 8i: the cover back at dusk, with a fire that reads
+
+8i retook only the cover (`screenshots/1-mission.jpg`) to fix the two faults 8h found in the night frame: the
+fire did not read as fire, and the dark frame had lost the palms, the sea, the crowd and Air-1.
+
+**What changed (f6ae1eb).**
+- Time of day: the `mission` shot in `shotsaction.js` is set at `dusk` instead of `night`. The sky is light
+  enough to show the palms, the sea, the boardwalk crowd and Air-1, and the street lamps, the light bars and the
+  spotlight cone still glow.
+- The wreck's place: `COVER.wreck` moves from the far lane about 19 m ahead of the van (dx -8.3, dz -62) to the
+  beach side about 11 m right of the lane, level with the van's nose (dx 10.6, dz -44.5). It is turned round
+  (turn 3.72 rad) so its burning engine bay faces the camera. In the frame its flames stand right of the chase,
+  below the stars panel and clear of every HUD panel and of the cone.
+- The flames (`police/wrecks.js`): the pale colour was caused by the blending, not by the gain. Additive orange
+  over a bright dusk sky sums to a pale yellow, and a redder palette with a lower gain alone barely changed it. The
+  points now use premultiplied blending. Flame points are drawn as tongues (narrow and pointed at the top, with a
+  firmer edge) and cover 80 % of what is behind them, so they keep their own orange. Smoke puffs and the impact
+  flash have alpha 0 and still only add light. Each slot now has six tongues and four puffs instead of four and
+  six, so the pool still holds the same eleven points per slot. The palette is redder (core 1.0/0.42/0.03,
+  ember 1.0/0.17/0.0) and the gain is 1.5 instead of 2.3. Flames rise to about 5 m instead of 3.2 m. The smoke is
+  fainter (gain 0.8 instead of 1.4) and starts higher, and the orange wash on the road is stronger and wider
+  (2.1 over 8 m instead of 1.6 over 6.5 m). `police/burnrule.js` did not change, so its tests did not need to.
+
+**Looking at it.** At 640 px wide the frame shows the cone lighting the road ahead, the van with a cruiser at
+each rear quarter, orange flames on the wreck at the right, the full HUD, and the palms, sea, crowd and Air-1.
+At the 253x158 sheet cell the flames still show as an orange tongue on the right. Four renders were made; the
+fourth is the one kept. Its file is 240,008 bytes, under the 256 KiB limit. `2-street.jpg`, `3-shop.jpg` and
+`4-progress.jpg` were rendered again and came out byte for byte the same, so git shows no change to them. The
+cover HUD layout check in `browser.mjs --shots` passes.
+
+**Numbers, measured in 8i.**
+- `tests/look.mjs`, cover with HUD: gradEnergy 7.88, flatBlocks 0.299 and colors 167 now meet their targets (the
+  night cover missed all three). Two values still miss, both only just: brightShare 1.42 % (band 1.5 to 4 %) and
+  meanSat 0.489 (0.47 or less). The no-HUD row was not re-rendered, so it is out of date and not counted.
+- Unit tests: 302 of 302 pass. `tests/lint.mjs`: 297 files, 0 problems.
+- `tests/play.mjs`: 43 pass, 0 fail; 64.3 driving frames, cash 3,830 kept across a reload, 60 fps, 75 draw calls.
+- `main.ts` run twice into `out/` gives identical bytes (checked before this section's commit).
+
+**Skipped in 8i**: the two remaining look misses (brightShare, meanSat), a fresh `--nohud` look copy and
+`tests/playstory.mjs`.
