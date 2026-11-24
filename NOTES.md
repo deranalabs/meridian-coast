@@ -815,3 +815,32 @@ cover HUD layout check in `browser.mjs --shots` passes.
 
 **Skipped in 8i**: the two remaining look misses (brightShare, meanSat), a fresh `--nohud` look copy and
 `tests/playstory.mjs`.
+
+## Recording 8j: a busy street and a designed map
+
+The last run before the deadline touched only the two weakest cells of the sheet.
+
+- **Street (`2-street.jpg`, `shotsstreet.js`)**: job 3 on foot in Harbor Row still shows the job card, HUD,
+  district banner and Juno's line. The block now has twelve walkers on the pavement on both sides of the door,
+  four cars in the two lanes (spaced like moving traffic, held at their marks for the frame) and a cruiser
+  adopted as a police unit with its bar lit, pulled in down the block with an officer out. Two stars are set
+  one step before the capture, so the dispatch panel shows its units. All of it is placed through the existing
+  fleet, pedestrian and police unit code; no mission or police rule changed. Two tries: the first hid the
+  cruiser and most walkers behind the minimap, the second moved them toward the centre. Several of the walkers
+  on the right still leave the frame before the capture; the cruiser and officer carry the shot.
+- **Map (`ui/mapsunny.js`, new `ui/mapstyle.js` with `mapstyle.test.js`)**: the full map reads the minimap
+  base palette back per pixel and recolours it. The sea is five bands from a pale surf line out to deep blue
+  (by distance to land), the park is green, roads that fill 70 % of a 7x7 window are gold and the rest cream,
+  blocks take one of three fixed tones per 11 px cell, and ground and blocks inside each district lean toward
+  its faction accent. Labels, pins and numbers are unchanged (`mapdraw.js` was not touched).
+- **Look test** (768x480, HUD): street gradEnergy 7.62, flatBlocks 0.255, colours 189, brightShare 3.31 %,
+  meanSat 0.442; progress gradEnergy 8.64, flatBlocks 0.394, colours 96 (was 79), brightShare 6.43 %,
+  meanSat 0.633. Files: 2-street 236160 bytes, 4-progress 217577 bytes, both under 256 KiB. `1-mission.jpg`
+  and `3-shop.jpg` are byte for byte as committed in 8i (one full retake wobbled the cover by timing; the next
+  retake gave the committed bytes back).
+- **Checks**: unit tests 306 of 306 pass, lint 299 files with 0 problems, `tests/play.mjs` passes (driving
+  64.8 km/h, cash 3830 reloaded as 3830).
+- `main.ts` run twice into `out/` gives identical bytes (checked before this section's commit).
+
+**Skipped in 8j**: a look at both cells at the 253x158 cell size, a third street try to keep the right-hand
+walkers in frame, icon redesign for the map pins (the existing pins were kept as drawn), `tests/playstory.mjs`.
